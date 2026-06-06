@@ -143,6 +143,7 @@ export function Figurita({
   onOpen,
   onClear,
   onToggleCaptain,
+  onDragStart,
 }: {
   slot: Slot;
   player?: PitchPlayer;
@@ -153,6 +154,7 @@ export function Figurita({
   onOpen?: () => void;
   onClear?: () => void;
   onToggleCaptain?: () => void;
+  onDragStart?: (e: React.PointerEvent) => void;
 }) {
   const color = POSITION_COLORS[slot.position];
 
@@ -224,10 +226,11 @@ export function Figurita({
       <button
         type="button"
         onClick={editable ? onOpen : undefined}
+        onPointerDown={editable ? onDragStart : undefined}
         disabled={!editable}
         className={cn(
           "flex flex-col items-center gap-1 rounded-[7px] p-[3px] pt-2.5",
-          editable && "transition-transform hover:-translate-y-0.5",
+          editable && "touch-none transition-transform hover:-translate-y-0.5",
         )}
       >
         {/* Bandera = protagonista (figurita) */}
@@ -280,7 +283,9 @@ export function Pitch({
   onOpenSlot,
   onClearSlot,
   onToggleCaptain,
+  onSlotPointerDown,
   dropPosition,
+  dragSlotId,
   className,
   style,
 }: {
@@ -291,8 +296,12 @@ export function Pitch({
   onOpenSlot?: (slot: Slot) => void;
   onClearSlot?: (slotId: string) => void;
   onToggleCaptain?: (slotId: string) => void;
-  /** Posición que se está arrastrando: resalta los titulares compatibles como destino. */
+  /** Arranca el drag de un titular (para reordenar o mandarlo al banco). */
+  onSlotPointerDown?: (e: React.PointerEvent, slot: Slot, player: PitchPlayer) => void;
+  /** Posición que se está arrastrando: resalta los slots compatibles como destino. */
   dropPosition?: Position | null;
+  /** Slot que se está arrastrando ahora mismo (se atenúa en su origen). */
+  dragSlotId?: string | null;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -324,9 +333,10 @@ export function Pitch({
                   data-position={s.position}
                   data-starter="1"
                   className={cn(
-                    "rounded-[10px] transition-shadow",
-                    dropPosition === s.position &&
+                    "rounded-[10px] transition-all",
+                    dropPosition === s.position && s.id !== dragSlotId &&
                       "ring-2 ring-gold ring-offset-2 ring-offset-[#16713F]",
+                    dragSlotId === s.id && "opacity-40",
                   )}
                 >
                   <Figurita
@@ -338,6 +348,10 @@ export function Pitch({
                     onOpen={() => onOpenSlot?.(s)}
                     onClear={() => onClearSlot?.(s.id)}
                     onToggleCaptain={() => onToggleCaptain?.(s.id)}
+                    onDragStart={(e) => {
+                      const pl = picks[s.id];
+                      if (pl) onSlotPointerDown?.(e, s, pl);
+                    }}
                   />
                 </div>
               ))}

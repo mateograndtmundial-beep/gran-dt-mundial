@@ -18,7 +18,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
-import { Pitch, buildSlots, type Slot } from "@/components/pitch";
+import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 
 /* Altura reservada para el chrome de arriba (header + título + control bar). */
 const PITCH_FIT = "min(100%, calc((100dvh - 16.5rem) * 0.6977))";
@@ -143,44 +143,68 @@ export function FieldBuilder({
     setCaptainId((prev) => (prev === p.id ? null : p.id));
   }
 
-  // Intercambia un suplente con un titular (mismo puesto). El titular desplazado
-  // pasa al banco; si era capitán, se limpia.
-  function swapSlots(subSlot: string, starterSlot: string) {
-    const benched = picks[starterSlot];
+  // Intercambia el contenido de dos slots (mismo puesto): titular↔titular,
+  // titular↔suplente o suplente↔titular. Si el capitán termina en el banco, se limpia.
+  function swapSlots(slotA: string, slotB: string) {
+    const pa = picks[slotA];
+    const pb = picks[slotB];
     setNotice(null);
     setPicks((prev) => {
       const next = { ...prev };
-      const subP = next[subSlot];
-      const startP = next[starterSlot];
-      if (startP) next[subSlot] = startP; else delete next[subSlot];
-      if (subP) next[starterSlot] = subP; else delete next[starterSlot];
+      if (pb) next[slotA] = pb; else delete next[slotA];
+      if (pa) next[slotB] = pa; else delete next[slotB];
       return next;
     });
-    if (benched && benched.id === captainId) setCaptainId(null);
+    const captainBenched =
+      (pa?.id === captainId && slotB.startsWith("SUB_")) ||
+      (pb?.id === captainId && slotA.startsWith("SUB_"));
+    if (captainBenched) setCaptainId(null);
   }
 
-  // Drag & drop (mouse + touch) de un suplente hacia un titular del mismo puesto.
+  // Drag & drop (mouse + touch) entre cualquier par de slots del mismo puesto.
   const [drag, setDrag] = useState<
-    { slotId: string; position: Position; player: PlayerRow; x: number; y: number } | null
+    { slotId: string; position: Position; player: PitchPlayer; x: number; y: number } | null
   >(null);
 
-  function startSubDrag(e: React.PointerEvent, slotId: string, position: Position, player: PlayerRow) {
-    e.preventDefault();
-    setDrag({ slotId, position, player, x: e.clientX, y: e.clientY });
-    const move = (ev: PointerEvent) =>
-      setDrag((d) => (d ? { ...d, x: ev.clientX, y: ev.clientY } : d));
+  // threshold=true para titulares: distingue "tap" (abre el picker) de "drag".
+  function startDrag(
+    e: React.PointerEvent,
+    slotId: string,
+    position: Position,
+    player: PitchPlayer,
+    threshold = false,
+  ) {
+    const sx = e.clientX, sy = e.clientY;
+    let active = !threshold;
+    if (active) {
+      e.preventDefault();
+      setDrag({ slotId, position, player, x: sx, y: sy });
+    }
+    const move = (ev: PointerEvent) => {
+      if (!active) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 6) return;
+        active = true;
+        setDrag({ slotId, position, player, x: ev.clientX, y: ev.clientY });
+      } else {
+        setDrag((d) => (d ? { ...d, x: ev.clientX, y: ev.clientY } : d));
+      }
+    };
     const up = (ev: PointerEvent) => {
       window.removeEventListener("pointermove", move);
       window.removeEventListener("pointerup", up);
+      const wasActive = active;
       setDrag(null);
+      if (!wasActive) return; // fue un tap → dejamos que el click abra el picker
+      // Suprimimos el click sintético que sigue al drag (si no, abre el picker).
+      const suppress = (ce: Event) => { ce.stopPropagation(); ce.preventDefault(); };
+      window.addEventListener("click", suppress, { capture: true, once: true });
+      setTimeout(() => window.removeEventListener("click", suppress, true), 0);
       const el = document.elementFromPoint(ev.clientX, ev.clientY);
       const target = el?.closest("[data-slot-id]") as HTMLElement | null;
       if (!target) return;
       const ts = target.getAttribute("data-slot-id");
       const tp = target.getAttribute("data-position");
-      if (target.getAttribute("data-starter") === "1" && tp === position && ts && ts !== slotId) {
-        swapSlots(slotId, ts);
-      }
+      if (tp === position && ts && ts !== slotId) swapSlots(slotId, ts);
     };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -342,7 +366,9 @@ export function FieldBuilder({
             onOpenSlot={openSlot}
             onClearSlot={clearSlot}
             onToggleCaptain={toggleCaptain}
+            onSlotPointerDown={(e, slot, player) => startDrag(e, slot.id, slot.position, player, true)}
             dropPosition={drag?.position ?? null}
+            dragSlotId={drag?.slotId ?? null}
             style={{ width: PITCH_FIT }}
           />
         </div>
@@ -371,9 +397,13 @@ export function FieldBuilder({
                 return (
                   <div
                     key={s.id}
+                    data-slot-id={s.id}
+                    data-position={s.position}
                     className={cn(
-                      "flex items-center gap-2 rounded-[6px]",
+                      "flex items-center gap-2 rounded-[6px] px-1 -mx-1 transition-shadow",
                       drag?.slotId === s.id && "opacity-40",
+                      drag && drag.position === s.position && drag.slotId !== s.id &&
+                        "ring-2 ring-gold bg-gold-bg/50",
                     )}
                   >
                     <PositionChip position={s.position} />
@@ -381,7 +411,7 @@ export function FieldBuilder({
                       <>
                         <button
                           type="button"
-                          onPointerDown={(e) => startSubDrag(e, s.id, s.position, p)}
+                          onPointerDown={(e) => startDrag(e, s.id, s.position, p)}
                           aria-label={`Arrastrar ${p.name} hacia un titular`}
                           title="Arrastrá hacia un titular para intercambiarlos"
                           className="shrink-0 cursor-grab touch-none text-ink-faint hover:text-ink-2 active:cursor-grabbing"
