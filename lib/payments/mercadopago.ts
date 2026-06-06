@@ -9,24 +9,27 @@ export const mercadopago: PaymentProvider = {
 
   async createCheckout(input: CheckoutInput): Promise<CheckoutResult> {
     if (!MP_TOKEN) throw new Error("Falta MP_ACCESS_TOKEN");
+    const body: Record<string, unknown> = {
+      items: [
+        {
+          title: input.product.name,
+          quantity: 1,
+          unit_price: input.amount,
+          currency_id: input.currency,
+        },
+      ],
+      external_reference: String(input.orderId),
+      back_urls: { success: input.successUrl, failure: input.failureUrl, pending: input.successUrl },
+      notification_url: input.notificationUrl,
+      metadata: { order_id: input.orderId, pins: input.product.pins },
+    };
+    // auto_return solo es válido con URLs https públicas (falla con localhost en dev).
+    if (input.successUrl.startsWith("https://")) body.auto_return = "approved";
+
     const res = await fetch(`${MP_API}/checkout/preferences`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${MP_TOKEN}` },
-      body: JSON.stringify({
-        items: [
-          {
-            title: input.product.name,
-            quantity: 1,
-            unit_price: input.amount,
-            currency_id: input.currency,
-          },
-        ],
-        external_reference: String(input.orderId),
-        back_urls: { success: input.successUrl, failure: input.failureUrl, pending: input.successUrl },
-        auto_return: "approved",
-        notification_url: input.notificationUrl,
-        metadata: { order_id: input.orderId, pins: input.product.pins },
-      }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) throw new Error(`MP preference ${res.status}: ${await res.text()}`);
     const json = (await res.json()) as { id: string; init_point: string };
