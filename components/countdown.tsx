@@ -25,14 +25,19 @@ export function Countdown({ target }: { target: string }) {
   const [prevSec, setPrevSec] = useState<number | null>(null);
 
   useEffect(() => {
-    setNow(Date.now());
-    const id = setInterval(() => {
+    // El primer set va en rAF (no sincrónico en el cuerpo del effect) para no
+    // disparar renders en cascada; igual mantenemos el esqueleto hasta montar.
+    const tick = () =>
       setNow((prev) => {
         setPrevSec(prev !== null ? Math.floor((Math.max(0, new Date(target).getTime() - prev) % 60000) / 1000) : null);
         return Date.now();
       });
-    }, 1000);
-    return () => clearInterval(id);
+    const raf = requestAnimationFrame(tick);
+    const id = setInterval(tick, 1000);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearInterval(id);
+    };
   }, [target]);
 
   if (now === null) {
