@@ -1,10 +1,11 @@
-import { asc, desc, eq, gt, sql } from "drizzle-orm";
+import { asc, desc, eq, gt, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   players,
   countries,
   coaches,
   rounds,
+  matches,
   entries,
   entryRounds,
   entryRoundPlayers,
@@ -53,16 +54,36 @@ export async function getCoaches() {
     .innerJoin(countries, eq(coaches.countryId, countries.id));
 }
 
-export async function getCurrentRound() {
-  const open = await db
+/**
+ * Fecha editable = la primera no publicada cuyo primer partido todavía no arrancó.
+ * Su "deadline" es el kickoff de ese primer partido. Cuando ese partido empieza,
+ * la fecha queda bloqueada y la editable pasa a la siguiente. Devuelve null si no
+ * hay ninguna editable (todo arrancó/publicado → equipo bloqueado).
+ */
+export async function getEditableRound(now: Date = new Date()) {
+  const candidates = await db
     .select()
     .from(rounds)
-    .where(eq(rounds.status, "open"))
-    .orderBy(asc(rounds.order))
-    .limit(1);
-  if (open.length) return open[0];
-  const any = await db.select().from(rounds).orderBy(asc(rounds.order)).limit(1);
-  return any[0] ?? null;
+    .where(ne(rounds.status, "published"))
+    .orderBy(asc(rounds.order));
+  for (const r of candidates) {
+    const first = (
+      await db
+        .select({ k: matches.kickoff })
+        .from(matches)
+        .where(eq(matches.roundId, r.id))
+        .orderBy(asc(matches.kickoff))
+        .limit(1)
+    )[0];
+    const deadline = first?.k ? new Date(first.k) : null;
+    if (!deadline || deadline > now) return { round: r, deadline };
+  }
+  return null;
+}
+
+/** Fecha sobre la que se guarda la alineación (la editable). Null si está bloqueado. */
+export async function getCurrentRound() {
+  return (await getEditableRound())?.round ?? null;
 }
 
 export async function getAllRounds() {
@@ -112,6 +133,34 @@ export async function getMyTeam(userId: number) {
     .where(eq(entryRounds.entryId, entry.id))
     .orderBy(asc(rounds.order));
   return { entry, rounds: roundRows };
+}
+
+/** Última alineación guardada del usuario (para precargar el armador al editar). */
+export async function getEditableLineup(userId: number) {
+  const entry = (await db.select().from(entries).where(eq(entries.userId, userId)).limit(1))[0];
+  if (!entry) return null;
+  const er = (
+    await db
+      .select({
+        id: entryRounds.id,
+        formation: entryRounds.formation,
+        captainPlayerId: entryRounds.captainPlayerId,
+        coachId: entryRounds.coachId,
+      })
+      .from(entryRounds)
+      .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+      .where(eq(entryRounds.entryId, entry.id))
+      .orderBy(desc(rounds.order))
+      .limit(1)
+  )[0];
+  if (!er) return null;
+  const lp = await db
+    .select({ slot: entryRoundPlayers.slot, playerId: entryRoundPlayers.playerId })
+    .from(entryRoundPlayers)
+    .where(eq(entryRoundPlayers.entryRoundId, er.id));
+  const slots: Record<string, number> = {};
+  for (const r of lp) if (r.slot) slots[r.slot] = r.playerId;
+  return { formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
 }
 
 export async function getMyLeagues(userId: number) {

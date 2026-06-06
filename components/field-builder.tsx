@@ -23,20 +23,40 @@ import { Pitch, buildSlots, type Slot } from "@/components/pitch";
 const PITCH_FIT = "min(100%, calc((100dvh - 16.5rem) * 0.6977))";
 
 /* ─── FieldBuilder ─── */
+export type InitialLineup = {
+  formation: string;
+  captainPlayerId: number | null;
+  coachId: number | null;
+  slots: Record<string, number>; // slotId -> playerId
+};
+
 export function FieldBuilder({
   players,
   coaches,
   budget = BUDGET,
+  initial,
+  deadlineLabel = "CERRÁ TU EQUIPO",
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
   budget?: number;
+  initial?: InitialLineup | null;
+  deadlineLabel?: string;
 }) {
   const router = useRouter();
-  const [formation, setFormation]   = useState(DEFAULT_FORMATION);
-  const [picks, setPicks]           = useState<Record<string, PlayerRow>>({});
-  const [captainId, setCaptainId]   = useState<number | null>(null);
-  const [coachId, setCoachId]       = useState<number | null>(null);
+  const [formation, setFormation]   = useState(initial?.formation ?? DEFAULT_FORMATION);
+  const [picks, setPicks]           = useState<Record<string, PlayerRow>>(() => {
+    if (!initial) return {};
+    const byId = new Map(players.map((p) => [p.id, p]));
+    const m: Record<string, PlayerRow> = {};
+    for (const [slot, pid] of Object.entries(initial.slots)) {
+      const p = byId.get(pid);
+      if (p) m[slot] = p;
+    }
+    return m;
+  });
+  const [captainId, setCaptainId]   = useState<number | null>(initial?.captainPlayerId ?? null);
+  const [coachId, setCoachId]       = useState<number | null>(initial?.coachId ?? null);
   const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | null>(null);
   const [search, setSearch]         = useState("");
   const [saving, setSaving]         = useState(false);
@@ -146,6 +166,10 @@ export function FieldBuilder({
       setMessage(`Máximo ${res.max} jugadores por selección.`);
       return;
     }
+    if (!res.ok && res.error === "locked") {
+      setMessage("El equipo está bloqueado: la fecha ya empezó.");
+      return;
+    }
     if (!res.ok) { setMessage("No se pudo guardar. Revisá la base de datos."); return; }
     router.push("/mi-equipo");
   }
@@ -162,7 +186,7 @@ export function FieldBuilder({
       {/* ─── Barra de control compacta ─── */}
       <div className="rounded-[8px] border border-border bg-surface card-shadow px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
-          <span className="eyebrow text-blue-ink">CERRÁ TU EQUIPO · 11 JUN 09:00</span>
+          <span className="eyebrow text-blue-ink">{deadlineLabel}</span>
           <div className="flex items-baseline gap-1.5 shrink-0">
             <span
               className={cn(
