@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
-import { POSITION_COLORS, POSITION_BG, type Position } from "@/lib/game/config";
+import { POSITION_COLORS, type Position } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
 
 export { PositionChip };
@@ -82,36 +82,6 @@ export function PlayerCard({
         </div>
         {action && <div className="mt-1">{action}</div>}
       </div>
-    </div>
-  );
-}
-
-export function PlayerCardCompact({
-  position,
-  name,
-  price,
-  isCaptain,
-}: {
-  position: Position;
-  name: string;
-  price: number;
-  isCaptain?: boolean;
-}) {
-  return (
-    <div className="flex flex-col items-center gap-0.5 text-center">
-      <div
-        className={cn(
-          "w-10 h-10 rounded-full flex items-center justify-center font-display text-[11px] leading-none",
-          isCaptain ? "ring-2 ring-gold ring-offset-1" : "",
-        )}
-        style={{ backgroundColor: POSITION_COLORS[position], color: POSITION_BG[position] }}
-      >
-        {position}
-      </div>
-      <span className="text-[10px] font-semibold text-white drop-shadow max-w-[72px] truncate leading-tight">
-        {name.split(" ").slice(-1)[0]}
-      </span>
-      <span className="jersey-numeral text-[9px] text-gold leading-none">{price}M</span>
     </div>
   );
 }

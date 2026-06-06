@@ -89,6 +89,7 @@ export async function getMyTeam(userId: number) {
       id: entryRounds.id,
       points: entryRounds.points,
       formation: entryRounds.formation,
+      captainPlayerId: entryRounds.captainPlayerId,
       roundName: rounds.name,
       order: rounds.order,
     })
@@ -137,9 +138,11 @@ export async function getLineupPlayers(entryRoundId: number) {
       id: players.id,
       name: players.name,
       position: players.position,
+      price: players.price,
       isStarter: entryRoundPlayers.isStarter,
       slot: entryRoundPlayers.slot,
       countryName: countries.name,
+      flagUrl: countries.flagUrl,
     })
     .from(entryRoundPlayers)
     .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))

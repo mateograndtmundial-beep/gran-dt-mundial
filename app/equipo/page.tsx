@@ -1,4 +1,5 @@
-import { PageTitle, EmptyState } from "@/components/ui";
+import { EmptyState } from "@/components/ui";
+import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
 import { getPlayersWithCountry, getCoaches, type PlayerRow, type CoachRow } from "@/lib/queries";
 import { BUDGET } from "@/lib/game/config";
@@ -17,10 +18,13 @@ export default async function EquipoPage() {
 
   return (
     <div>
-      <PageTitle
-        title="Armar equipo"
-        subtitle="Elegí formación, 11 titulares (+ banca), capitán y técnico, dentro del presupuesto."
-      />
+      {/* Header compacto — no se come el alto de la cancha */}
+      <div className="mb-3 flex items-baseline justify-between gap-3">
+        <h1 className="font-display text-2xl leading-none tracking-tight text-ink">
+          ARMÁ TU EQUIPO
+        </h1>
+        <Eyebrow className="hidden sm:block">11 TITULARES · CAPITÁN · DT</Eyebrow>
+      </div>
       {error || players.length === 0 ? (
         <EmptyState
           title="Todavía no hay jugadores cargados."

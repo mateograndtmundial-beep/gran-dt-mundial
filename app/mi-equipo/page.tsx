@@ -1,8 +1,10 @@
 import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow, StatNumeral, SecondaryButton, PrimaryButton } from "@/components/editorial";
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
+import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers } from "@/lib/queries";
+import type { Position } from "@/lib/game/config";
 import { formatPoints } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -56,6 +58,30 @@ export default async function MiEquipoPage() {
 
   const ranking = 1; // Placeholder — se conecta al leaderboard real
 
+  // Lineup de la fecha vigente (la más reciente) para la cancha read-only
+  const latestRound = team.rounds.length ? team.rounds[team.rounds.length - 1] : null;
+  let lineup: Awaited<ReturnType<typeof getLineupPlayers>> = [];
+  if (latestRound) {
+    try {
+      lineup = await getLineupPlayers(latestRound.id);
+    } catch {
+      lineup = [];
+    }
+  }
+  const picks: Record<string, PitchPlayer> = {};
+  for (const p of lineup) {
+    if (!p.isStarter || !p.slot) continue;
+    picks[p.slot] = {
+      id: p.id,
+      name: p.name,
+      position: p.position as Position,
+      flagUrl: p.flagUrl,
+      countryName: p.countryName,
+      price: p.price,
+    };
+  }
+  const hasLineup = Object.keys(picks).length > 0;
+
   return (
     <div className="space-y-6">
       {/* Hero con watermark del ranking */}
@@ -87,13 +113,34 @@ export default async function MiEquipoPage() {
         </div>
       </section>
 
-      {/* Puntos por fecha */}
-      <Card className="p-5">
-        <div className="flex items-center justify-between pb-3 mb-2 border-b-2 border-border">
-          <Eyebrow>Puntos por fecha</Eyebrow>
-        </div>
-        <PointsBreakdown rounds={team.rounds} />
-      </Card>
+      {/* Tu once + Puntos por fecha */}
+      <div className="grid gap-6 md:grid-cols-[auto_1fr] md:items-start">
+        {hasLineup && (
+          <Card className="p-4">
+            <div className="mb-3 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
+              <Eyebrow>Tu once</Eyebrow>
+              {latestRound && (
+                <span className="text-[11px] text-ink-faint">
+                  {latestRound.formation}
+                </span>
+              )}
+            </div>
+            <Pitch
+              formation={latestRound?.formation ?? "4-4-2"}
+              picks={picks}
+              captainId={latestRound?.captainPlayerId ?? null}
+              style={{ width: "min(78vw, 320px)" }}
+            />
+          </Card>
+        )}
+
+        <Card className="p-5">
+          <div className="flex items-center justify-between pb-3 mb-2 border-b-2 border-border">
+            <Eyebrow>Puntos por fecha</Eyebrow>
+          </div>
+          <PointsBreakdown rounds={team.rounds} />
+        </Card>
+      </div>
     </div>
   );
 }

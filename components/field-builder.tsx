@@ -2,170 +2,22 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { X, Star } from "lucide-react";
+import { X } from "lucide-react";
 import {
   FORMATIONS,
   DEFAULT_FORMATION,
   BUDGET,
   MAX_PER_COUNTRY,
-  POSITION_COLORS,
-  POSITION_BG,
   POSITION_LABELS,
-  type Position,
 } from "@/lib/game/config";
 import { saveLineup } from "@/lib/actions";
 import type { PlayerRow, CoachRow } from "@/lib/queries";
 import { cn } from "@/lib/utils";
-import { Eyebrow, ValidationCallout, PrimaryButton } from "@/components/editorial";
+import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
+import { Pitch, buildSlots, type Slot } from "@/components/pitch";
 
-type Slot = { id: string; position: Position; isStarter: boolean };
-const ROWS: Position[] = ["GK", "DEF", "MID", "FWD"];
-
-function buildSlots(formation: string): Slot[] {
-  const shape = FORMATIONS[formation] ?? FORMATIONS[DEFAULT_FORMATION];
-  const slots: Slot[] = [];
-  ROWS.forEach((pos) => {
-    for (let i = 0; i < shape[pos]; i++)
-      slots.push({ id: `${pos}_${i + 1}`, position: pos, isStarter: true });
-  });
-  ROWS.forEach((pos) => slots.push({ id: `SUB_${pos}`, position: pos, isStarter: false }));
-  return slots;
-}
-
-/* ─── SVG Cancha ─── */
-function PitchSVG() {
-  return (
-    <svg
-      viewBox="0 0 300 430"
-      xmlns="http://www.w3.org/2000/svg"
-      className="w-full h-full"
-      aria-hidden
-    >
-      {/* Fondo verde base */}
-      <rect width="300" height="430" fill="#16713F" />
-      {/* Franjas de pasto alternadas */}
-      <rect y="0"   width="300" height="86" fill="#0F5A30" opacity="0.45" />
-      <rect y="172" width="300" height="86" fill="#0F5A30" opacity="0.45" />
-      <rect y="344" width="300" height="86" fill="#0F5A30" opacity="0.45" />
-      {/* Gradiente luces de estadio (radial, focos desde arriba) */}
-      <defs>
-        <radialGradient id="stadium-lights" cx="50%" cy="38%" r="65%">
-          <stop offset="0%"  stopColor="white" stopOpacity="0.08" />
-          <stop offset="70%" stopColor="white" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <rect width="300" height="430" fill="url(#stadium-lights)" />
-      {/* Líneas del campo */}
-      {/* Borde exterior */}
-      <rect x="10" y="10" width="280" height="410" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" />
-      {/* Medio campo */}
-      <line x1="10" y1="215" x2="290" y2="215" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" />
-      {/* Círculo central */}
-      <circle cx="150" cy="215" r="36" fill="none" stroke="rgba(255,255,255,0.28)" strokeWidth="1.5" />
-      <circle cx="150" cy="215" r="2.5" fill="rgba(255,255,255,0.28)" />
-      {/* Área penal superior */}
-      <rect x="55" y="10" width="190" height="78" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
-      <rect x="100" y="10" width="100" height="27" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
-      <circle cx="150" cy="66" r="2" fill="rgba(255,255,255,0.22)" />
-      {/* Área penal inferior */}
-      <rect x="55" y="342" width="190" height="78" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
-      <rect x="100" y="393" width="100" height="27" fill="none" stroke="rgba(255,255,255,0.22)" strokeWidth="1.2" />
-      <circle cx="150" cy="364" r="2" fill="rgba(255,255,255,0.22)" />
-    </svg>
-  );
-}
-
-/* ─── SlotChip — slot vacío o con jugador ─── */
-function SlotChip({
-  slot,
-  player,
-  isCaptain,
-  compact,
-  onOpen,
-  onClear,
-  onCaptain,
-}: {
-  slot: Slot;
-  player?: PlayerRow;
-  isCaptain: boolean;
-  compact?: boolean;
-  onOpen: () => void;
-  onClear: () => void;
-  onCaptain?: () => void;
-}) {
-  if (!player) {
-    return (
-      <button
-        onClick={onOpen}
-        className="flex flex-col items-center gap-1 group"
-        aria-label={`Agregar ${POSITION_LABELS[slot.position]}`}
-      >
-        <div
-          className="w-10 h-10 rounded-full border-2 border-dashed border-white/30 flex items-center justify-center transition-colors group-hover:border-white/60"
-          style={{ backgroundColor: POSITION_COLORS[slot.position] + "33" }}
-        >
-          <span className="text-white/70 text-[10px] font-display leading-none">
-            {slot.position}
-          </span>
-        </div>
-        <span className="text-[9px] text-white/50 font-medium leading-tight">+ Agregar</span>
-      </button>
-    );
-  }
-
-  return (
-    <div
-      className={cn(
-        "relative flex flex-col items-center gap-0.5 text-center cursor-pointer",
-        "animate-sticker-slap",
-      )}
-    >
-      {/* Botones de acción flotantes */}
-      <div className="absolute -right-1 -top-1 flex gap-0.5 z-10">
-        {!compact && onCaptain && (
-          <button
-            onClick={onCaptain}
-            title="Capitán"
-            aria-label={isCaptain ? "Quitar capitán" : "Hacer capitán"}
-            className={cn(
-              "rounded-full p-0.5 transition-colors",
-              isCaptain ? "bg-gold text-gold-ink" : "bg-white/20 text-white/70 hover:bg-white/40",
-            )}
-          >
-            <Star size={11} fill={isCaptain ? "currentColor" : "none"} />
-          </button>
-        )}
-        <button
-          onClick={onClear}
-          title="Quitar"
-          aria-label="Quitar jugador"
-          className="rounded-full bg-white/20 p-0.5 text-white/70 hover:bg-white/40 transition-colors"
-        >
-          <X size={11} />
-        </button>
-      </div>
-
-      <button onClick={onOpen} className="flex flex-col items-center gap-0.5">
-        <div
-          className={cn(
-            "w-10 h-10 rounded-full flex items-center justify-center font-display text-[10px] leading-none transition-transform hover:scale-105",
-            isCaptain ? "ring-2 ring-gold ring-offset-1 ring-offset-transparent" : "",
-          )}
-          style={{
-            backgroundColor: POSITION_COLORS[slot.position],
-            color: POSITION_BG[slot.position],
-          }}
-        >
-          {slot.position}
-        </div>
-        <span className="text-[10px] font-semibold text-white drop-shadow max-w-[72px] truncate leading-tight">
-          {player.name.split(" ").slice(-1)[0]}
-        </span>
-        <span className="jersey-numeral text-[9px] text-gold leading-none">{player.price}M</span>
-      </button>
-    </div>
-  );
-}
+/* Altura reservada para el chrome de arriba (header + título + control bar). */
+const PITCH_FIT = "min(100%, calc((100dvh - 16.5rem) * 0.6977))";
 
 /* ─── FieldBuilder ─── */
 export function FieldBuilder({
@@ -200,12 +52,15 @@ export function FieldBuilder({
   }, [chosen]);
   const maxCountry = countByCountry.size ? Math.max(...countByCountry.values()) : 0;
 
-  const starterSlots  = slots.filter((s) => s.isStarter);
+  const starterSlots   = slots.filter((s) => s.isStarter);
+  const subSlots       = slots.filter((s) => !s.isStarter);
   const startersFilled = starterSlots.every((s) => picks[s.id]);
-  const captainOk     = captainId != null && starterSlots.some((s) => picks[s.id]?.id === captainId);
+  const subsFilled     = subSlots.every((s) => picks[s.id]);
+  const captainOk      = captainId != null && starterSlots.some((s) => picks[s.id]?.id === captainId);
 
   const errors: string[] = [];
   if (!startersFilled) errors.push("Completá los 11 titulares");
+  if (!subsFilled)     errors.push(`Completá los ${subSlots.length} suplentes`);
   if (remaining < 0)   errors.push("Te pasaste del presupuesto");
   if (maxCountry > MAX_PER_COUNTRY) errors.push(`Máx ${MAX_PER_COUNTRY} jugadores por selección`);
   if (!captainOk)      errors.push("Elegí un capitán");
@@ -230,6 +85,11 @@ export function FieldBuilder({
       if (removed?.id === captainId) setCaptainId(null);
       return n;
     });
+  }
+  function toggleCaptain(slotId: string) {
+    const p = picks[slotId];
+    if (!p) return;
+    setCaptainId((prev) => (prev === p.id ? null : p.id));
   }
 
   const pickedIds    = new Set(chosen.map((p) => p.id));
@@ -278,31 +138,54 @@ export function FieldBuilder({
     router.push("/mi-equipo");
   }
 
-  /* Porcentaje de presupuesto usado */
   const budgetPct = Math.min(100, Math.round((used / budget) * 100));
 
-  return (
-    <div className="space-y-4">
-      {/* Banner de deadline */}
-      <div className="rounded-[6px] bg-blue-light border border-blue-border px-4 py-2">
-        <span className="eyebrow text-blue-ink">
-          CERRÁ TU EQUIPO · ANTES DEL 11 JUN 09:00
-        </span>
-      </div>
+  function openSlot(s: Slot) {
+    setSearch("");
+    setModal({ type: "player", slot: s });
+  }
 
-      {/* FormationSelector */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Eyebrow>Formación</Eyebrow>
-        <div className="flex gap-1.5 flex-wrap">
+  return (
+    <div className="flex flex-col gap-3">
+      {/* ─── Barra de control compacta ─── */}
+      <div className="rounded-[8px] border border-border bg-surface card-shadow px-3 py-2.5">
+        <div className="flex items-center justify-between gap-3">
+          <span className="eyebrow text-blue-ink">CERRÁ TU EQUIPO · 11 JUN 09:00</span>
+          <div className="flex items-baseline gap-1.5 shrink-0">
+            <span
+              className={cn(
+                "jersey-numeral text-2xl leading-none tracking-tight",
+                remaining < 0 ? "text-danger" : "text-ink",
+              )}
+            >
+              {remaining}
+            </span>
+            <span className="text-xs text-ink-3">/ {budget}M</span>
+          </div>
+        </div>
+
+        {/* barra de presupuesto */}
+        <div className="mt-2 h-1 rounded-full bg-surface-2 overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all duration-300",
+              remaining < 0 ? "bg-danger" : budgetPct > 85 ? "bg-warning" : "bg-success",
+            )}
+            style={{ width: `${budgetPct}%` }}
+          />
+        </div>
+
+        {/* formaciones — fila scrollable */}
+        <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5">
           {Object.keys(FORMATIONS).map((f) => (
             <button
               key={f}
               onClick={() => onFormationChange(f)}
               className={cn(
-                "font-display text-sm px-3 py-1 rounded-[4px] transition-colors leading-none",
+                "shrink-0 rounded-[4px] px-2.5 py-1 font-display text-sm leading-none transition-colors",
                 formation === f
                   ? "bg-blue text-white"
-                  : "bg-surface border border-border text-ink-2 hover:border-border-strong",
+                  : "bg-canvas border border-border text-ink-2 hover:border-border-strong",
               )}
             >
               {f}
@@ -311,85 +194,72 @@ export function FieldBuilder({
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-        {/* ─── Cancha (55%) ─── */}
-        <div
-          className="relative rounded-[8px] overflow-hidden card-shadow-lg"
-          style={{ aspectRatio: "300/430" }}
-        >
-          {/* SVG del pitch (fondo) */}
-          <div className="absolute inset-0">
-            <PitchSVG />
-          </div>
-
-          {/* Filas de slots (FWD en top, GK en bottom — attacking direction up) */}
-          <div className="absolute inset-0 flex flex-col justify-around py-4 px-2">
-            {[...ROWS].reverse().map((pos) => {
-              const rowSlots = starterSlots.filter((s) => s.position === pos);
-              return (
-                <div key={pos} className="flex justify-center gap-3">
-                  {rowSlots.map((s) => (
-                    <SlotChip
-                      key={s.id}
-                      slot={s}
-                      player={picks[s.id]}
-                      isCaptain={picks[s.id]?.id === captainId}
-                      onOpen={() => { setSearch(""); setModal({ type: "player", slot: s }); }}
-                      onClear={() => clearSlot(s.id)}
-                      onCaptain={() => picks[s.id] && setCaptainId(picks[s.id]!.id)}
-                    />
-                  ))}
-                </div>
-              );
-            })}
-          </div>
+      {/* ─── Body: cancha + rail ─── */}
+      <div className="grid min-h-0 gap-4 md:grid-cols-[minmax(0,1fr)_300px]">
+        {/* Cancha — entra completa, deriva ancho del alto disponible */}
+        <div className="flex min-h-0 justify-center">
+          <Pitch
+            editable
+            formation={formation}
+            picks={picks}
+            captainId={captainId}
+            onOpenSlot={openSlot}
+            onClearSlot={clearSlot}
+            onToggleCaptain={toggleCaptain}
+            style={{ width: PITCH_FIT }}
+          />
         </div>
 
-        {/* ─── Panel derecho (45%) ─── */}
-        <div className="flex flex-col gap-4">
-          {/* BudgetMeter */}
-          <div className="rounded-[8px] border border-border bg-surface card-shadow p-4">
-            <Eyebrow className="mb-1">Presupuesto</Eyebrow>
-            <div className={cn(
-              "jersey-numeral text-[clamp(1.5rem,3vw,2.5rem)] leading-none tracking-tight",
-              remaining < 0 ? "text-danger" : "text-ink",
-            )}>
-              {remaining}
-              <span className="text-base font-normal text-ink-3 ml-1">/ {budget} M</span>
-            </div>
-            <div className="mt-2 h-1.5 rounded-full bg-surface-2 overflow-hidden">
-              <div
-                className={cn(
-                  "h-full rounded-full transition-all duration-300",
-                  remaining < 0 ? "bg-danger" : budgetPct > 85 ? "bg-warning" : "bg-success",
-                )}
-                style={{ width: `${budgetPct}%` }}
-              />
-            </div>
-          </div>
-
+        {/* Rail derecho (scrollea solo, la cancha nunca se corta) */}
+        <div className="flex flex-col gap-3 md:max-h-[calc(100dvh-16.5rem)] md:overflow-y-auto md:pr-0.5">
           {/* Suplentes */}
-          <div className="rounded-[8px] border border-border bg-surface card-shadow p-4">
-            <Eyebrow className="mb-3">Suplentes (opcional)</Eyebrow>
-            <div className="grid grid-cols-2 gap-2">
-              {slots
-                .filter((s) => !s.isStarter)
-                .map((s) => (
-                  <SlotChip
-                    key={s.id}
-                    slot={s}
-                    player={picks[s.id]}
-                    isCaptain={false}
-                    compact
-                    onOpen={() => { setSearch(""); setModal({ type: "player", slot: s }); }}
-                    onClear={() => clearSlot(s.id)}
-                  />
-                ))}
+          <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
+            <Eyebrow className="mb-2">Suplentes</Eyebrow>
+            <div className="space-y-1.5">
+              {subSlots.map((s) => {
+                const p = picks[s.id];
+                return (
+                  <div key={s.id} className="flex items-center gap-2">
+                    <PositionChip position={s.position} />
+                    {p ? (
+                      <>
+                        {p.flagUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.flagUrl} alt={p.countryName} className="h-4 w-6 rounded-sm object-cover shrink-0" />
+                        ) : (
+                          <div className="h-4 w-6 rounded-sm bg-surface-2 shrink-0" />
+                        )}
+                        <button
+                          onClick={() => openSlot(s)}
+                          className="min-w-0 flex-1 truncate text-left text-sm font-semibold text-ink hover:text-blue"
+                        >
+                          {p.name}
+                        </button>
+                        <span className="jersey-numeral text-xs text-gold-ink shrink-0">{p.price}M</span>
+                        <button
+                          onClick={() => clearSlot(s.id)}
+                          aria-label="Quitar suplente"
+                          className="rounded-full p-0.5 text-ink-faint hover:bg-surface-2 hover:text-danger transition-colors shrink-0"
+                        >
+                          <X size={13} />
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        onClick={() => openSlot(s)}
+                        className="flex-1 text-left text-sm text-ink-faint hover:text-blue transition-colors"
+                      >
+                        + Agregar {POSITION_LABELS[s.position].toLowerCase()}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* CoachCard */}
-          <div className="rounded-[8px] border border-border bg-surface card-shadow p-4">
+          {/* Técnico */}
+          <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Técnico</Eyebrow>
             <button
               onClick={() => { setSearch(""); setModal({ type: "coach" }); }}
@@ -408,12 +278,7 @@ export function FieldBuilder({
               {coach ? (
                 <div className="text-right">
                   <div className="jersey-numeral text-sm text-blue">{coach.price}M</div>
-                  <div className={cn(
-                    "text-[10px] font-semibold",
-                    "text-success", // default, in real app would show win/loss record
-                  )}>
-                    +2 / −2 pts
-                  </div>
+                  <div className="text-[10px] font-semibold text-success">+2 / −2 pts</div>
                 </div>
               ) : null}
             </button>
@@ -432,16 +297,14 @@ export function FieldBuilder({
                 ¡Equipo válido! Listo para guardar.
               </ValidationCallout>
             )}
-            {message && (
-              <ValidationCallout type="danger">{message}</ValidationCallout>
-            )}
+            {message && <ValidationCallout type="danger">{message}</ValidationCallout>}
           </div>
 
           {/* Guardar */}
           <PrimaryButton
             onClick={onSave}
             disabled={!valid || saving}
-            className="w-full justify-center py-4 text-lg"
+            className="w-full justify-center py-3.5 text-lg"
           >
             {saving ? "Guardando…" : "GUARDAR EQUIPO →"}
           </PrimaryButton>

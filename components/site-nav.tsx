@@ -64,7 +64,7 @@ export function SiteNav() {
               className="rounded-full transition-transform duration-150 group-hover:scale-110"
               priority
             />
-            <span className="text-base font-display text-ink leading-none">
+            <span className="text-xl font-display text-ink leading-none [-webkit-text-stroke:0.4px_currentColor] [paint-order:stroke_fill]">
               LOS <span className="text-blue">11</span> DE SAMPA
             </span>
           </Link>

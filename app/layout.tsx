@@ -30,12 +30,12 @@ const archivoBlack = Archivo_Black({
 /* ─── Metadatos ─── */
 export const metadata: Metadata = {
   metadataBase: new URL("https://los11desampa.vercel.app"),
-  title: "Los 11 de Sampa — Fantasy del Mundial 2026",
+  title: "Los 11 de Sampa — El juego de los DT del Mundial 2026",
   description:
-    "Armá tu equipo del Mundial 2026 con 15 jugadores, elegí capitán y técnico, y competí con amigos por el primer puesto.",
+    "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 con 15 jugadores, elegí capitán y DT, y competí con amigos por el primer puesto.",
   openGraph: {
     title: "Los 11 de Sampa",
-    description: "Fantasy football del Mundial 2026",
+    description: "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 y competí con amigos.",
     images: [{ url: "/images/logo/logo-square-512.png", width: 512, height: 512 }],
   },
   icons: {
