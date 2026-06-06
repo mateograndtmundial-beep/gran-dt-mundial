@@ -79,7 +79,7 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
     } catch (e) {
       console.warn(`  squad ${apiId}:`, (e as Error).message);
     }
-    await sleep(6500);
+    await sleep(350);
 
     try {
       const cs = (await apiFootball.coach(apiId)) as any[];
@@ -93,7 +93,7 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
     } catch (e) {
       console.warn(`  coach ${apiId}:`, (e as Error).message);
     }
-    await sleep(6500);
+    await sleep(350);
   }
 }
 
