@@ -189,10 +189,12 @@ async function main() {
   // ── Calibración ──
   printCalibration(priced);
 
-  if (unmatched.length) {
-    console.log(`\n⚠ ${unmatched.length} jugadores sin match (precio piso ${PRICING.MIN}M) — ajustá en /admin/precios:`);
-    for (const r of unmatched.slice(0, 30)) console.log(`   · ${r.p.name} (${r.p.countryName})`);
-    if (unmatched.length > 30) console.log(`   … y ${unmatched.length - 30} más.`);
+  // Los manuales no "están sin precio" aunque no matcheen: ya tienen valor fijado.
+  const floor = unmatched.filter((r) => !r.p.priceManual);
+  if (floor.length) {
+    console.log(`\n⚠ ${floor.length} jugadores sin match ni precio manual (piso ${PRICING.MIN}M) — ajustá en /admin/precios:`);
+    for (const r of floor.slice(0, 30)) console.log(`   · ${r.p.name} (${r.p.countryName})`);
+    if (floor.length > 30) console.log(`   … y ${floor.length - 30} más.`);
   }
 }
 
