@@ -169,9 +169,9 @@ export default function ComoFuncionaPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             <RuleItem
               icon={<Calculator size={22} strokeWidth={1.5} />}
-              title="Presupuesto: 600"
+              title="Presupuesto: 600M"
             >
-              Tenés 600 de presupuesto para repartir entre tus 15 jugadores y el técnico. Cada
+              Tenés 600M de presupuesto para repartir entre tus 15 jugadores y el técnico. Cada
               jugador tiene un precio según su valor de mercado.
             </RuleItem>
             <RuleItem icon={<Shirt size={22} strokeWidth={1.5} />} title="15 jugadores">
@@ -250,8 +250,8 @@ export default function ComoFuncionaPage() {
           <div className="rounded-[6px] border border-border bg-surface-2 p-4">
             <Eyebrow className="mb-1">EL TÉCNICO</Eyebrow>
             <p className="text-sm leading-relaxed text-ink-2">
-              Tu DT suma <strong>+2</strong> si su selección gana, <strong>−2</strong> si pierde y{" "}
-              <strong>0</strong> si empata.
+              Tu DT suma <strong>+2 puntos</strong> si su selección gana, <strong>−2</strong> si
+              pierde y <strong>0</strong> si empata.
             </p>
           </div>
         </Card>
