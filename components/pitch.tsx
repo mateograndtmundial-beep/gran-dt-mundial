@@ -40,10 +40,22 @@ export function buildSlots(formation: string): Slot[] {
   return slots;
 }
 
-/** Apellido (último token del nombre). */
+/* Partículas que forman parte del apellido y deben conservarse:
+   "De Bruyne", "Van Dijk", "Van de Beek", "Di María", "De Paul"… */
+const NAME_PARTICLES = new Set([
+  "de", "del", "della", "der", "den", "van", "von", "da", "di", "do", "dos",
+  "das", "la", "le", "el", "al", "bin", "ben", "mac", "mc", "st", "san",
+  "santa", "ter", "te", "ten", "vande", "vander", "y",
+]);
+
+/** Apellido para la figurita: último token + partículas previas (de, van, der…). */
 export function lastName(name: string): string {
-  const parts = name.trim().split(" ");
-  return parts.length > 1 ? parts.slice(-1)[0] : name;
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  let i = parts.length - 1;
+  // Conservamos al menos el primer token como nombre (i > 1).
+  while (i > 1 && NAME_PARTICLES.has(parts[i - 1].toLowerCase())) i--;
+  return parts.slice(i).join(" ");
 }
 
 /* ─── SVG de la cancha ─── */
