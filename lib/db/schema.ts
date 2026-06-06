@@ -35,7 +35,7 @@ export const coaches = pgTable('coaches', {
   countryId: integer('country_id').references(() => countries.id).notNull(),
   name: text('name').notNull(),
   photoUrl: text('photo_url'),
-  price: integer('price').notNull().default(0),
+  price: doublePrecision('price').notNull().default(0),
   apiFootballId: integer('api_football_id').unique(),
 });
 
@@ -44,9 +44,10 @@ export const players = pgTable('players', {
   countryId: integer('country_id').references(() => countries.id).notNull(),
   name: text('name').notNull(),
   position: positionEnum('position').notNull(),
-  price: integer('price').notNull().default(5),
+  price: doublePrecision('price').notNull().default(5),
   photoUrl: text('photo_url'),
   club: text('club'),
+  birthYear: integer('birth_year'), // para desambiguar el cruce con Transfermarkt
   jerseyNumber: integer('jersey_number'),
   status: text('status').notNull().default('active'),
   apiFootballId: integer('api_football_id').unique(),
@@ -138,7 +139,7 @@ export const entryRounds = pgTable(
     formation: text('formation').notNull().default('4-4-2'),
     captainPlayerId: integer('captain_player_id'),
     coachId: integer('coach_id').references(() => coaches.id),
-    budgetUsed: integer('budget_used').notNull().default(0),
+    budgetUsed: doublePrecision('budget_used').notNull().default(0),
     points: doublePrecision('points').notNull().default(0),
     pinsSpent: integer('pins_spent').notNull().default(0),
     changesMade: integer('changes_made').notNull().default(0),

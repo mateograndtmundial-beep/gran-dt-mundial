@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { POSITION_COLORS, type Position } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
 
@@ -48,36 +48,40 @@ export function PlayerCard({
       )}
 
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <PositionChip position={position} />
+        {/* Línea 1: nombre a ancho completo (lo más importante, que no se pierda) */}
+        <div className="flex items-center gap-1.5">
+          <span className="truncate font-semibold text-ink text-sm leading-tight">{name}</span>
           {isCaptain && (
             <span
               aria-label="Capitán"
-              className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gold text-gold-ink font-display text-[9px] leading-none"
+              className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gold text-gold-ink font-display text-[9px] leading-none"
             >
               C
             </span>
           )}
-          <span className="truncate font-semibold text-ink text-sm">{name}</span>
         </div>
-        <p className="mt-0.5 truncate text-xs text-ink-3">
-          {countryName}
-          {club ? ` · ${club}` : ""}
+        {/* Línea 2: chip de posición + país · club */}
+        <div className="mt-1 flex items-center gap-1.5">
+          <PositionChip position={position} />
+          <span className="min-w-0 truncate text-xs text-ink-3">
+            {countryName}
+            {club ? ` · ${club}` : ""}
+          </span>
           {eliminated ? (
             <span
               aria-label="Jugador eliminado del torneo"
-              className="ml-1 inline-block -rotate-[6deg] rounded-sm bg-danger px-1 py-0.5 text-[9px] font-display text-white"
+              className="shrink-0 -rotate-[6deg] rounded-sm bg-danger px-1 py-0.5 text-[9px] font-display text-white"
               style={{ boxShadow: "1px 1px 0 #991B1B" }}
             >
-              ELIMINADO
+              ELIM
             </span>
           ) : null}
-        </p>
+        </div>
       </div>
 
       <div className="text-right shrink-0">
         <div className="jersey-numeral text-[clamp(1rem,2vw,1.25rem)] leading-none tracking-tight text-blue">
-          {price}
+          {formatPrice(price)}
           <span className="text-[10px] font-normal text-ink-3 ml-0.5">M</span>
         </div>
         {action && <div className="mt-1">{action}</div>}

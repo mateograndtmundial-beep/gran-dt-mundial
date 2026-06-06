@@ -1,0 +1,1 @@
+ALTER TABLE "players" ADD COLUMN "birth_year" integer;

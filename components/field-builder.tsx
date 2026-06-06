@@ -12,7 +12,9 @@ import {
 } from "@/lib/game/config";
 import { saveLineup } from "@/lib/actions";
 import type { PlayerRow, CoachRow } from "@/lib/queries";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
+import { round1 } from "@/lib/pricing/map";
+import { normalizeName } from "@/lib/pricing/normalize";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { Pitch, buildSlots, type Slot } from "@/components/pitch";
 
@@ -42,8 +44,8 @@ export function FieldBuilder({
   const slots     = useMemo(() => buildSlots(formation), [formation]);
   const coach     = coaches.find((c) => c.id === coachId) ?? null;
   const chosen    = Object.values(picks);
-  const used      = chosen.reduce((s, p) => s + p.price, 0) + (coach?.price ?? 0);
-  const remaining = budget - used;
+  const used      = round1(chosen.reduce((s, p) => s + p.price, 0) + (coach?.price ?? 0));
+  const remaining = round1(budget - used);
 
   const countByCountry = useMemo(() => {
     const m = new Map<number, number>();
@@ -93,13 +95,14 @@ export function FieldBuilder({
   }
 
   const pickedIds    = new Set(chosen.map((p) => p.id));
+  const nq           = normalizeName(search); // búsqueda sin tildes ni mayúsculas
   const modalPlayers = modal?.type === "player"
     ? players
         .filter(
           (p) =>
             p.position === modal.slot.position &&
             !pickedIds.has(p.id) &&
-            p.name.toLowerCase().includes(search.toLowerCase()),
+            (nq === "" || normalizeName(p.name).includes(nq) || normalizeName(p.countryName).includes(nq)),
         )
         .slice(0, 120)
     : [];
@@ -107,8 +110,9 @@ export function FieldBuilder({
     ? coaches
         .filter(
           (c) =>
-            c.name.toLowerCase().includes(search.toLowerCase()) ||
-            c.countryName.toLowerCase().includes(search.toLowerCase()),
+            nq === "" ||
+            normalizeName(c.name).includes(nq) ||
+            normalizeName(c.countryName).includes(nq),
         )
         .slice(0, 120)
     : [];
@@ -126,12 +130,19 @@ export function FieldBuilder({
       captainPlayerId: captainId,
       coachId,
       players: payloadPlayers,
-      budgetUsed: used,
     });
     setSaving(false);
     if (!res.ok && res.error === "auth") { router.push("/sign-in"); return; }
     if (!res.ok && res.error === "pins") {
       setMessage(`Necesitás ${res.needed} pin(es) para esos cambios (tenés ${res.balance}).`);
+      return;
+    }
+    if (!res.ok && res.error === "budget") {
+      setMessage(`Te pasaste del presupuesto: ${formatPrice(res.used)}M de ${res.budget}M.`);
+      return;
+    }
+    if (!res.ok && res.error === "country") {
+      setMessage(`Máximo ${res.max} jugadores por selección.`);
       return;
     }
     if (!res.ok) { setMessage("No se pudo guardar. Revisá la base de datos."); return; }
@@ -158,7 +169,7 @@ export function FieldBuilder({
                 remaining < 0 ? "text-danger" : "text-ink",
               )}
             >
-              {remaining}
+              {formatPrice(remaining)}
             </span>
             <span className="text-xs text-ink-3">/ {budget}M</span>
           </div>
@@ -235,7 +246,7 @@ export function FieldBuilder({
                         >
                           {p.name}
                         </button>
-                        <span className="jersey-numeral text-xs text-gold-ink shrink-0">{p.price}M</span>
+                        <span className="jersey-numeral text-xs text-gold-ink shrink-0">{formatPrice(p.price)}M</span>
                         <button
                           onClick={() => clearSlot(s.id)}
                           aria-label="Quitar suplente"
@@ -277,7 +288,7 @@ export function FieldBuilder({
               )}
               {coach ? (
                 <div className="text-right">
-                  <div className="jersey-numeral text-sm text-blue">{coach.price}M</div>
+                  <div className="jersey-numeral text-sm text-blue">{formatPrice(coach.price)}M</div>
                   <div className="text-[10px] font-semibold text-success">+2 / −2 pts</div>
                 </div>
               ) : null}
@@ -375,7 +386,7 @@ export function FieldBuilder({
                           </span>
                           <span className="block truncate text-xs text-ink-3">{p.countryName}</span>
                         </span>
-                        <span className="jersey-numeral text-sm text-blue shrink-0">{p.price}M</span>
+                        <span className="jersey-numeral text-sm text-blue shrink-0">{formatPrice(p.price)}M</span>
                       </button>
                     ))
                   : modalCoaches.map((c) => (
@@ -396,7 +407,7 @@ export function FieldBuilder({
                           </span>
                           <span className="block truncate text-xs text-ink-3">{c.countryName}</span>
                         </span>
-                        <span className="jersey-numeral text-sm text-blue shrink-0">{c.price}M</span>
+                        <span className="jersey-numeral text-sm text-blue shrink-0">{formatPrice(c.price)}M</span>
                       </button>
                     ))}
               </div>

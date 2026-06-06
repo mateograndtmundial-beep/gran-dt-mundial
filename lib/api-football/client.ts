@@ -35,6 +35,10 @@ async function apiGet<T = unknown>(
 export const apiFootball = {
   teams: () => apiGet('teams', { league: LEAGUE_ID, season: SEASON }),
   squad: (teamId: number) => apiGet('players/squads', { team: teamId }),
+  // Perfil + estadísticas de un jugador en una temporada (nombre completo + club).
+  playerSeason: (playerId: number, season: number) => apiGet('players', { id: playerId, season }),
+  // Perfil del jugador (nombre completo, sin club). Fallback si no hay temporada.
+  playerProfile: (playerId: number) => apiGet('players/profiles', { player: playerId }),
   coach: (teamId: number) => apiGet('coachs', { team: teamId }),
   fixtures: () => apiGet('fixtures', { league: LEAGUE_ID, season: SEASON }),
   fixtureById: (id: number) => apiGet('fixtures', { id }),

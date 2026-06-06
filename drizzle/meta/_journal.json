@@ -15,6 +15,20 @@
       "when": 1780730367648,
       "tag": "0001_jittery_junta",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780756894795,
+      "tag": "0002_previous_morlocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780758320082,
+      "tag": "0003_nostalgic_scorpion",
+      "breakpoints": true
     }
   ]
 }

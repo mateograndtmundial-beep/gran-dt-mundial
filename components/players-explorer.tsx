@@ -4,7 +4,8 @@ import { useMemo, useState } from "react";
 import { Search, ChevronDown, X } from "lucide-react";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { PlayerCard } from "@/components/player-card";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
+import { normalizeName } from "@/lib/pricing/normalize";
 
 type P = {
   id: number;
@@ -95,13 +96,17 @@ export function PlayersExplorer({ players }: { players: P[] }) {
   }, [players]);
 
   const filtered = useMemo(() => {
+    const nq = normalizeName(q); // sin tildes ni mayúsculas
     const out = players.filter(
       (p) =>
         (pos === "ALL" || p.position === pos) &&
         (country === "ALL" || p.countryName === country) &&
         (!hideElim || p.eliminatedRound == null) &&
         p.price <= effectiveCap &&
-        p.name.toLowerCase().includes(q.toLowerCase()),
+        (nq === "" ||
+          normalizeName(p.name).includes(nq) ||
+          normalizeName(p.countryName).includes(nq) ||
+          normalizeName(p.club ?? "").includes(nq)),
     );
     out.sort((a, b) => {
       if (sort === "name-asc") return a.name.localeCompare(b.name);
@@ -226,16 +231,16 @@ export function PlayersExplorer({ players }: { players: P[] }) {
             <span className="eyebrow shrink-0">Precio hasta</span>
             <input
               type="range"
-              min={minPrice}
-              max={maxPrice}
-              step={1}
+              min={Math.floor(minPrice)}
+              max={Math.ceil(maxPrice)}
+              step={0.5}
               value={effectiveCap}
               onChange={(e) => setPriceCap(Number(e.target.value))}
               aria-label="Precio máximo"
               className="h-1.5 flex-1 cursor-pointer accent-blue"
             />
             <span className="jersey-numeral text-sm text-blue shrink-0 w-14 text-right">
-              {effectiveCap}M
+              {formatPrice(effectiveCap)}M
             </span>
           </div>
         )}
@@ -247,7 +252,7 @@ export function PlayersExplorer({ players }: { players: P[] }) {
         </p>
         {!hasPriceRange && players.length > 0 && (
           <p className="text-[11px] text-ink-faint">
-            Todos valen {minPrice}M por ahora
+            Todos valen {formatPrice(minPrice)}M por ahora
           </p>
         )}
       </div>
@@ -266,7 +271,7 @@ export function PlayersExplorer({ players }: { players: P[] }) {
           )}
         </div>
       ) : (
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((p, i) => (
             <PlayerCard
               key={p.id}

@@ -13,7 +13,7 @@ import {
   POSITION_LABELS,
   type Position,
 } from "@/lib/game/config";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 
 export type Slot = { id: string; position: Position; isStarter: boolean };
 export const ROWS: Position[] = ["GK", "DEF", "MID", "FWD"];
@@ -239,7 +239,7 @@ export function Figurita({
         {/* Precio */}
         {player.price != null && (
           <span className="jersey-numeral text-[10px] leading-none text-gold-bg drop-shadow-[0_1px_1px_rgba(0,0,0,0.5)]">
-            {player.price}M
+            {formatPrice(player.price)}M
           </span>
         )}
       </button>
