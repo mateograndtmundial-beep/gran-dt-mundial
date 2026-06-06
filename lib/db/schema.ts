@@ -99,7 +99,7 @@ export const playerMatchStats = pgTable(
     isMotm: boolean('is_motm').notNull().default(false),
     fantasyPoints: doublePrecision('fantasy_points').notNull().default(0),
   },
-  (t) => ({ uniq: uniqueIndex('pms_player_match').on(t.playerId, t.matchId) }),
+  (t) => [uniqueIndex('pms_player_match').on(t.playerId, t.matchId)],
 );
 
 export const playerRoundPoints = pgTable(
@@ -110,7 +110,7 @@ export const playerRoundPoints = pgTable(
     roundId: integer('round_id').references(() => rounds.id).notNull(),
     points: doublePrecision('points').notNull().default(0),
   },
-  (t) => ({ uniq: uniqueIndex('prp_player_round').on(t.playerId, t.roundId) }),
+  (t) => [uniqueIndex('prp_player_round').on(t.playerId, t.roundId)],
 );
 
 // ---------- Datos del juego (usuarios) ----------
@@ -145,7 +145,7 @@ export const entryRounds = pgTable(
     pinsSpent: integer('pins_spent').notNull().default(0),
     changesMade: integer('changes_made').notNull().default(0),
   },
-  (t) => ({ uniq: uniqueIndex('er_entry_round').on(t.entryId, t.roundId) }),
+  (t) => [uniqueIndex('er_entry_round').on(t.entryId, t.roundId)],
 );
 
 export const entryRoundPlayers = pgTable('entry_round_players', {
@@ -174,7 +174,7 @@ export const leagueMembers = pgTable(
     joinedAt: timestamp('joined_at', { withTimezone: true }).notNull().defaultNow(),
     currentRank: integer('current_rank'),
   },
-  (t) => ({ uniq: uniqueIndex('lm_league_user').on(t.leagueId, t.userId) }),
+  (t) => [uniqueIndex('lm_league_user').on(t.leagueId, t.userId)],
 );
 
 export const pointTransactions = pgTable('point_transactions', {
@@ -216,7 +216,7 @@ export const orders = pgTable(
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     paidAt: timestamp('paid_at', { withTimezone: true }),
   },
-  (t) => ({ providerRefIdx: index('orders_provider_ref').on(t.provider, t.providerRef) }),
+  (t) => [index('orders_provider_ref').on(t.provider, t.providerRef)],
 );
 
 export const pinTransactions = pgTable(
@@ -230,5 +230,5 @@ export const pinTransactions = pgTable(
     roundId: integer('round_id').references(() => rounds.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => ({ userIdx: index('pin_tx_user').on(t.userId) }),
+  (t) => [index('pin_tx_user').on(t.userId)],
 );
