@@ -13,7 +13,9 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
     "seed:products": "tsx scripts/seed-products.ts",
-    "make-admin": "tsx scripts/make-admin.ts"
+    "make-admin": "tsx scripts/make-admin.ts",
+    "prices:fetch": "tsx scripts/fetch-market-values.ts",
+    "prices:apply": "tsx scripts/price-players.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

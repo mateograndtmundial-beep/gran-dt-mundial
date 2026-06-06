@@ -39,7 +39,7 @@ export default function Home() {
 
           <p className="max-w-[420px] text-lg leading-relaxed text-ink-2">
             Ponete el buzo de Sampa: armá tu plantel del Mundial, elegí
-            capitán y DT, y peleala con los amigos durante las 8 fechas.
+            capitán y DT, y competí con tus amigos durante las 8 fechas.
           </p>
 
           {/* Countdown */}

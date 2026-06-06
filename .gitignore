@@ -43,3 +43,11 @@ next-env.d.ts
 
 # playwright MCP
 .playwright-mcp/
+
+# datos de pricing: fuente cruda de TM + artefacto derivado
+/data/players.csv
+/data/market-values.json
+
+# locales / logs
+.npmrc
+databricks_mcp.log

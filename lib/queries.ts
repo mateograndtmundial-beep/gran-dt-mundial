@@ -26,6 +26,7 @@ export async function getPlayersWithCountry() {
       price: players.price,
       photoUrl: players.photoUrl,
       club: players.club,
+      birthYear: players.birthYear,
       countryId: players.countryId,
       countryName: countries.name,
       flagUrl: countries.flagUrl,

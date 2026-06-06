@@ -1,20 +1,20 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds } from "@/lib/db/schema";
+import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentRound } from "@/lib/queries";
 import { getPinBalance, addPins } from "@/lib/pins";
-import { FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { round1 } from "@/lib/pricing/map";
 
 export type SaveLineupInput = {
   formation: string;
   captainPlayerId: number | null;
   coachId: number | null;
   players: { playerId: number; isStarter: boolean; slot: string }[];
-  budgetUsed: number;
 };
 
 export async function saveLineup(input: SaveLineupInput) {
@@ -22,6 +22,34 @@ export async function saveLineup(input: SaveLineupInput) {
   if (!user) return { ok: false as const, error: "auth" as const };
   const round = await getCurrentRound();
   if (!round) return { ok: false as const, error: "no-round" as const };
+
+  // Validación server-side: recalculamos costo y composición desde la DB,
+  // no confiamos en lo que manda el cliente (budgetUsed, conteos).
+  const playerIds = input.players.map((p) => p.playerId);
+  const pr = playerIds.length
+    ? await db
+        .select({ id: players.id, price: players.price, countryId: players.countryId })
+        .from(players)
+        .where(inArray(players.id, playerIds))
+    : [];
+  if (pr.length !== new Set(playerIds).size) {
+    return { ok: false as const, error: "invalid" as const };
+  }
+  let coachPrice = 0;
+  if (input.coachId != null) {
+    const c = (await db.select({ price: coaches.price }).from(coaches).where(eq(coaches.id, input.coachId)).limit(1))[0];
+    if (!c) return { ok: false as const, error: "invalid" as const };
+    coachPrice = c.price;
+  }
+  const budgetUsed = round1(pr.reduce((s, p) => s + p.price, 0) + coachPrice);
+  if (budgetUsed > BUDGET + 0.05) {
+    return { ok: false as const, error: "budget" as const, used: budgetUsed, budget: BUDGET };
+  }
+  const perCountry = new Map<number, number>();
+  for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
+  if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
+    return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
+  }
 
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];
   if (!entry) {
@@ -83,7 +111,7 @@ export async function saveLineup(input: SaveLineupInput) {
         formation: input.formation,
         captainPlayerId: input.captainPlayerId,
         coachId: input.coachId,
-        budgetUsed: input.budgetUsed,
+        budgetUsed,
         pinsSpent: pinsNeeded,
         changesMade: changes,
       })
@@ -99,7 +127,7 @@ export async function saveLineup(input: SaveLineupInput) {
           formation: input.formation,
           captainPlayerId: input.captainPlayerId,
           coachId: input.coachId,
-          budgetUsed: input.budgetUsed,
+          budgetUsed,
           pinsSpent: pinsNeeded,
           changesMade: changes,
         })

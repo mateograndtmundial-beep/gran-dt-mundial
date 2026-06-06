@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
 import { getAllRounds } from "@/lib/queries";
@@ -33,6 +34,12 @@ export default async function AdminPage() {
         title="Panel de administración"
         subtitle="Sincronizá las stats de cada fecha y publicá los puntos (una sola vez por fecha)."
       />
+      <Link
+        href="/admin/precios"
+        className="inline-block rounded-[6px] border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all"
+      >
+        Editar precios de jugadores →
+      </Link>
       {rounds.length === 0 ? (
         <EmptyState title="No hay fechas cargadas." hint="Corré: npm run seed" />
       ) : (

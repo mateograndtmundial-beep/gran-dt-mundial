@@ -2,7 +2,18 @@ import 'dotenv/config';
 import { db } from '../lib/db';
 import { countries, players, coaches, rounds, matches } from '../lib/db/schema';
 import { apiFootball, mapPosition, mapRoundOrder } from '../lib/api-football/client';
+import { getPlayerDetails, resolveName } from '../lib/api-football/enrich';
 import { ROUNDS } from '../lib/game/config';
+
+/*
+ * Paso 1 del pricing (y carga base del torneo). Trae de API-Football: selecciones,
+ * fixture, técnicos y el plantel COMPLETO de cada jugador (nombre completo, club,
+ * año de nacimiento, foto). Idempotente (onConflictDoUpdate; no pisa price).
+ *
+ *   npm run seed
+ *
+ * Después: `npm run prices:fetch` y `npm run prices:apply`. Ver scripts/README.md.
+ */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -60,26 +71,40 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
     try {
       const squads = (await apiFootball.squad(apiId)) as any[];
       const list: any[] = squads?.[0]?.players ?? [];
-      if (list.length) {
+      await sleep(300);
+      for (const p of list) {
+        // Completar nombre/club/nacimiento desde /players (el squad viene abreviado).
+        const details = await getPlayerDetails(p.id);
+        const name = resolveName(p.name, details?.firstname, details?.lastname);
         await db
           .insert(players)
-          .values(
-            list.map((p) => ({
-              countryId,
-              name: p.name,
+          .values({
+            countryId,
+            name,
+            position: mapPosition(p.position),
+            photoUrl: details?.photo ?? p.photo ?? null,
+            club: details?.club ?? null,
+            birthYear: details?.birthYear ?? null,
+            jerseyNumber: p.number ?? null,
+            apiFootballId: p.id,
+            price: 5,
+          })
+          // No pisamos price (lo fija el admin / price-players) ni status.
+          .onConflictDoUpdate({
+            target: players.apiFootballId,
+            set: {
+              name,
               position: mapPosition(p.position),
-              photoUrl: p.photo ?? null,
+              photoUrl: details?.photo ?? p.photo ?? null,
+              club: details?.club ?? null,
+              birthYear: details?.birthYear ?? null,
               jerseyNumber: p.number ?? null,
-              apiFootballId: p.id,
-              price: 5,
-            })),
-          )
-          .onConflictDoNothing();
+            },
+          });
       }
     } catch (e) {
       console.warn(`  squad ${apiId}:`, (e as Error).message);
     }
-    await sleep(350);
 
     try {
       const cs = (await apiFootball.coach(apiId)) as any[];
