@@ -69,7 +69,7 @@ export function FieldBuilder({
   const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc">("price-desc");
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
-  const [notice, setNotice]         = useState<string | null>(null);
+  const [pendingFormation, setPendingFormation] = useState<string | null>(null);
 
   const slots     = useMemo(() => buildSlots(formation), [formation]);
   const playerCountries = useMemo(
@@ -102,29 +102,27 @@ export function FieldBuilder({
   if (!coachId)        errors.push("Elegí un técnico");
   const valid = errors.length === 0;
 
-  function onFormationChange(f: string) {
+  function droppedBy(f: string): PlayerRow[] {
     const nextIds = new Set(buildSlots(f).map((s) => s.id));
-    // Jugadores cuyo slot no existe en la nueva formación quedan fuera: avisamos
-    // en vez de descartarlos en silencio (antes desaparecían sin feedback).
-    const dropped = Object.entries(picks)
+    return Object.entries(picks)
       .filter(([id]) => !nextIds.has(id))
       .map(([, p]) => p);
-    if (dropped.length) {
-      setNotice(
-        `Quitamos a ${dropped.map((p) => p.name).join(", ")} porque no ${
-          dropped.length > 1 ? "entran" : "entra"
-        } en ${f}.`,
-      );
-      if (dropped.some((p) => p.id === captainId)) setCaptainId(null);
-    } else {
-      setNotice(null);
-    }
+  }
+  function applyFormation(f: string) {
+    const nextIds = new Set(buildSlots(f).map((s) => s.id));
+    if (droppedBy(f).some((p) => p.id === captainId)) setCaptainId(null);
     setPicks((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => nextIds.has(id))));
     setFormation(f);
   }
+  function onFormationChange(f: string) {
+    if (f === formation) return;
+    // Si el cambio dejaría jugador(es) afuera, pedimos confirmación ANTES de
+    // aplicarlo (en vez de descartarlos y avisar después).
+    if (droppedBy(f).length > 0) setPendingFormation(f);
+    else applyFormation(f);
+  }
   function pickPlayer(slotId: string, player: PlayerRow) {
     setPicks((prev) => ({ ...prev, [slotId]: player }));
-    setNotice(null);
     setModal(null);
     setSearch("");
   }
@@ -148,7 +146,6 @@ export function FieldBuilder({
   function swapSlots(slotA: string, slotB: string) {
     const pa = picks[slotA];
     const pb = picks[slotB];
-    setNotice(null);
     setPicks((prev) => {
       const next = { ...prev };
       if (pb) next[slotA] = pb; else delete next[slotA];
@@ -481,7 +478,6 @@ export function FieldBuilder({
 
           {/* Validación */}
           <div className="space-y-2">
-            {notice && <ValidationCallout type="warning">{notice}</ValidationCallout>}
             {errors.length > 0 ? (
               errors.map((e) => (
                 <ValidationCallout key={e} type="warning">
@@ -655,6 +651,57 @@ export function FieldBuilder({
           </div>
         </div>
       )}
+
+      {/* Confirmación antes de cambiar de formación si se pierde jugador(es) */}
+      {pendingFormation && (() => {
+        const lost = droppedBy(pendingFormation);
+        return (
+          <div
+            className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 p-4"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Confirmar cambio de formación"
+            onClick={() => setPendingFormation(null)}
+          >
+            <div
+              className="w-full max-w-sm rounded-[12px] border border-border bg-surface card-shadow-lg p-5 animate-slide-up"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="font-display text-xl text-ink">¿Cambiar a {pendingFormation}?</h3>
+              <p className="mt-2 text-sm text-ink-2">
+                Con esta formación {lost.length > 1 ? "quedan" : "queda"} afuera del equipo:
+              </p>
+              <ul className="mt-3 space-y-1.5">
+                {lost.map((p) => (
+                  <li key={p.id} className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    {p.flagUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={p.flagUrl} alt="" className="h-4 w-6 rounded-sm object-cover" />
+                    ) : (
+                      <span className="h-4 w-6 rounded-sm bg-surface-2" />
+                    )}
+                    {p.name}
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 flex justify-end gap-2">
+                <button
+                  onClick={() => setPendingFormation(null)}
+                  className="rounded-[6px] border border-border px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => { applyFormation(pendingFormation); setPendingFormation(null); }}
+                  className="rounded-[6px] bg-blue px-4 py-2 text-sm font-display text-white hover:bg-blue-ink transition-colors"
+                >
+                  Cambiar igual
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Fantasma que sigue al puntero mientras se arrastra un suplente */}
       {drag && (
