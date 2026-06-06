@@ -15,6 +15,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { FORMATIONS } from "@/lib/game/config";
 
 export const metadata: Metadata = {
   title: "¿Cómo funciona? · Los 11 de Sampa",
@@ -129,18 +130,7 @@ function RuleItem({
   );
 }
 
-const FORMACIONES = [
-  "4-4-2",
-  "4-3-3",
-  "4-2-3-1",
-  "3-5-2",
-  "5-3-2",
-  "4-5-1",
-  "3-4-3",
-  "5-4-1",
-  "4-1-4-1",
-  "3-3-4",
-];
+const FORMACIONES = Object.keys(FORMATIONS);
 
 export default function ComoFuncionaPage() {
   return (
