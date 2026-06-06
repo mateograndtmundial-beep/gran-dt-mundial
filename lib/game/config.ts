@@ -48,6 +48,7 @@ export type FormationShape = { GK: number; DEF: number; MID: number; FWD: number
 export const FORMATIONS: Record<string, FormationShape> = {
   '4-4-2': { GK: 1, DEF: 4, MID: 4, FWD: 2 },
   '4-3-3': { GK: 1, DEF: 4, MID: 3, FWD: 3 },
+  '3-4-3': { GK: 1, DEF: 3, MID: 4, FWD: 3 },
   '3-5-2': { GK: 1, DEF: 3, MID: 5, FWD: 2 },
   '5-3-2': { GK: 1, DEF: 5, MID: 3, FWD: 2 },
   '4-5-1': { GK: 1, DEF: 4, MID: 5, FWD: 1 },
