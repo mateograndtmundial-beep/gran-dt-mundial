@@ -1,7 +1,8 @@
 import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
-import { getPlayersWithCountry, getCoaches, type PlayerRow, type CoachRow } from "@/lib/queries";
+import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, type PlayerRow, type CoachRow } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import { BUDGET } from "@/lib/game/config";
 
 export const dynamic = "force-dynamic";
@@ -9,12 +10,32 @@ export const dynamic = "force-dynamic";
 export default async function EquipoPage() {
   let players: PlayerRow[] = [];
   let coaches: CoachRow[] = [];
+  let initial: Awaited<ReturnType<typeof getEditableLineup>> = null;
+  let editable: Awaited<ReturnType<typeof getEditableRound>> = null;
   let error = false;
   try {
-    [players, coaches] = await Promise.all([getPlayersWithCountry(), getCoaches()]);
+    [players, coaches, editable] = await Promise.all([
+      getPlayersWithCountry(),
+      getCoaches(),
+      getEditableRound(),
+    ]);
+    const user = await getCurrentUser();
+    if (user) initial = await getEditableLineup(user.id);
   } catch {
     error = true;
   }
+
+  // Label del deadline (kickoff del primer partido de la fecha editable).
+  const deadlineLabel = editable?.deadline
+    ? `CERRÁ TU EQUIPO · ${editable.deadline.toLocaleString("es-AR", {
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "America/Argentina/Buenos_Aires",
+      }).toUpperCase()}`
+    : "EDITÁ LIBRE HASTA QUE ARRANQUE EL MUNDIAL";
+  const locked = !error && players.length > 0 && !editable;
 
   return (
     <div>
@@ -30,8 +51,19 @@ export default async function EquipoPage() {
           title="Todavía no hay jugadores cargados."
           hint="Configurá DATABASE_URL y corré: npm run seed"
         />
+      ) : locked ? (
+        <EmptyState
+          title="Equipo bloqueado: la fecha está en curso."
+          hint="Vas a poder volver a editar cuando se publiquen los puntos de esta fecha."
+        />
       ) : (
-        <FieldBuilder players={players} coaches={coaches} budget={BUDGET} />
+        <FieldBuilder
+          players={players}
+          coaches={coaches}
+          budget={BUDGET}
+          initial={initial}
+          deadlineLabel={deadlineLabel}
+        />
       )}
     </div>
   );

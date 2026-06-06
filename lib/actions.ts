@@ -5,7 +5,7 @@ import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { getCurrentRound } from "@/lib/queries";
+import { getEditableRound } from "@/lib/queries";
 import { getPinBalance, addPins } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
 import { round1 } from "@/lib/pricing/map";
@@ -20,8 +20,9 @@ export type SaveLineupInput = {
 export async function saveLineup(input: SaveLineupInput) {
   const user = await getCurrentUser();
   if (!user) return { ok: false as const, error: "auth" as const };
-  const round = await getCurrentRound();
-  if (!round) return { ok: false as const, error: "no-round" as const };
+  const editable = await getEditableRound();
+  if (!editable) return { ok: false as const, error: "locked" as const };
+  const round = editable.round;
 
   // Validación server-side: recalculamos costo y composición desde la DB,
   // no confiamos en lo que manda el cliente (budgetUsed, conteos).
