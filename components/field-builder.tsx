@@ -591,15 +591,34 @@ export function FieldBuilder({
                 {modal.type === "player"
                   ? modalPlayers.map((p) => {
                       const affordable = p.price <= freeForSlot + 0.05;
+                      // Si el slot ya tiene un jugador del mismo país, reemplazarlo
+                      // libera un cupo: no cuenta para el tope.
+                      const countryNow =
+                        (countByCountry.get(p.countryId) ?? 0) -
+                        (slotCurrent?.countryId === p.countryId ? 1 : 0);
+                      const countryOk =
+                        maxPerCountry == null || countryNow < maxPerCountry;
+                      const selectable = affordable && countryOk;
+                      const reason = !affordable
+                        ? "no te alcanza"
+                        : !countryOk
+                          ? `máx ${maxPerCountry} de este país`
+                          : null;
                       return (
                       <button
                         key={p.id}
-                        onClick={() => affordable && pickPlayer(modal.slot.id, p)}
-                        disabled={!affordable}
-                        title={affordable ? undefined : "No te alcanza el presupuesto"}
+                        onClick={() => selectable && pickPlayer(modal.slot.id, p)}
+                        disabled={!selectable}
+                        title={
+                          selectable
+                            ? undefined
+                            : !affordable
+                              ? "No te alcanza el presupuesto"
+                              : `Máximo ${maxPerCountry} jugadores por selección`
+                        }
                         className={cn(
                           "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
-                          affordable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
+                          selectable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
                         )}
                       >
                         {p.flagUrl ? (
@@ -609,15 +628,15 @@ export function FieldBuilder({
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
                         <span className="min-w-0 flex-1">
-                          <span className={cn("block truncate text-sm font-semibold text-ink", affordable && "group-hover:text-blue")}>
+                          <span className={cn("block truncate text-sm font-semibold text-ink", selectable && "group-hover:text-blue")}>
                             {p.name}
                           </span>
                           <span className="block truncate text-xs text-ink-3">
                             {p.countryName}
-                            {!affordable && <span className="text-danger"> · no te alcanza</span>}
+                            {reason && <span className="text-danger"> · {reason}</span>}
                           </span>
                         </span>
-                        <span className={cn("jersey-numeral text-sm shrink-0", affordable ? "text-blue" : "text-danger")}>{formatPrice(p.price)}M</span>
+                        <span className={cn("jersey-numeral text-sm shrink-0", selectable ? "text-blue" : "text-danger")}>{formatPrice(p.price)}M</span>
                       </button>
                       );
                     })

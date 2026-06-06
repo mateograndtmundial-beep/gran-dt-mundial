@@ -59,7 +59,7 @@ export default function RootLayout({
     <html lang="es" className={fontVars}>
       <body className="min-h-screen antialiased">
         <SiteNav />
-        <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-5 md:pb-10">
+        <main className="mx-auto w-full max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 md:pb-10">
           {children}
         </main>
       </body>

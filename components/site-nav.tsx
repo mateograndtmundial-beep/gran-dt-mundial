@@ -109,7 +109,10 @@ export function SiteNav() {
       {/* ─── Bottom nav mobile ─── */}
       <nav
         aria-label="Navegación principal"
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 backdrop-blur-sm md:hidden"
+        // translateZ(0)+backface-hidden: promueve la barra a su propia capa GPU
+        // para evitar el glitch de iOS Safari (backdrop-filter sobre fixed se
+        // "despega" durante el scroll por inercia). pb safe-area: home indicator.
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 backdrop-blur-sm md:hidden pb-[env(safe-area-inset-bottom)] [transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]"
       >
         <div className="mx-auto grid max-w-5xl grid-cols-6">
           {links.map((l) => {
