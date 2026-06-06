@@ -1,6 +1,6 @@
 // Configuración central del juego. Pensado para tunear fácil.
 
-export const BUDGET = 500; // presupuesto para armar el equipo (15 jugadores + DT)
+export const BUDGET = 600; // presupuesto para armar el equipo (15 jugadores + DT)
 export const SQUAD = { STARTERS: 11, SUBS: 4, TOTAL: 15 } as const;
 export const MAX_PER_COUNTRY = 3;
 export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha; los extra cuestan pines
