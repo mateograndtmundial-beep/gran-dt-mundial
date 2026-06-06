@@ -61,6 +61,7 @@ export function FieldBuilder({
   const [search, setSearch]         = useState("");
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
+  const [notice, setNotice]         = useState<string | null>(null);
 
   const slots     = useMemo(() => buildSlots(formation), [formation]);
   const coach     = coaches.find((c) => c.id === coachId) ?? null;
@@ -68,11 +69,8 @@ export function FieldBuilder({
   const used      = round1(chosen.reduce((s, p) => s + p.price, 0) + (coach?.price ?? 0));
   const remaining = round1(budget - used);
 
-  const countByCountry = useMemo(() => {
-    const m = new Map<number, number>();
-    for (const p of chosen) m.set(p.countryId, (m.get(p.countryId) ?? 0) + 1);
-    return m;
-  }, [chosen]);
+  const countByCountry = new Map<number, number>();
+  for (const p of chosen) countByCountry.set(p.countryId, (countByCountry.get(p.countryId) ?? 0) + 1);
   const maxCountry = countByCountry.size ? Math.max(...countByCountry.values()) : 0;
 
   const starterSlots   = slots.filter((s) => s.isStarter);
@@ -92,11 +90,27 @@ export function FieldBuilder({
 
   function onFormationChange(f: string) {
     const nextIds = new Set(buildSlots(f).map((s) => s.id));
+    // Jugadores cuyo slot no existe en la nueva formación quedan fuera: avisamos
+    // en vez de descartarlos en silencio (antes desaparecían sin feedback).
+    const dropped = Object.entries(picks)
+      .filter(([id]) => !nextIds.has(id))
+      .map(([, p]) => p);
+    if (dropped.length) {
+      setNotice(
+        `Quitamos a ${dropped.map((p) => p.name).join(", ")} porque no ${
+          dropped.length > 1 ? "entran" : "entra"
+        } en ${f}.`,
+      );
+      if (dropped.some((p) => p.id === captainId)) setCaptainId(null);
+    } else {
+      setNotice(null);
+    }
     setPicks((prev) => Object.fromEntries(Object.entries(prev).filter(([id]) => nextIds.has(id))));
     setFormation(f);
   }
   function pickPlayer(slotId: string, player: PlayerRow) {
     setPicks((prev) => ({ ...prev, [slotId]: player }));
+    setNotice(null);
     setModal(null);
     setSearch("");
   }
@@ -187,16 +201,25 @@ export function FieldBuilder({
       <div className="rounded-[8px] border border-border bg-surface card-shadow px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
           <span className="eyebrow text-blue-ink">{deadlineLabel}</span>
-          <div className="flex items-baseline gap-1.5 shrink-0">
-            <span
-              className={cn(
-                "jersey-numeral text-2xl leading-none tracking-tight",
-                remaining < 0 ? "text-danger" : "text-ink",
-              )}
-            >
-              {formatPrice(remaining)}
+          <div className="flex flex-col items-end shrink-0">
+            {/* El número grande es lo GASTADO (coincide con la barra, que se llena
+                al gastar); abajo el restante explícito para que no se confunda. */}
+            <div className="flex items-baseline gap-1.5">
+              <span
+                className={cn(
+                  "jersey-numeral text-2xl leading-none tracking-tight",
+                  remaining < 0 ? "text-danger" : "text-ink",
+                )}
+              >
+                {formatPrice(used)}
+              </span>
+              <span className="text-xs text-ink-3">/ {budget}M</span>
+            </div>
+            <span className={cn("text-[11px] leading-tight", remaining < 0 ? "text-danger" : "text-ink-3")}>
+              {remaining < 0
+                ? `Te pasaste ${formatPrice(-remaining)}M`
+                : `Te quedan ${formatPrice(remaining)}M`}
             </span>
-            <span className="text-xs text-ink-3">/ {budget}M</span>
           </div>
         </div>
 
@@ -322,6 +345,7 @@ export function FieldBuilder({
 
           {/* Validación */}
           <div className="space-y-2">
+            {notice && <ValidationCallout type="warning">{notice}</ValidationCallout>}
             {errors.length > 0 ? (
               errors.map((e) => (
                 <ValidationCallout key={e} type="warning">
