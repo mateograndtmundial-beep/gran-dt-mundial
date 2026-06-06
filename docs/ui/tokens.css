@@ -1,0 +1,227 @@
+/*
+  DT Mundial — Design Tokens (v2 — sistema híbrido Gran DT + editorial)
+  Tailwind v4 @theme block + utilidades
+  Pegar dentro del @layer base de globals.css (o reemplazar el bloque @theme existente).
+  Requiere: Tailwind CSS v4+
+*/
+
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────
+   Fuentes — cargar en layout.tsx vía next/font/google
+   Bebas Neue  : display (400) → var(--font-display)   [mismo que Gran DT]
+   Manrope     : body (400–800) → var(--font-sans)      [mismo que Gran DT]
+   Archivo     : numerales (900) → var(--font-numeral)  [diferenciador editorial]
+───────────────────────────────────────────── */
+
+@theme {
+  /* ── Fuentes ── */
+  --font-display: var(--font-bebas), "Bebas Neue", sans-serif;
+  --font-sans:    var(--font-manrope), "Manrope", sans-serif;
+  --font-numeral: var(--font-archivo), "Archivo", sans-serif;
+
+  /* ── Base neutra (gris con tinte verdoso — estadio apagado) ── */
+  --color-canvas:        #F0F2F0;   /* fondo de página */
+  --color-surface:       #FFFFFF;   /* tarjetas, modales */
+  --color-surface-2:     #E8EBE8;   /* fondos alternativos, inputs */
+  --color-border:        #D4D9D4;   /* bordes normales */
+  --color-border-strong: #B8C0B8;   /* bordes activos */
+  --color-ink:           #111827;   /* texto principal */
+  --color-ink-2:         #4B5563;   /* texto secundario */
+  --color-ink-3:         #6B7280;   /* etiquetas, eyebrows */
+  --color-ink-faint:     #9CA3AF;   /* placeholders */
+
+  /* ── Azul deportivo (primario / marca / CTAs) ── */
+  --color-blue:          #1B4FD8;
+  --color-blue-hover:    #1640B8;
+  --color-blue-press:    #1235A0;
+  --color-blue-ink:      #0F2D80;
+  --color-blue-border:   #BFCFFF;
+  --color-blue-light:    #EFF4FF;
+
+  /* ── Dorado (capitán, top-3, premium) ── */
+  --color-gold:          #C8A24B;
+  --color-gold-hover:    #B8922F;
+  --color-gold-ink:      #7A5C10;
+  --color-gold-border:   #E8D4A0;
+  --color-gold-bg:       #FBF5E6;
+
+  /* ── Verde cancha (sólo pitch + estado "ganó") ── */
+  --color-pitch:         #16713F;
+  --color-pitch-dark:    #0F5A30;
+  --color-pitch-line:    rgba(255, 255, 255, 0.25);
+
+  /* ── Chips de posición (Panini — se preservan) ── */
+  --color-pos-gk:        #D97706;   /* ámbar */
+  --color-pos-gk-bg:     #FEF3C7;
+  --color-pos-def:       #1E40AF;   /* azul profundo */
+  --color-pos-def-bg:    #DBEAFE;
+  --color-pos-mid:       #059669;   /* verde esmeralda */
+  --color-pos-mid-bg:    #D1FAE5;
+  --color-pos-fwd:       #DC2626;   /* rojo */
+  --color-pos-fwd-bg:    #FEE2E2;
+
+  /* ── Semánticos ── */
+  --color-success:       #059669;
+  --color-success-bg:    #D1FAE5;
+  --color-warning:       #D97706;
+  --color-warning-bg:    #FEF3C7;
+  --color-danger:        #DC2626;
+  --color-danger-bg:     #FEE2E2;
+
+  /* ── Sombras (estándar para tarjetas, hard solo para CTAs) ── */
+  --shadow-card:    0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-card-md: 0 4px 12px rgba(0, 0, 0, 0.10), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-card-lg: 0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 8px rgba(0, 0, 0, 0.08);
+  --shadow-btn:     3px 3px 0 var(--color-blue-ink);   /* hard shadow solo en CTA primario */
+  --shadow-gold:    3px 3px 0 var(--color-gold-ink);   /* hard shadow CTA dorado */
+
+  /* ── Radios ── */
+  --radius-card:   8px;
+  --radius-chip:   4px;
+  --radius-pill:   999px;
+  --radius-modal:  10px;
+  --radius-btn:    6px;
+
+  /* ── Timing ── */
+  --duration-fast:   100ms;
+  --duration-base:   150ms;
+  --duration-slow:   250ms;
+  --ease-standard:   cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ─────────────────────────────────────────────
+   Utilidades
+───────────────────────────────────────────── */
+
+@utility card-shadow {
+  box-shadow: var(--shadow-card);
+}
+@utility card-shadow-md {
+  box-shadow: var(--shadow-card-md);
+}
+@utility card-shadow-lg {
+  box-shadow: var(--shadow-card-lg);
+}
+@utility btn-shadow {
+  box-shadow: var(--shadow-btn);
+}
+@utility btn-shadow-gold {
+  box-shadow: var(--shadow-gold);
+}
+
+/* Eyebrow / label editorial (se preserva) */
+@utility eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--color-ink-3);
+}
+
+/* Numeral tipo camiseta (se preserva) */
+@utility jersey-numeral {
+  font-family: var(--font-numeral);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* ─────────────────────────────────────────────
+   Animaciones
+───────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes stickerSlap {
+  0%   { transform: scale(1.12) rotate(-2deg); opacity: 0.7; }
+  60%  { transform: scale(0.97) rotate(0.3deg); }
+  100% { transform: scale(1) rotate(0deg); opacity: 1; }
+}
+@keyframes countdownTick {
+  0%   { transform: scaleY(1.06); }
+  100% { transform: scaleY(1); }
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+@utility animate-fade-in {
+  animation: fadeIn var(--duration-slow) var(--ease-standard) both;
+}
+@utility animate-slide-up {
+  animation: slideUp var(--duration-slow) var(--ease-standard) both;
+}
+@utility animate-sticker-slap {
+  animation: stickerSlap 200ms var(--ease-standard) both;
+  @media (prefers-reduced-motion: reduce) {
+    animation: fadeIn var(--duration-fast) linear both;
+  }
+}
+@utility animate-countdown-tick {
+  animation: countdownTick 80ms ease-out both;
+  @media (prefers-reduced-motion: reduce) { animation: none; }
+}
+@utility animate-pulse-skeleton {
+  animation: pulseGlow 1.4s ease-in-out infinite;
+}
+
+@utility stagger-1 { animation-delay: 60ms;  }
+@utility stagger-2 { animation-delay: 120ms; }
+@utility stagger-3 { animation-delay: 180ms; }
+@utility stagger-4 { animation-delay: 240ms; }
+@utility stagger-5 { animation-delay: 300ms; }
+@utility stagger-6 { animation-delay: 360ms; }
+
+/* ─────────────────────────────────────────────
+   Base global
+───────────────────────────────────────────── */
+
+:root { color-scheme: light; }
+
+body {
+  background-color: var(--color-canvas);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-blue);
+  outline-offset: 2px;
+}
+
+/* ─────────────────────────────────────────────
+   Re-skin de shadcn/ui CSS variables → paleta azul deportivo
+───────────────────────────────────────────── */
+
+:root {
+  --background:         var(--color-canvas);
+  --foreground:         var(--color-ink);
+  --card:               var(--color-surface);
+  --card-foreground:    var(--color-ink);
+  --popover:            var(--color-surface);
+  --popover-foreground: var(--color-ink);
+  --primary:            var(--color-blue);
+  --primary-foreground: #ffffff;
+  --secondary:          var(--color-surface-2);
+  --secondary-foreground: var(--color-ink-2);
+  --muted:              var(--color-surface-2);
+  --muted-foreground:   var(--color-ink-3);
+  --accent:             var(--color-gold-bg);
+  --accent-foreground:  var(--color-gold-ink);
+  --destructive:        var(--color-danger);
+  --destructive-foreground: #ffffff;
+  --border:             var(--color-border);
+  --input:              var(--color-border);
+  --ring:               var(--color-blue);
+  --radius:             var(--radius-card);
+}

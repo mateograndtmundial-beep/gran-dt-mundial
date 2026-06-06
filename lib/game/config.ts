@@ -15,11 +15,20 @@ export const POSITION_LABELS: Record<Position, string> = {
   FWD: 'Delantero',
 };
 
+// Colores Panini — texto del chip (sobre fondo claro)
 export const POSITION_COLORS: Record<Position, string> = {
-  GK: '#F5C518', // dorado/amarillo
-  DEF: '#3B82F6', // azul
-  MID: '#13A34A', // verde
-  FWD: '#EF4444', // rojo
+  GK:  '#D97706', // ámbar
+  DEF: '#1E40AF', // azul profundo
+  MID: '#059669', // verde esmeralda
+  FWD: '#DC2626', // rojo
+};
+
+// Fondos Panini — fondo del chip
+export const POSITION_BG: Record<Position, string> = {
+  GK:  '#FEF3C7',
+  DEF: '#DBEAFE',
+  MID: '#D1FAE5',
+  FWD: '#FEE2E2',
 };
 
 export type FormationShape = { GK: number; DEF: number; MID: number; FWD: number };

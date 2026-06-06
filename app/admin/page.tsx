@@ -12,7 +12,7 @@ export default async function AdminPage() {
     user = await getCurrentUser();
     rounds = await getAllRounds();
   } catch {
-    // sin DB / sin auth -> cae en "acceso restringido"
+    // sin DB / sin auth -> acceso restringido
   }
 
   if (!user || !user.isAdmin) {
@@ -28,7 +28,7 @@ export default async function AdminPage() {
   }
 
   return (
-    <div>
+    <div className="space-y-5">
       <PageTitle
         title="Panel de administración"
         subtitle="Sincronizá las stats de cada fecha y publicá los puntos (una sola vez por fecha)."

@@ -4,12 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createLeague, joinLeague } from "@/lib/actions";
 import { Card } from "@/components/ui";
+import { Eyebrow, PrimaryButton } from "@/components/editorial";
 
 export function LeagueActions() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
-  const [msg, setMsg] = useState<string | null>(null);
+  const [msg,  setMsg]  = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function onCreate() {
@@ -33,39 +34,40 @@ export function LeagueActions() {
 
   return (
     <div className="grid gap-3 md:grid-cols-2">
-      <Card>
-        <h3 className="mb-2 font-bold">Crear liga</h3>
+      {/* Crear liga */}
+      <Card className="p-4 space-y-3">
+        <Eyebrow>Crear liga</Eyebrow>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Nombre de la liga"
-          className="mb-2 w-full rounded-lg border border-white/10 bg-pitch px-3 py-2 text-sm outline-none focus:border-accent"
+          className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
         />
-        <button
-          onClick={onCreate}
-          disabled={busy}
-          className="w-full rounded-lg bg-accent py-2 font-bold text-pitch disabled:opacity-50"
-        >
-          Crear
-        </button>
+        <PrimaryButton onClick={onCreate} disabled={busy || !name.trim()} className="w-full justify-center">
+          {busy ? "Creando…" : "CREAR LIGA →"}
+        </PrimaryButton>
       </Card>
-      <Card>
-        <h3 className="mb-2 font-bold">Unirme con código</h3>
+
+      {/* Unirse */}
+      <Card className="p-4 space-y-3">
+        <Eyebrow>Unirme con código</Eyebrow>
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           placeholder="Ej: ABC123"
           maxLength={6}
-          className="mb-2 w-full rounded-lg border border-white/10 bg-pitch px-3 py-2 text-sm uppercase outline-none focus:border-accent"
+          className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink uppercase outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors font-mono tracking-widest"
         />
         <button
           onClick={onJoin}
-          disabled={busy}
-          className="w-full rounded-lg bg-gold py-2 font-bold text-pitch disabled:opacity-50"
+          disabled={busy || code.length < 4}
+          className="w-full rounded-[6px] border border-gold-border bg-gold-bg text-gold-ink font-display text-base px-6 py-3 hover:bg-gold hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Unirme
+          UNIRME
         </button>
-        {msg && <p className="mt-2 text-xs text-amber-300">{msg}</p>}
+        {msg && (
+          <p className="text-xs font-semibold text-danger">{msg}</p>
+        )}
       </Card>
     </div>
   );

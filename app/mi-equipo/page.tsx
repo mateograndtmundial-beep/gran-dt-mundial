@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
+import { Eyebrow, StatNumeral, SecondaryButton, PrimaryButton } from "@/components/editorial";
+import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam } from "@/lib/queries";
 import { formatPoints } from "@/lib/utils";
@@ -35,9 +36,7 @@ export default async function MiEquipoPage() {
           hint="Podés armarlo primero y guardarlo al iniciar sesión."
         />
         <div className="mt-4 text-center">
-          <Link href="/equipo" className="inline-block rounded-lg bg-gold px-5 py-2.5 font-bold text-pitch">
-            Armar mi equipo
-          </Link>
+          <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
         </div>
       </div>
     );
@@ -49,37 +48,51 @@ export default async function MiEquipoPage() {
         <PageTitle title="Mi equipo" />
         <EmptyState title="Todavía no armaste tu equipo." />
         <div className="mt-4 text-center">
-          <Link href="/equipo" className="inline-block rounded-lg bg-gold px-5 py-2.5 font-bold text-pitch">
-            Armar mi equipo
-          </Link>
+          <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="space-y-5">
-      <div className="flex items-start justify-between">
-        <PageTitle title={team.entry.name} subtitle={`${formatPoints(team.entry.totalPoints)} puntos totales`} />
-        <Link href="/equipo" className="rounded-lg border border-white/15 px-3 py-1.5 text-sm font-semibold">
-          Editar
-        </Link>
-      </div>
+  const ranking = 1; // Placeholder — se conecta al leaderboard real
 
-      <Card>
-        <h3 className="mb-2 font-bold">Puntos por fecha</h3>
-        {team.rounds.length === 0 ? (
-          <p className="text-sm text-white/50">Todavía no hay fechas jugadas.</p>
-        ) : (
-          <ul className="divide-y divide-white/10">
-            {team.rounds.map((r) => (
-              <li key={r.id} className="flex items-center justify-between py-2 text-sm">
-                <span className="text-white/70">{r.roundName}</span>
-                <span className="font-bold text-gold">{formatPoints(r.points)}</span>
-              </li>
-            ))}
-          </ul>
-        )}
+  return (
+    <div className="space-y-6">
+      {/* Hero con watermark del ranking */}
+      <section className="relative overflow-hidden rounded-[8px] border border-border bg-surface card-shadow px-6 py-10">
+        {/* Watermark: número de ranking gigante, apenas visible */}
+        <span
+          className="absolute right-4 top-0 font-display text-[20vw] leading-none text-ink opacity-[0.04] select-none pointer-events-none"
+          aria-hidden
+        >
+          {ranking}
+        </span>
+
+        {/* Contenido real */}
+        <div className="relative flex items-start justify-between gap-4">
+          <div className="space-y-2">
+            <Eyebrow>MI EQUIPO</Eyebrow>
+            <h1 className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none text-ink">
+              {team.entry.name}
+            </h1>
+            <StatNumeral
+              value={formatPoints(team.entry.totalPoints)}
+              label="PUNTOS TOTALES"
+              size="lg"
+            />
+            <Eyebrow>#{ranking} EN EL RANKING GLOBAL</Eyebrow>
+          </div>
+
+          <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
+        </div>
+      </section>
+
+      {/* Puntos por fecha */}
+      <Card className="p-5">
+        <div className="flex items-center justify-between pb-3 mb-2 border-b-2 border-border">
+          <Eyebrow>Puntos por fecha</Eyebrow>
+        </div>
+        <PointsBreakdown rounds={team.rounds} />
       </Card>
     </div>
   );

@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Home, Users, Shirt, Trophy, ListOrdered } from "lucide-react";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/", label: "Inicio", icon: Home },
+  { href: "/",          label: "Inicio",    icon: Home },
   { href: "/jugadores", label: "Jugadores", icon: Users },
-  { href: "/mi-equipo", label: "Equipo", icon: Shirt },
-  { href: "/ligas", label: "Ligas", icon: Trophy },
-  { href: "/ranking", label: "Ranking", icon: ListOrdered },
+  { href: "/mi-equipo", label: "Equipo",    icon: Shirt },
+  { href: "/ligas",     label: "Ligas",     icon: Trophy },
+  { href: "/ranking",   label: "Ranking",   icon: ListOrdered },
 ];
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -21,7 +22,7 @@ function AuthArea() {
     return (
       <Link
         href="/sign-in"
-        className="rounded-md bg-gold px-3 py-1.5 text-sm font-bold text-pitch"
+        className="rounded-[6px] border border-border card-shadow px-3 py-1.5 text-sm font-semibold text-ink hover:border-border-strong hover:card-shadow-md transition-all"
       >
         Ingresar
       </Link>
@@ -32,11 +33,13 @@ function AuthArea() {
 
 function AuthAreaInner() {
   const { isLoaded, isSignedIn } = useAuth();
-  if (!isLoaded) return <div className="h-7 w-7" />;
+  if (!isLoaded) return <div className="h-7 w-7 rounded-full bg-surface-2 animate-pulse-skeleton" />;
   if (isSignedIn) return <UserButton />;
   return (
     <SignInButton mode="modal">
-      <button className="rounded-md bg-gold px-3 py-1.5 text-sm font-bold text-pitch">Ingresar</button>
+      <button className="rounded-[6px] border border-border card-shadow px-3 py-1.5 text-sm font-semibold text-ink hover:border-border-strong hover:card-shadow-md transition-all">
+        Ingresar
+      </button>
     </SignInButton>
   );
 }
@@ -48,45 +51,77 @@ export function SiteNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-pitch/90 backdrop-blur">
+      {/* ─── Header desktop ─── */}
+      <header className="sticky top-0 z-40 border-b border-border bg-canvas/90 backdrop-blur-sm">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-1.5 text-lg font-extrabold tracking-tight">
-            Los <span className="text-gold">11</span> de Sampa
+          {/* Logo + wordmark */}
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <Image
+              src="/images/logo/logo-badge-32.png"
+              alt="Los 11 de Sampa"
+              width={32}
+              height={32}
+              className="rounded-full transition-transform duration-150 group-hover:scale-110"
+              priority
+            />
+            <span className="text-base font-display text-ink leading-none">
+              LOS <span className="text-blue">11</span> DE SAMPA
+            </span>
           </Link>
-          <nav className="hidden items-center gap-1 md:flex">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium text-white/70 hover:text-white",
-                  isActive(l.href) && "bg-white/10 text-white",
-                )}
-              >
-                {l.label}
-              </Link>
-            ))}
+
+          {/* Nav desktop */}
+          <nav className="hidden items-center gap-0.5 md:flex">
+            {links.map((l) => {
+              const active = isActive(l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className={cn(
+                    "relative px-3 py-1.5 text-sm font-medium rounded-[6px] transition-colors",
+                    active
+                      ? "text-blue bg-blue-light"
+                      : "text-ink-2 hover:text-ink hover:bg-surface-2",
+                  )}
+                >
+                  {/* Active indicator: regla azul arriba */}
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-x-2 -top-[13px] h-[2px] rounded-full bg-blue"
+                    />
+                  )}
+                  {l.label}
+                </Link>
+              );
+            })}
           </nav>
+
           <div className="flex items-center gap-2">
             <AuthArea />
           </div>
         </div>
       </header>
 
-      <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-pitch/95 backdrop-blur md:hidden">
+      {/* ─── Bottom nav mobile ─── */}
+      <nav
+        aria-label="Navegación principal"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 backdrop-blur-sm md:hidden"
+      >
         <div className="mx-auto grid max-w-5xl grid-cols-5">
           {links.map((l) => {
             const Icon = l.icon;
+            const active = isActive(l.href);
             return (
               <Link
                 key={l.href}
                 href={l.href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 py-2 text-[11px] text-white/60",
-                  isActive(l.href) && "text-gold",
+                  "flex flex-col items-center gap-0.5 py-2 text-[11px] font-medium transition-colors",
+                  active ? "text-blue" : "text-ink-3",
                 )}
               >
-                <Icon size={20} />
+                <Icon size={20} strokeWidth={active ? 2.5 : 1.5} aria-hidden />
                 {l.label}
               </Link>
             );

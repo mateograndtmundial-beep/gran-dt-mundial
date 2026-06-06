@@ -1,11 +1,50 @@
 import type { Metadata } from "next";
+import { Bebas_Neue, Manrope, Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
+import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
 
+/* ─── Fuentes (next/font/google → CSS variables) ─── */
+const bebasNeue = Bebas_Neue({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-bebas",
+  display: "swap",
+});
+
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-manrope",
+  display: "swap",
+});
+
+const archivoBlack = Archivo_Black({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-archivo",
+  display: "swap",
+});
+
+/* ─── Metadatos ─── */
 export const metadata: Metadata = {
+  metadataBase: new URL("https://los11desampa.vercel.app"),
   title: "Los 11 de Sampa — Fantasy del Mundial 2026",
-  description: "Armá tu equipo del Mundial 2026, sumá puntos y competí con amigos.",
+  description:
+    "Armá tu equipo del Mundial 2026 con 15 jugadores, elegí capitán y técnico, y competí con amigos por el primer puesto.",
+  openGraph: {
+    title: "Los 11 de Sampa",
+    description: "Fantasy football del Mundial 2026",
+    images: [{ url: "/images/logo/logo-square-512.png", width: 512, height: 512 }],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/favicon.ico", sizes: "any" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
 };
 
 const clerkEnabled =
@@ -14,14 +53,45 @@ const clerkEnabled =
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const fontVars = [bebasNeue.variable, manrope.variable, archivoBlack.variable].join(" ");
+
   const tree = (
-    <html lang="es">
+    <html lang="es" className={fontVars}>
       <body className="min-h-screen antialiased">
         <SiteNav />
-        <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-5 md:pb-10">{children}</main>
+        <main className="mx-auto w-full max-w-5xl px-4 pb-24 pt-5 md:pb-10">
+          {children}
+        </main>
       </body>
     </html>
   );
 
-  return clerkEnabled ? <ClerkProvider>{tree}</ClerkProvider> : tree;
+  return clerkEnabled ? (
+    <ClerkProvider
+      localization={esES}
+      appearance={{
+        variables: {
+          colorPrimary: "#1B4FD8",
+          colorBackground: "#FFFFFF",
+          colorText: "#111827",
+          colorTextSecondary: "#6B7280",
+          colorInputBackground: "#FFFFFF",
+          colorInputText: "#111827",
+          borderRadius: "8px",
+          fontFamily: "Manrope, sans-serif",
+        },
+        elements: {
+          card: "shadow-none border border-[#D4D9D4] rounded-[8px]",
+          formButtonPrimary:
+            "bg-[#1B4FD8] hover:bg-[#1640B8] text-white font-semibold",
+          socialButtonsBlockButton:
+            "border border-[#D4D9D4] hover:bg-[#E8EBE8] text-[#111827]",
+        },
+      }}
+    >
+      {tree}
+    </ClerkProvider>
+  ) : (
+    tree
+  );
 }

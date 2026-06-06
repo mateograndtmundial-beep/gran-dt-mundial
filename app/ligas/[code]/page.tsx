@@ -1,6 +1,7 @@
-import { PageTitle, EmptyState, Card } from "@/components/ui";
+import { PageTitle, EmptyState } from "@/components/ui";
+import { Eyebrow } from "@/components/editorial";
+import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { getLeagueRanking } from "@/lib/queries";
-import { formatPoints } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -34,26 +35,28 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
   }
 
   return (
-    <div>
-      <PageTitle title={data.league.name} subtitle={`Código: ${data.league.code}`} />
-      <Card>
-        {data.rows.length === 0 ? (
-          <p className="text-sm text-white/50">Todavía no hay participantes.</p>
-        ) : (
-          <ol className="divide-y divide-white/10">
-            {data.rows.map((r, i) => (
-              <li key={i} className="flex items-center gap-3 py-2.5 text-sm">
-                <span className="w-6 text-center font-bold text-white/40">{i + 1}</span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate font-semibold">{r.entryName ?? "Sin equipo"}</span>
-                  <span className="block truncate text-xs text-white/40">{r.username ?? "DT"}</span>
-                </span>
-                <span className="font-bold text-gold">{formatPoints(r.totalPoints ?? 0)}</span>
-              </li>
-            ))}
-          </ol>
-        )}
-      </Card>
+    <div className="space-y-5">
+      <div className="flex items-start justify-between gap-4">
+        <PageTitle title={data.league.name} />
+        <div className="text-right shrink-0">
+          <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
+          <p
+            className="font-display text-3xl text-ink-3 tracking-widest cursor-pointer select-all"
+            title="Copiá este código para invitar amigos"
+          >
+            {data.league.code}
+          </p>
+        </div>
+      </div>
+
+      <LeagueRanking
+        rows={data.rows.map((r, i) => ({
+          entryId: i,
+          entryName: r.entryName,
+          username: r.username,
+          totalPoints: r.totalPoints ?? 0,
+        }))}
+      />
     </div>
   );
 }

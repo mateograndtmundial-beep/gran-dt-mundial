@@ -1,28 +1,40 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/* Card — fondo blanco, borde suave, sombra estándar */
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <div className={cn("rounded-xl border border-white/10 bg-pitch-card p-4", className)}>
+    <div
+      className={cn(
+        "rounded-[8px] border border-border bg-surface card-shadow",
+        className,
+      )}
+    >
       {children}
     </div>
   );
 }
 
+/* PageTitle — tipografía a escala de pantalla */
 export function PageTitle({ title, subtitle }: { title: string; subtitle?: string }) {
   return (
     <div className="mb-5">
-      <h1 className="text-2xl font-extrabold tracking-tight md:text-3xl">{title}</h1>
-      {subtitle && <p className="mt-1 text-sm text-white/60">{subtitle}</p>}
+      <h1 className="font-display text-[clamp(2rem,5vw,3.5rem)] leading-none tracking-tight text-ink">
+        {title}
+      </h1>
+      {subtitle && (
+        <p className="mt-1.5 text-sm text-ink-3">{subtitle}</p>
+      )}
     </div>
   );
 }
 
+/* Badge — pill genérico */
 export function Badge({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
+        "inline-flex items-center rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
         className,
       )}
     >
@@ -31,11 +43,12 @@ export function Badge({ children, className }: { children: ReactNode; className?
   );
 }
 
+/* EmptyState — centrado, tono apagado */
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-white/15 p-8 text-center">
-      <p className="font-medium text-white/80">{title}</p>
-      {hint && <p className="mt-1 text-sm text-white/50">{hint}</p>}
+    <div className="rounded-[8px] border border-dashed border-border-strong/50 p-10 text-center">
+      <p className="font-semibold text-ink-3">{title}</p>
+      {hint && <p className="mt-1 text-sm text-ink-faint">{hint}</p>}
     </div>
   );
 }
