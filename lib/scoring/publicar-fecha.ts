@@ -12,6 +12,7 @@ import {
   countries,
 } from "@/lib/db/schema";
 import { calcularPuntosTecnico } from "@/lib/scoring/calcular-puntos";
+import { SCORING } from "@/lib/game/config";
 
 /**
  * Publica una fecha: agrega los puntos por jugador, calcula el puntaje de cada
@@ -29,12 +30,15 @@ export async function publishRound(roundId: number) {
 
   const pts = new Map<number, number>(); // playerId -> puntos de la fecha
   const base = new Map<number, number>(); // playerId -> suma de rating (>=20') para el capitán
+  const minutesByPlayer = new Map<number, number>(); // playerId -> minutos jugados en la fecha
   for (const s of stats) {
     pts.set(s.playerId, (pts.get(s.playerId) ?? 0) + s.fantasyPoints);
-    if (s.minutes >= 20 && s.rating != null) {
+    minutesByPlayer.set(s.playerId, (minutesByPlayer.get(s.playerId) ?? 0) + s.minutes);
+    if (s.minutes >= SCORING.minMinutes && s.rating != null) {
       base.set(s.playerId, (base.get(s.playerId) ?? 0) + s.rating);
     }
   }
+  const played = (pid: number) => (minutesByPlayer.get(pid) ?? 0) >= SCORING.minMinutes;
 
   for (const [playerId, points] of pts) {
     await db
@@ -74,12 +78,40 @@ export async function publishRound(roundId: number) {
       .from(entryRoundPlayers)
       .where(eq(entryRoundPlayers.entryRoundId, er.id));
 
-    let total = 0;
-    for (const lp of lineup) {
-      if (lp.isStarter) total += pts.get(lp.playerId) ?? 0;
+    // Auto-sustitución: si un titular no jugó (>=minMinutes), lo reemplaza su
+    // suplente de la misma posición (un suplente por posición). effectiveOf mapea
+    // cada titular a quien efectivamente puntúa.
+    const starters = lineup.filter((l) => l.isStarter);
+    const subsByPos = new Map<string, number[]>();
+    for (const sub of lineup.filter((l) => !l.isStarter)) {
+      const pos = (sub.slot ?? "").split("_")[1] ?? ""; // 'SUB_DEF' -> 'DEF'
+      if (!subsByPos.has(pos)) subsByPos.set(pos, []);
+      subsByPos.get(pos)!.push(sub.playerId);
     }
-    // Capitán: duplica el rating base (suma una vez más la calificación).
-    if (er.captainPlayerId) total += base.get(er.captainPlayerId) ?? 0;
+    const usedSub = new Map<string, number>();
+    const effectiveOf = new Map<number, number>();
+    for (const st of starters) {
+      if (played(st.playerId)) { effectiveOf.set(st.playerId, st.playerId); continue; }
+      const pos = (st.slot ?? "").split("_")[0] ?? ""; // 'DEF_2' -> 'DEF'
+      const pool = subsByPos.get(pos) ?? [];
+      const idx = usedSub.get(pos) ?? 0;
+      // Reemplaza por el suplente de la posición si hay uno disponible y jugó.
+      if (idx < pool.length && played(pool[idx])) {
+        usedSub.set(pos, idx + 1);
+        effectiveOf.set(st.playerId, pool[idx]);
+      } else {
+        effectiveOf.set(st.playerId, st.playerId); // sin reemplazo útil → queda el titular (0 pts)
+      }
+    }
+
+    let total = 0;
+    for (const st of starters) total += pts.get(effectiveOf.get(st.playerId) ?? st.playerId) ?? 0;
+    // Capitán: duplica el rating base. Si el capitán fue auto-sustituido, el bonus
+    // va al suplente que lo reemplazó.
+    if (er.captainPlayerId) {
+      const capId = effectiveOf.get(er.captainPlayerId) ?? er.captainPlayerId;
+      total += base.get(capId) ?? 0;
+    }
     // Técnico: +2 / -2 / 0 según el resultado de su selección.
     if (er.coachId) {
       const cc = coachCountry.get(er.coachId);

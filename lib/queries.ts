@@ -1,4 +1,4 @@
-import { asc, desc, eq } from "drizzle-orm";
+import { asc, desc, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   players,
@@ -83,6 +83,18 @@ export async function getGlobalLeaderboard(limit = 100) {
     .limit(limit);
 }
 
+/** Posición global de un entry: 1 + cantidad de entries con más puntos. */
+export async function getUserGlobalRank(entryId: number): Promise<number | null> {
+  const me = (
+    await db.select({ pts: entries.totalPoints }).from(entries).where(eq(entries.id, entryId)).limit(1)
+  )[0];
+  if (!me) return null;
+  const r = (
+    await db.select({ c: sql<number>`count(*)` }).from(entries).where(gt(entries.totalPoints, me.pts))
+  )[0];
+  return Number(r?.c ?? 0) + 1;
+}
+
 export async function getMyTeam(userId: number) {
   const entry = (await db.select().from(entries).where(eq(entries.userId, userId)).limit(1))[0];
   if (!entry) return null;
@@ -122,6 +134,7 @@ export async function getLeagueRanking(code: string) {
   if (!league) return null;
   const rows = await db
     .select({
+      userId: leagueMembers.userId,
       username: users.username,
       entryName: entries.name,
       totalPoints: entries.totalPoints,
@@ -145,6 +158,7 @@ export async function getLineupPlayers(entryRoundId: number) {
       slot: entryRoundPlayers.slot,
       countryName: countries.name,
       flagUrl: countries.flagUrl,
+      eliminatedRound: countries.eliminatedRound,
     })
     .from(entryRoundPlayers)
     .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))

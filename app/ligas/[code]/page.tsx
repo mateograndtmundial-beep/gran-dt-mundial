@@ -1,7 +1,9 @@
 import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
+import { LeagueManagement } from "@/components/league-management";
 import { getLeagueRanking } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -9,9 +11,10 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
   const { code } = await params;
 
   let data: Awaited<ReturnType<typeof getLeagueRanking>> = null;
+  let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let error = false;
   try {
-    data = await getLeagueRanking(code);
+    [user, data] = await Promise.all([getCurrentUser(), getLeagueRanking(code)]);
   } catch {
     error = true;
   }
@@ -57,6 +60,15 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
           totalPoints: r.totalPoints ?? 0,
         }))}
       />
+
+      {user && user.id === data.league.ownerId && (
+        <LeagueManagement
+          leagueId={data.league.id}
+          leagueName={data.league.name}
+          ownerId={data.league.ownerId}
+          members={data.rows.map((r) => ({ userId: r.userId, username: r.username, entryName: r.entryName }))}
+        />
+      )}
     </div>
   );
 }
