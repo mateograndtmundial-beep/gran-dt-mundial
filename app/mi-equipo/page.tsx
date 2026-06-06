@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/components/editorial";
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
@@ -164,6 +165,12 @@ export default async function MiEquipoPage() {
         <Card className="p-5">
           <div className="mb-2 flex items-center justify-between border-b-2 border-border pb-3">
             <Eyebrow>Puntos por fecha</Eyebrow>
+            <Link
+              href="/como-funciona"
+              className="text-xs font-semibold text-ink-3 transition-colors hover:text-blue"
+            >
+              ¿Cómo se calculan?
+            </Link>
           </div>
           <PointsBreakdown rounds={team.rounds} />
         </Card>

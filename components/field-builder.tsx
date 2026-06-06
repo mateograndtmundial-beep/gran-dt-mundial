@@ -508,6 +508,13 @@ export function FieldBuilder({
           >
             {saving ? "Guardando…" : "GUARDAR EQUIPO →"}
           </PrimaryButton>
+
+          <Link
+            href="/como-funciona"
+            className="block text-center text-xs font-semibold text-ink-3 transition-colors hover:text-blue"
+          >
+            ¿Cómo se suman los puntos?
+          </Link>
         </div>
       </div>
 

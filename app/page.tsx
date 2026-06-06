@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Shirt, Calculator, Trophy } from "lucide-react";
 import { Countdown } from "@/components/countdown";
+import { WelcomeBanner } from "@/components/welcome-banner";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
@@ -27,6 +28,8 @@ function Feature({
 export default function Home() {
   return (
     <div className="space-y-12">
+      <WelcomeBanner />
+
       {/* ─── HERO ─── */}
       <section className="grid items-center gap-10 pt-4 md:grid-cols-[55%_45%]">
         {/* Columna izquierda: texto + CTA */}
@@ -55,6 +58,12 @@ export default function Home() {
               className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
             >
               Ver jugadores
+            </Link>
+            <Link
+              href="/como-funciona"
+              className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
+            >
+              ¿Cómo funciona?
             </Link>
           </div>
         </div>

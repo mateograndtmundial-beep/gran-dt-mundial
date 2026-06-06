@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Home, Users, Shirt, Trophy, ListOrdered } from "lucide-react";
+import { Home, Users, Shirt, Trophy, ListOrdered, HelpCircle } from "lucide-react";
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { PinBalance } from "@/components/pin-balance";
@@ -14,6 +14,7 @@ const links = [
   { href: "/mi-equipo", label: "Equipo",    icon: Shirt },
   { href: "/ligas",     label: "Ligas",     icon: Trophy },
   { href: "/ranking",   label: "Ranking",   icon: ListOrdered },
+  { href: "/como-funciona", label: "Ayuda", icon: HelpCircle },
 ];
 
 const clerkEnabled = !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
@@ -110,7 +111,7 @@ export function SiteNav() {
         aria-label="Navegación principal"
         className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 backdrop-blur-sm md:hidden"
       >
-        <div className="mx-auto grid max-w-5xl grid-cols-5">
+        <div className="mx-auto grid max-w-5xl grid-cols-6">
           {links.map((l) => {
             const Icon = l.icon;
             const active = isActive(l.href);
