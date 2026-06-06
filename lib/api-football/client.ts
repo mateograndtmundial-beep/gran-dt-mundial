@@ -29,6 +29,7 @@ export const apiFootball = {
   squad: (teamId: number) => apiGet('players/squads', { team: teamId }),
   coach: (teamId: number) => apiGet('coachs', { team: teamId }),
   fixtures: () => apiGet('fixtures', { league: LEAGUE_ID, season: SEASON }),
+  fixtureById: (id: number) => apiGet('fixtures', { id }),
   fixtureRounds: () => apiGet<string>('fixtures/rounds', { league: LEAGUE_ID, season: SEASON }),
   fixturePlayers: (fixtureId: number) => apiGet('fixtures/players', { fixture: fixtureId }),
   standings: () => apiGet('standings', { league: LEAGUE_ID, season: SEASON }),

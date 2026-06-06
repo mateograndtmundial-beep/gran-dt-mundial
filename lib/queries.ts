@@ -6,6 +6,10 @@ import {
   coaches,
   rounds,
   entries,
+  entryRounds,
+  entryRoundPlayers,
+  leagues,
+  leagueMembers,
   users,
 } from "@/lib/db/schema";
 
@@ -74,4 +78,70 @@ export async function getGlobalLeaderboard(limit = 100) {
     .innerJoin(users, eq(entries.userId, users.id))
     .orderBy(desc(entries.totalPoints))
     .limit(limit);
+}
+
+export async function getMyTeam(userId: number) {
+  const entry = (await db.select().from(entries).where(eq(entries.userId, userId)).limit(1))[0];
+  if (!entry) return null;
+  const roundRows = await db
+    .select({
+      id: entryRounds.id,
+      points: entryRounds.points,
+      formation: entryRounds.formation,
+      roundName: rounds.name,
+      order: rounds.order,
+    })
+    .from(entryRounds)
+    .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+    .where(eq(entryRounds.entryId, entry.id))
+    .orderBy(asc(rounds.order));
+  return { entry, rounds: roundRows };
+}
+
+export async function getMyLeagues(userId: number) {
+  return db
+    .select({
+      id: leagues.id,
+      name: leagues.name,
+      code: leagues.code,
+      isPublic: leagues.isPublic,
+    })
+    .from(leagueMembers)
+    .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.id))
+    .where(eq(leagueMembers.userId, userId));
+}
+
+export async function getLeagueRanking(code: string) {
+  const league = (
+    await db.select().from(leagues).where(eq(leagues.code, code.toUpperCase())).limit(1)
+  )[0];
+  if (!league) return null;
+  const rows = await db
+    .select({
+      username: users.username,
+      entryName: entries.name,
+      totalPoints: entries.totalPoints,
+    })
+    .from(leagueMembers)
+    .innerJoin(users, eq(leagueMembers.userId, users.id))
+    .leftJoin(entries, eq(entries.userId, users.id))
+    .where(eq(leagueMembers.leagueId, league.id))
+    .orderBy(desc(entries.totalPoints));
+  return { league, rows };
+}
+
+export async function getLineupPlayers(entryRoundId: number) {
+  return db
+    .select({
+      id: players.id,
+      name: players.name,
+      position: players.position,
+      isStarter: entryRoundPlayers.isStarter,
+      slot: entryRoundPlayers.slot,
+      countryName: countries.name,
+    })
+    .from(entryRoundPlayers)
+    .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))
+    .innerJoin(countries, eq(players.countryId, countries.id))
+    .where(eq(entryRoundPlayers.entryRoundId, entryRoundId));
 }
