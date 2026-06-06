@@ -1,0 +1,15 @@
+@import "tailwindcss";
+
+@theme {
+  --color-pitch: #0a1410;
+  --color-pitch-card: #0e2018;
+  --color-pitch-line: #1d3a2c;
+  --color-accent: #13a34a;
+  --color-gold: #f5c518;
+}
+
+html,
+body {
+  background-color: var(--color-pitch);
+  color: #ffffff;
+}
