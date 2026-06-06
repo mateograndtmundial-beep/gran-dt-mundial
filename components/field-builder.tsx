@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
 import {
@@ -309,6 +310,14 @@ export function FieldBuilder({
               </ValidationCallout>
             )}
             {message && <ValidationCallout type="danger">{message}</ValidationCallout>}
+            {message && /pin/i.test(message) && (
+              <Link
+                href="/pines"
+                className="block rounded-[6px] border border-gold-border bg-gold-bg px-3 py-2 text-center text-sm font-display text-gold-ink hover:bg-gold hover:text-white transition-colors"
+              >
+                COMPRAR PINES →
+              </Link>
+            )}
           </div>
 
           {/* Guardar */}

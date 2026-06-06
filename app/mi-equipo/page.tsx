@@ -3,7 +3,7 @@ import { Eyebrow, StatNumeral, SecondaryButton, PrimaryButton } from "@/componen
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getUserGlobalRank } from "@/lib/queries";
 import type { Position } from "@/lib/game/config";
 import { formatPoints } from "@/lib/utils";
 
@@ -56,7 +56,12 @@ export default async function MiEquipoPage() {
     );
   }
 
-  const ranking = 1; // Placeholder — se conecta al leaderboard real
+  let ranking: number | null = null;
+  try {
+    ranking = await getUserGlobalRank(team.entry.id);
+  } catch {
+    ranking = null;
+  }
 
   // Lineup de la fecha vigente (la más reciente) para la cancha read-only
   const latestRound = team.rounds.length ? team.rounds[team.rounds.length - 1] : null;
@@ -78,6 +83,7 @@ export default async function MiEquipoPage() {
       flagUrl: p.flagUrl,
       countryName: p.countryName,
       price: p.price,
+      eliminatedRound: p.eliminatedRound,
     };
   }
   const hasLineup = Object.keys(picks).length > 0;
@@ -91,7 +97,7 @@ export default async function MiEquipoPage() {
           className="absolute right-4 top-0 font-display text-[20vw] leading-none text-ink opacity-[0.04] select-none pointer-events-none"
           aria-hidden
         >
-          {ranking}
+          {ranking ?? "—"}
         </span>
 
         {/* Contenido real */}
@@ -106,7 +112,7 @@ export default async function MiEquipoPage() {
               label="PUNTOS TOTALES"
               size="lg"
             />
-            <Eyebrow>#{ranking} EN EL RANKING GLOBAL</Eyebrow>
+            <Eyebrow>{ranking ? `#${ranking} EN EL RANKING GLOBAL` : "SIN RANKING AÚN"}</Eyebrow>
           </div>
 
           <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>

@@ -26,6 +26,7 @@ export type PitchPlayer = {
   flagUrl?: string | null;
   countryName: string;
   price?: number;
+  eliminatedRound?: number | null;
 };
 
 export function buildSlots(formation: string): Slot[] {
@@ -126,6 +127,7 @@ export function Figurita({
   isCaptain,
   editable,
   allowCaptain = true,
+  eliminated,
   onOpen,
   onClear,
   onToggleCaptain,
@@ -135,6 +137,7 @@ export function Figurita({
   isCaptain: boolean;
   editable?: boolean;
   allowCaptain?: boolean;
+  eliminated?: boolean;
   onOpen?: () => void;
   onClear?: () => void;
   onToggleCaptain?: () => void;
@@ -183,6 +186,15 @@ export function Figurita({
       <div className="absolute -top-2 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1">
         {allowCaptain && (
           <CaptainTab active={isCaptain} editable={editable} onToggle={onToggleCaptain} />
+        )}
+        {eliminated && (
+          <span
+            aria-label="Jugador eliminado del torneo"
+            className="shrink-0 -rotate-[6deg] rounded-sm bg-danger px-1 py-0.5 text-[9px] font-display leading-none text-white"
+            style={{ boxShadow: "1px 1px 0 #991B1B" }}
+          >
+            ELIM
+          </span>
         )}
         {editable && (
           <button
@@ -297,6 +309,7 @@ export function Pitch({
                   player={picks[s.id]}
                   isCaptain={picks[s.id]?.id === captainId}
                   editable={editable}
+                  eliminated={picks[s.id]?.eliminatedRound != null}
                   onOpen={() => onOpenSlot?.(s)}
                   onClear={() => onClearSlot?.(s.id)}
                   onToggleCaptain={() => onToggleCaptain?.(s.id)}
