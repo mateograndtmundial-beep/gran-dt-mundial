@@ -61,22 +61,21 @@ export async function getCoaches() {
  * hay ninguna editable (todo arrancó/publicado → equipo bloqueado).
  */
 export async function getEditableRound(now: Date = new Date()) {
+  // Una sola query: trae las rondas no publicadas con el kickoff de su primer
+  // partido (min) vía leftJoin + groupBy, en vez de N+1 (una query por ronda).
   const candidates = await db
-    .select()
+    .select({
+      round: rounds,
+      firstKickoff: sql<string | null>`min(${matches.kickoff})`,
+    })
     .from(rounds)
+    .leftJoin(matches, eq(matches.roundId, rounds.id))
     .where(ne(rounds.status, "published"))
+    .groupBy(rounds.id)
     .orderBy(asc(rounds.order));
-  for (const r of candidates) {
-    const first = (
-      await db
-        .select({ k: matches.kickoff })
-        .from(matches)
-        .where(eq(matches.roundId, r.id))
-        .orderBy(asc(matches.kickoff))
-        .limit(1)
-    )[0];
-    const deadline = first?.k ? new Date(first.k) : null;
-    if (!deadline || deadline > now) return { round: r, deadline };
+  for (const c of candidates) {
+    const deadline = c.firstKickoff ? new Date(c.firstKickoff) : null;
+    if (!deadline || deadline > now) return { round: c.round, deadline };
   }
   return null;
 }
@@ -160,7 +159,7 @@ export async function getEditableLineup(userId: number) {
     .where(eq(entryRoundPlayers.entryRoundId, er.id));
   const slots: Record<string, number> = {};
   for (const r of lp) if (r.slot) slots[r.slot] = r.playerId;
-  return { formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
+  return { teamName: entry.name, formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
 }
 
 export async function getMyLeagues(userId: number) {

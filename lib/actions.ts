@@ -3,19 +3,24 @@
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
+import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches, pinTransactions } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getEditableRound } from "@/lib/queries";
-import { getPinBalance, addPins } from "@/lib/pins";
+import { getPinBalance } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
 import { round1 } from "@/lib/pricing/map";
 
+type BatchOp = Parameters<typeof db.batch>[0][number];
+
 export type SaveLineupInput = {
+  teamName: string;
   formation: string;
   captainPlayerId: number | null;
   coachId: number | null;
   players: { playerId: number; isStarter: boolean; slot: string }[];
 };
+
+const TEAM_NAME_MAX = 40;
 
 export async function saveLineup(input: SaveLineupInput) {
   const user = await getCurrentUser();
@@ -23,6 +28,9 @@ export async function saveLineup(input: SaveLineupInput) {
   const editable = await getEditableRound();
   if (!editable) return { ok: false as const, error: "locked" as const };
   const round = editable.round;
+
+  const teamName = input.teamName.trim().slice(0, TEAM_NAME_MAX);
+  if (!teamName) return { ok: false as const, error: "name" as const };
 
   // Validación server-side: recalculamos costo y composición desde la DB,
   // no confiamos en lo que manda el cliente (budgetUsed, conteos).
@@ -46,20 +54,21 @@ export async function saveLineup(input: SaveLineupInput) {
   if (budgetUsed > BUDGET + 0.05) {
     return { ok: false as const, error: "budget" as const, used: budgetUsed, budget: BUDGET };
   }
-  const perCountry = new Map<number, number>();
-  for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
-  if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
-    return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
+  // El tope por nacionalidad rige solo en fase de grupos; en playoffs quedan
+  // pocas selecciones vivas y mantenerlo lo haría imposible.
+  if (round.type === "group") {
+    const perCountry = new Map<number, number>();
+    for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
+    if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
+      return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
+    }
   }
 
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];
   if (!entry) {
-    entry = (
-      await db
-        .insert(entries)
-        .values({ userId: user.id, name: user.username ?? "Mi equipo" })
-        .returning()
-    )[0];
+    entry = (await db.insert(entries).values({ userId: user.id, name: teamName }).returning())[0];
+  } else if (entry.name !== teamName) {
+    await db.update(entries).set({ name: teamName }).where(eq(entries.id, entry.id));
   }
   if (!entry) throw new Error("No se pudo crear el equipo");
 
@@ -104,52 +113,63 @@ export async function saveLineup(input: SaveLineupInput) {
     }
   }
 
-  let er = er0;
-  if (er) {
-    await db
-      .update(entryRounds)
-      .set({
-        formation: input.formation,
-        captainPlayerId: input.captainPlayerId,
-        coachId: input.coachId,
-        budgetUsed,
-        pinsSpent: pinsNeeded,
-        changesMade: changes,
-      })
-      .where(eq(entryRounds.id, er.id));
-    await db.delete(entryRoundPlayers).where(eq(entryRoundPlayers.entryRoundId, er.id));
+  const erValues = {
+    formation: input.formation,
+    captainPlayerId: input.captainPlayerId,
+    coachId: input.coachId,
+    budgetUsed,
+    pinsSpent: pinsNeeded,
+    changesMade: changes,
+  };
+  const playerRows = input.players.map((p) => ({
+    playerId: p.playerId,
+    isStarter: p.isStarter,
+    slot: p.slot,
+  }));
+  // El movimiento de pines va en el mismo ledger; delta>0 descuenta, delta<0 reembolsa.
+  const pinRow =
+    delta !== 0
+      ? { userId: user.id, delta: -delta, reason: "transfer" as const, roundId: round.id }
+      : null;
+
+  if (er0) {
+    // Re-edición: reemplazo de la alineación. El delete + insert + ajuste de pines
+    // deben ser atómicos — si no, un fallo entre medio deja el equipo sin jugadores.
+    // neon-http no soporta transaction(), pero batch() corre todo en una sola
+    // transacción del servidor.
+    const ops: BatchOp[] = [
+      db.update(entryRounds).set(erValues).where(eq(entryRounds.id, er0.id)),
+      db.delete(entryRoundPlayers).where(eq(entryRoundPlayers.entryRoundId, er0.id)),
+    ];
+    if (playerRows.length) {
+      ops.push(
+        db
+          .insert(entryRoundPlayers)
+          .values(playerRows.map((p) => ({ ...p, entryRoundId: er0.id }))),
+      );
+    }
+    if (pinRow) ops.push(db.insert(pinTransactions).values(pinRow));
+    await db.batch(ops as [BatchOp, ...BatchOp[]]);
   } else {
-    er = (
+    // Primera alineación de la fecha: necesitamos el id generado antes de insertar
+    // los jugadores, así que el insert del entryRound va aparte. No hay delete acá,
+    // por lo que un fallo parcial deja a lo sumo un entryRound sin jugadores
+    // (recuperable re-guardando), no una alineación borrada.
+    const er = (
       await db
         .insert(entryRounds)
-        .values({
-          entryId: entry.id,
-          roundId: round.id,
-          formation: input.formation,
-          captainPlayerId: input.captainPlayerId,
-          coachId: input.coachId,
-          budgetUsed,
-          pinsSpent: pinsNeeded,
-          changesMade: changes,
-        })
+        .values({ entryId: entry.id, roundId: round.id, ...erValues })
         .returning()
     )[0];
-  }
-  if (!er) throw new Error("No se pudo crear la alineación");
-
-  if (input.players.length) {
-    await db.insert(entryRoundPlayers).values(
-      input.players.map((p) => ({
-        entryRoundId: er.id,
-        playerId: p.playerId,
-        isStarter: p.isStarter,
-        slot: p.slot,
-      })),
-    );
-  }
-
-  if (delta !== 0) {
-    await addPins(user.id, -delta, "transfer", { roundId: round.id });
+    if (!er) throw new Error("No se pudo crear la alineación");
+    const ops: BatchOp[] = [];
+    if (playerRows.length) {
+      ops.push(
+        db.insert(entryRoundPlayers).values(playerRows.map((p) => ({ ...p, entryRoundId: er.id }))),
+      );
+    }
+    if (pinRow) ops.push(db.insert(pinTransactions).values(pinRow));
+    if (ops.length) await db.batch(ops as [BatchOp, ...BatchOp[]]);
   }
 
   revalidatePath("/mi-equipo");

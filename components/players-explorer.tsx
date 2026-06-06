@@ -33,7 +33,9 @@ const SORT_LABELS: Record<SortKey, string> = {
   "name-asc":   "Nombre: A → Z",
 };
 
-const LIMIT = 200;
+/* Render incremental: pintamos PAGE tarjetas y crecemos con "Mostrar más".
+   Evita montar cientos de PlayerCard de una (el primer paint era pesado). */
+const PAGE = 48;
 
 /* Select nativo estilizado */
 function FilterSelect({
@@ -116,7 +118,16 @@ export function PlayersExplorer({ players }: { players: P[] }) {
     return out;
   }, [players, pos, country, hideElim, effectiveCap, q, sort]);
 
-  const visible = filtered.slice(0, LIMIT);
+  // Cada vez que cambian los filtros, volvemos a la primera "página". Ajuste de
+  // estado durante el render (sin useEffect) según recomienda React.
+  const filterKey = `${q}|${pos}|${country}|${hideElim}|${effectiveCap}|${sort}`;
+  const [shown, setShown] = useState(PAGE);
+  const [prevKey, setPrevKey] = useState(filterKey);
+  if (filterKey !== prevKey) {
+    setPrevKey(filterKey);
+    setShown(PAGE);
+  }
+  const visible = filtered.slice(0, shown);
 
   const filtersActive =
     q !== "" ||
@@ -291,10 +302,18 @@ export function PlayersExplorer({ players }: { players: P[] }) {
         </div>
       )}
 
-      {filtered.length > LIMIT && (
-        <p className="eyebrow text-center">
-          Mostrando los primeros {LIMIT}. Refiná la búsqueda.
-        </p>
+      {filtered.length > shown && (
+        <div className="flex flex-col items-center gap-1.5 pt-1">
+          <button
+            onClick={() => setShown((s) => s + PAGE)}
+            className="rounded-[6px] border border-border bg-surface px-5 py-2 text-sm font-semibold text-ink-2 hover:border-blue hover:text-blue transition-colors"
+          >
+            Mostrar más
+          </button>
+          <p className="eyebrow text-center">
+            Mostrando {visible.length} de {filtered.length}
+          </p>
+        </div>
       )}
     </div>
   );

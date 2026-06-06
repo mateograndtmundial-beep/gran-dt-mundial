@@ -40,10 +40,22 @@ export function buildSlots(formation: string): Slot[] {
   return slots;
 }
 
-/** Apellido (último token del nombre). */
+/* Partículas que forman parte del apellido y deben conservarse:
+   "De Bruyne", "Van Dijk", "Van de Beek", "Di María", "De Paul"… */
+const NAME_PARTICLES = new Set([
+  "de", "del", "della", "der", "den", "van", "von", "da", "di", "do", "dos",
+  "das", "la", "le", "el", "al", "bin", "ben", "mac", "mc", "st", "san",
+  "santa", "ter", "te", "ten", "vande", "vander", "y",
+]);
+
+/** Apellido para la figurita: último token + partículas previas (de, van, der…). */
 export function lastName(name: string): string {
-  const parts = name.trim().split(" ");
-  return parts.length > 1 ? parts.slice(-1)[0] : name;
+  const parts = name.trim().split(/\s+/);
+  if (parts.length <= 1) return name;
+  let i = parts.length - 1;
+  // Conservamos al menos el primer token como nombre (i > 1).
+  while (i > 1 && NAME_PARTICLES.has(parts[i - 1].toLowerCase())) i--;
+  return parts.slice(i).join(" ");
 }
 
 /* ─── SVG de la cancha ─── */
@@ -131,6 +143,7 @@ export function Figurita({
   onOpen,
   onClear,
   onToggleCaptain,
+  onDragStart,
 }: {
   slot: Slot;
   player?: PitchPlayer;
@@ -141,6 +154,7 @@ export function Figurita({
   onOpen?: () => void;
   onClear?: () => void;
   onToggleCaptain?: () => void;
+  onDragStart?: (e: React.PointerEvent) => void;
 }) {
   const color = POSITION_COLORS[slot.position];
 
@@ -212,10 +226,11 @@ export function Figurita({
       <button
         type="button"
         onClick={editable ? onOpen : undefined}
+        onPointerDown={editable ? onDragStart : undefined}
         disabled={!editable}
         className={cn(
           "flex flex-col items-center gap-1 rounded-[7px] p-[3px] pt-2.5",
-          editable && "transition-transform hover:-translate-y-0.5",
+          editable && "touch-none transition-transform hover:-translate-y-0.5",
         )}
       >
         {/* Bandera = protagonista (figurita) */}
@@ -268,6 +283,9 @@ export function Pitch({
   onOpenSlot,
   onClearSlot,
   onToggleCaptain,
+  onSlotPointerDown,
+  dropPosition,
+  dragSlotId,
   className,
   style,
 }: {
@@ -278,6 +296,12 @@ export function Pitch({
   onOpenSlot?: (slot: Slot) => void;
   onClearSlot?: (slotId: string) => void;
   onToggleCaptain?: (slotId: string) => void;
+  /** Arranca el drag de un titular (para reordenar o mandarlo al banco). */
+  onSlotPointerDown?: (e: React.PointerEvent, slot: Slot, player: PitchPlayer) => void;
+  /** Posición que se está arrastrando: resalta los slots compatibles como destino. */
+  dropPosition?: Position | null;
+  /** Slot que se está arrastrando ahora mismo (se atenúa en su origen). */
+  dragSlotId?: string | null;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -303,17 +327,33 @@ export function Pitch({
           return (
             <div key={pos} className="flex items-center justify-evenly gap-1">
               {rowSlots.map((s) => (
-                <Figurita
+                <div
                   key={s.id}
-                  slot={s}
-                  player={picks[s.id]}
-                  isCaptain={picks[s.id]?.id === captainId}
-                  editable={editable}
-                  eliminated={picks[s.id]?.eliminatedRound != null}
-                  onOpen={() => onOpenSlot?.(s)}
-                  onClear={() => onClearSlot?.(s.id)}
-                  onToggleCaptain={() => onToggleCaptain?.(s.id)}
-                />
+                  data-slot-id={s.id}
+                  data-position={s.position}
+                  data-starter="1"
+                  className={cn(
+                    "rounded-[10px] transition-all",
+                    dropPosition === s.position && s.id !== dragSlotId &&
+                      "ring-2 ring-gold ring-offset-2 ring-offset-[#16713F]",
+                    dragSlotId === s.id && "opacity-40",
+                  )}
+                >
+                  <Figurita
+                    slot={s}
+                    player={picks[s.id]}
+                    isCaptain={picks[s.id]?.id === captainId}
+                    editable={editable}
+                    eliminated={picks[s.id]?.eliminatedRound != null}
+                    onOpen={() => onOpenSlot?.(s)}
+                    onClear={() => onClearSlot?.(s.id)}
+                    onToggleCaptain={() => onToggleCaptain?.(s.id)}
+                    onDragStart={(e) => {
+                      const pl = picks[s.id];
+                      if (pl) onSlotPointerDown?.(e, s, pl);
+                    }}
+                  />
+                </div>
               ))}
             </div>
           );

@@ -1,11 +1,11 @@
 import { PageTitle, EmptyState, Card } from "@/components/ui";
-import { Eyebrow, StatNumeral, SecondaryButton, PrimaryButton } from "@/components/editorial";
+import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/components/editorial";
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getUserGlobalRank } from "@/lib/queries";
-import type { Position } from "@/lib/game/config";
-import { formatPoints } from "@/lib/utils";
+import { POSITIONS, type Position } from "@/lib/game/config";
+import { formatPoints, formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -87,61 +87,82 @@ export default async function MiEquipoPage() {
     };
   }
   const hasLineup = Object.keys(picks).length > 0;
+  const subs = lineup
+    .filter((p) => !p.isStarter && p.slot)
+    .sort((a, b) => POSITIONS.indexOf(a.position as Position) - POSITIONS.indexOf(b.position as Position));
 
   return (
-    <div className="space-y-6">
-      {/* Hero con watermark del ranking */}
-      <section className="relative overflow-hidden rounded-[8px] border border-border bg-surface card-shadow px-6 py-10">
-        {/* Watermark: número de ranking gigante, apenas visible */}
-        <span
-          className="absolute right-4 top-0 font-display text-[20vw] leading-none text-ink opacity-[0.04] select-none pointer-events-none"
-          aria-hidden
-        >
-          {ranking ?? "—"}
-        </span>
-
-        {/* Contenido real */}
-        <div className="relative flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <Eyebrow>MI EQUIPO</Eyebrow>
-            <h1 className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none text-ink">
-              {team.entry.name}
-            </h1>
-            <StatNumeral
-              value={formatPoints(team.entry.totalPoints)}
-              label="PUNTOS TOTALES"
-              size="lg"
-            />
-            <Eyebrow>{ranking ? `#${ranking} EN EL RANKING GLOBAL` : "SIN RANKING AÚN"}</Eyebrow>
-          </div>
-
-          <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
+    <div className="space-y-5">
+      {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
+      <section className="flex flex-wrap items-end justify-between gap-4">
+        <div className="space-y-1">
+          <Eyebrow>MI EQUIPO</Eyebrow>
+          <h1 className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none text-ink">
+            {team.entry.name}
+          </h1>
+          <p className="text-sm text-ink-3">
+            <span className="jersey-numeral text-base text-ink">{formatPoints(team.entry.totalPoints)}</span> pts
+            {ranking ? (
+              <> · <span className="font-semibold text-ink-2">#{ranking}</span> en el ranking global</>
+            ) : null}
+          </p>
         </div>
+        <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
       </section>
 
-      {/* Tu once + Puntos por fecha */}
-      <div className="grid gap-6 md:grid-cols-[auto_1fr] md:items-start">
-        {hasLineup && (
-          <Card className="p-4">
-            <div className="mb-3 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
-              <Eyebrow>Tu once</Eyebrow>
-              {latestRound && (
-                <span className="text-[11px] text-ink-faint">
-                  {latestRound.formation}
-                </span>
+      {/* El equipo manda: cancha grande + suplentes; los puntos van al costado */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
+        <Card className="p-4 lg:p-6">
+          <div className="mb-4 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
+            <Eyebrow>Tu equipo</Eyebrow>
+            {latestRound && <span className="text-[11px] text-ink-faint">{latestRound.formation}</span>}
+          </div>
+
+          {hasLineup ? (
+            <div className="flex flex-col items-center gap-6">
+              <Pitch
+                formation={latestRound?.formation ?? "4-4-2"}
+                picks={picks}
+                captainId={latestRound?.captainPlayerId ?? null}
+                style={{ width: "min(92vw, 400px)" }}
+              />
+
+              {subs.length > 0 && (
+                <div className="w-full">
+                  <Eyebrow className="mb-2">Suplentes</Eyebrow>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {subs.map((s) => (
+                      <div
+                        key={s.slot}
+                        className="flex items-center gap-2 rounded-[6px] border border-border bg-surface px-2.5 py-2"
+                      >
+                        <PositionChip position={s.position as Position} />
+                        {s.flagUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={s.flagUrl} alt={s.countryName} className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                        ) : (
+                          <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
+                        )}
+                        <span
+                          className={`min-w-0 flex-1 truncate text-sm font-semibold ${s.eliminatedRound != null ? "text-ink-faint line-through" : "text-ink"}`}
+                          title={s.name}
+                        >
+                          {s.name}
+                        </span>
+                        <span className="jersey-numeral shrink-0 text-xs text-gold-ink">{formatPrice(s.price)}M</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
-            <Pitch
-              formation={latestRound?.formation ?? "4-4-2"}
-              picks={picks}
-              captainId={latestRound?.captainPlayerId ?? null}
-              style={{ width: "min(78vw, 320px)" }}
-            />
-          </Card>
-        )}
+          ) : (
+            <EmptyState title="Todavía no armaste tu equipo." />
+          )}
+        </Card>
 
         <Card className="p-5">
-          <div className="flex items-center justify-between pb-3 mb-2 border-b-2 border-border">
+          <div className="mb-2 flex items-center justify-between border-b-2 border-border pb-3">
             <Eyebrow>Puntos por fecha</Eyebrow>
           </div>
           <PointsBreakdown rounds={team.rounds} />

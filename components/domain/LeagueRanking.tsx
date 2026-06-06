@@ -47,11 +47,14 @@ export function LeagueRanking({
                   : "hover:bg-surface-2 py-2.5 px-4",
               )}
             >
-              {/* Posición */}
+              {/* Posición — cascada descendente 1 > 2 > 3 > resto */}
               <span
                 className={cn(
                   "jersey-numeral w-7 text-center leading-none shrink-0",
-                  rank === 1 ? "text-xl text-gold-ink" : isTop3 ? "text-lg text-gold-ink" : "text-sm text-ink-3",
+                  rank === 1 ? "text-2xl text-gold-ink"
+                  : rank === 2 ? "text-xl text-gold-ink"
+                  : rank === 3 ? "text-lg text-gold-ink"
+                  : "text-sm text-ink-3",
                 )}
               >
                 {podioMedal ?? rank}
@@ -61,20 +64,23 @@ export function LeagueRanking({
               <span className="min-w-0 flex-1">
                 <span
                   className={cn(
-                    "block truncate font-semibold",
-                    rank === 1 ? "text-base text-ink" : isTop3 ? "text-sm text-ink" : "text-sm text-ink",
+                    "block truncate font-semibold text-ink",
+                    rank === 1 ? "text-lg" : isTop3 ? "text-base" : "text-sm",
                   )}
                 >
-                  {r.entryName ?? "Sin equipo"}
+                  {r.username ?? "DT"}
                 </span>
-                <span className="block truncate text-xs text-ink-3">{r.username ?? "DT"}</span>
+                <span className="block truncate text-xs text-ink-3">{r.entryName ?? "Sin equipo"}</span>
               </span>
 
-              {/* Puntos */}
+              {/* Puntos — cascada descendente 1 > 2 > 3 > resto */}
               <span
                 className={cn(
                   "jersey-numeral leading-none tracking-tight shrink-0",
-                  rank === 1 ? "text-2xl text-ink" : isTop3 ? "text-xl text-ink" : "text-base text-ink-2",
+                  rank === 1 ? "text-3xl text-ink"
+                  : rank === 2 ? "text-2xl text-ink"
+                  : rank === 3 ? "text-xl text-ink"
+                  : "text-base text-ink-2",
                 )}
               >
                 {formatPoints(r.totalPoints ?? 0)}
