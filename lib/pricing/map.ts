@@ -26,16 +26,19 @@ export function percentile(values: number[], p: number): number {
 
 /**
  * Mapea un valor de mercado (en EUR) a un precio de juego continuo [MIN, MAX]
- * con 1 decimal. `mvRef` es el valor de mercado que mapea a ~MAX (percentil alto),
- * para que un par de megaestrellas clipeen al techo y no aplasten al resto.
+ * con 1 decimal. `mvRef` (percentil alto del valor de mercado) mapea al ANCHOR;
+ * la elite con mv > mvRef sube por encima del ANCHOR y se reparte hasta el techo
+ * MAX, en vez de aplastarse toda en el mismo valor.
  *
  * Curva sobre el valor (no por ranking): como el valor de mercado es de cola
  * pesada, la mayoría queda barata (cerca de MIN) y solo las estrellas caras.
- * GAMMA<1 levanta los medios; GAMMA>1 los aplana.
+ * GAMMA<1 levanta/estira los medios; GAMMA>1 los aplana.
  */
 export function computePrice(mvEur: number, mvRef: number): number {
-  const { MIN, MAX, GAMMA } = PRICING;
+  const { MIN, ANCHOR, MAX, GAMMA } = PRICING;
   if (!mvRef || mvEur <= 0) return MIN;
-  const f = clamp(mvEur / mvRef, 0, 1) ** GAMMA;
-  return round1(clamp(MIN + (MAX - MIN) * f, MIN, MAX));
+  // Sin cap del ratio en 1: la elite (mv > mvRef) supera el ANCHOR y se reparte
+  // hacia arriba hasta el techo duro MAX, en vez de pegarse toda en el mismo valor.
+  const f = Math.max(0, mvEur / mvRef) ** GAMMA;
+  return round1(clamp(MIN + (ANCHOR - MIN) * f, MIN, MAX));
 }

@@ -31,7 +31,7 @@ export default async function AdminPreciosPage() {
     <div className="space-y-5">
       <PageTitle
         title="Precios de jugadores"
-        subtitle="Carga inicial: npm run prices:apply. Acá ajustás a mano (5,0–60,0M, con 1 decimal)."
+        subtitle="Carga inicial: npm run prices:apply. Acá ajustás a mano (5,0–150,0M, con 1 decimal)."
       />
       {players.length === 0 ? (
         <EmptyState title="No hay jugadores cargados." hint="Corré: npm run seed" />

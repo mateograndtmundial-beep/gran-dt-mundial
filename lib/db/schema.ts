@@ -45,6 +45,7 @@ export const players = pgTable('players', {
   name: text('name').notNull(),
   position: positionEnum('position').notNull(),
   price: doublePrecision('price').notNull().default(5),
+  priceManual: boolean('price_manual').notNull().default(false), // precio fijado a mano: prices:apply no lo pisa
   photoUrl: text('photo_url'),
   club: text('club'),
   birthYear: integer('birth_year'), // para desambiguar el cruce con Transfermarkt

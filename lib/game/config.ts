@@ -1,6 +1,6 @@
 // Configuración central del juego. Pensado para tunear fácil.
 
-export const BUDGET = 250; // presupuesto a calibrar post-seed
+export const BUDGET = 600; // presupuesto para armar el equipo (15 jugadores + DT)
 export const SQUAD = { STARTERS: 11, SUBS: 4, TOTAL: 15 } as const;
 export const MAX_PER_COUNTRY = 3;
 export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha; los extra cuestan pines
@@ -9,9 +9,10 @@ export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha; los extra 
 // Ver lib/pricing/map.ts y scripts/price-players.ts. Todo tuneable post-seed.
 export const PRICING = {
   MIN: 5,                 // piso continuo (jugador base / sin valor de mercado)
-  MAX: 60,                // techo (crack)
-  MV_REF_PERCENTILE: 98,  // percentil de valor de mercado que mapea a ~MAX (clip de megaestrellas)
-  GAMMA: 0.9,             // curvatura: <1 levanta los medios, >1 los aplana
+  ANCHOR: 85,             // precio del jugador en el percentil de referencia (mvRef)
+  MAX: 150,               // techo duro (la elite extiende hasta acá)
+  MV_REF_PERCENTILE: 98,  // mvRef = percentil del valor de mercado (≈ €90M)
+  GAMMA: 0.85,            // curvatura: <1 levanta/estira los medios, >1 los aplana
 } as const;
 
 export const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'] as const;

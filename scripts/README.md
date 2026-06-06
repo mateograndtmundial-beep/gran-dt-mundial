@@ -51,6 +51,11 @@ npm run prices:apply -- --dry  # solo calcula y muestra calibración
 El cruce (TM no comparte ID con API-Football) usa tiers de nombre/apellido + país +
 **año de nacimiento** (la señal más fuerte). Detalle en `scripts/price-players.ts`.
 
+> **Precios manuales (`priceManual`)**: los precios fijados a mano desde `/admin/precios`
+> marcan la columna `players.price_manual = true`, y `prices:apply` **los respeta** (no los
+> recalcula ni los pisa). Así los ajustes manuales sobreviven a cualquier re-corrida. `seed`
+> tampoco toca `price`. El único modo de resetear un precio manual es ponerlo de nuevo en el admin.
+
 ### Calibración
 
 Todo se tunea en `lib/game/config.ts` → `PRICING` (y `BUDGET`):

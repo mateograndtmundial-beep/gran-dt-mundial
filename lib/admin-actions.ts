@@ -30,7 +30,8 @@ export async function updatePlayerPrice(playerId: number, price: number) {
   if (!(await isAdmin())) return { ok: false as const, error: "forbidden" };
   if (!Number.isFinite(price)) return { ok: false as const, error: "precio inválido" };
   const p = round1(clamp(price, PRICING.MIN, PRICING.MAX));
-  await db.update(players).set({ price: p }).where(eq(players.id, playerId));
+  // priceManual: marca el precio como fijado a mano para que `prices:apply` no lo pise.
+  await db.update(players).set({ price: p, priceManual: true }).where(eq(players.id, playerId));
   revalidatePath("/admin/precios");
   revalidatePath("/jugadores");
   revalidatePath("/equipo");
