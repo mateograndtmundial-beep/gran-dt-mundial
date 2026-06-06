@@ -8,6 +8,7 @@ import {
   doublePrecision,
   jsonb,
   uniqueIndex,
+  index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
 
@@ -139,6 +140,8 @@ export const entryRounds = pgTable(
     coachId: integer('coach_id').references(() => coaches.id),
     budgetUsed: integer('budget_used').notNull().default(0),
     points: doublePrecision('points').notNull().default(0),
+    pinsSpent: integer('pins_spent').notNull().default(0),
+    changesMade: integer('changes_made').notNull().default(0),
   },
   (t) => ({ uniq: uniqueIndex('er_entry_round').on(t.entryId, t.roundId) }),
 );
@@ -180,3 +183,50 @@ export const pointTransactions = pgTable('point_transactions', {
   points: doublePrecision('points').notNull().default(0),
   breakdown: jsonb('breakdown'),
 });
+
+// ---------- Monetización: pines (única fuente de ingresos) ----------
+export const orderStatusEnum = pgEnum('order_status', ['pending', 'paid', 'failed', 'expired', 'refunded']);
+export const paymentProviderEnum = pgEnum('payment_provider', ['mercadopago', 'dlocal']);
+export const pinReasonEnum = pgEnum('pin_reason', ['purchase', 'transfer', 'refund', 'grant']);
+
+export const products = pgTable('products', {
+  id: serial('id').primaryKey(),
+  sku: text('sku').notNull().unique(),
+  name: text('name').notNull(),
+  pins: integer('pins').notNull(),
+  priceArs: integer('price_ars'), // Mercado Pago (Argentina)
+  priceUsd: doublePrecision('price_usd'), // dLocal (resto de LatAm)
+  active: boolean('active').notNull().default(true),
+});
+
+export const orders = pgTable(
+  'orders',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    productId: integer('product_id').references(() => products.id).notNull(),
+    pins: integer('pins').notNull(),
+    amount: doublePrecision('amount').notNull(),
+    currency: text('currency').notNull(),
+    provider: paymentProviderEnum('provider').notNull(),
+    providerRef: text('provider_ref'),
+    status: orderStatusEnum('status').notNull().default('pending'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+  },
+  (t) => ({ providerRefIdx: index('orders_provider_ref').on(t.provider, t.providerRef) }),
+);
+
+export const pinTransactions = pgTable(
+  'pin_transactions',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull(),
+    delta: integer('delta').notNull(), // +comprados / -usados
+    reason: pinReasonEnum('reason').notNull(),
+    orderId: integer('order_id').references(() => orders.id),
+    roundId: integer('round_id').references(() => rounds.id),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({ userIdx: index('pin_tx_user').on(t.userId) }),
+);

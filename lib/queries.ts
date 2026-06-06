@@ -11,6 +11,7 @@ import {
   leagues,
   leagueMembers,
   users,
+  products,
 } from "@/lib/db/schema";
 
 export type PlayerRow = Awaited<ReturnType<typeof getPlayersWithCountry>>[number];
@@ -144,4 +145,8 @@ export async function getLineupPlayers(entryRoundId: number) {
     .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))
     .innerJoin(countries, eq(players.countryId, countries.id))
     .where(eq(entryRoundPlayers.entryRoundId, entryRoundId));
+}
+
+export async function getActiveProducts() {
+  return db.select().from(products).where(eq(products.active, true)).orderBy(asc(products.pins));
 }

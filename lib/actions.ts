@@ -1,11 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers } from "@/lib/db/schema";
+import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getCurrentRound } from "@/lib/queries";
+import { getPinBalance, addPins } from "@/lib/pins";
+import { FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
 
 export type SaveLineupInput = {
   formation: string;
@@ -32,7 +34,7 @@ export async function saveLineup(input: SaveLineupInput) {
   }
   if (!entry) throw new Error("No se pudo crear el equipo");
 
-  let er = (
+  const er0 = (
     await db
       .select()
       .from(entryRounds)
@@ -40,6 +42,40 @@ export async function saveLineup(input: SaveLineupInput) {
       .limit(1)
   )[0];
 
+  // Contar cambios vs la alineación de la fecha anterior.
+  const prevEr = (
+    await db
+      .select({ id: entryRounds.id })
+      .from(entryRounds)
+      .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+      .where(and(eq(entryRounds.entryId, entry.id), lt(rounds.order, round.order)))
+      .orderBy(desc(rounds.order))
+      .limit(1)
+  )[0];
+
+  let changes = 0;
+  if (prevEr) {
+    const prev = await db
+      .select({ playerId: entryRoundPlayers.playerId })
+      .from(entryRoundPlayers)
+      .where(eq(entryRoundPlayers.entryRoundId, prevEr.id));
+    const prevIds = new Set(prev.map((p) => p.playerId));
+    changes = input.players.filter((p) => !prevIds.has(p.playerId)).length;
+  }
+
+  // 1er cambio gratis por fecha; los extra cuestan pines. Reconcilia re-ediciones.
+  const pinsNeeded = Math.max(0, changes - FREE_CHANGES_PER_ROUND);
+  const alreadySpent = er0?.pinsSpent ?? 0;
+  const delta = pinsNeeded - alreadySpent;
+
+  if (delta > 0) {
+    const balance = await getPinBalance(user.id);
+    if (balance < delta) {
+      return { ok: false as const, error: "pins" as const, needed: delta, balance };
+    }
+  }
+
+  let er = er0;
   if (er) {
     await db
       .update(entryRounds)
@@ -48,6 +84,8 @@ export async function saveLineup(input: SaveLineupInput) {
         captainPlayerId: input.captainPlayerId,
         coachId: input.coachId,
         budgetUsed: input.budgetUsed,
+        pinsSpent: pinsNeeded,
+        changesMade: changes,
       })
       .where(eq(entryRounds.id, er.id));
     await db.delete(entryRoundPlayers).where(eq(entryRoundPlayers.entryRoundId, er.id));
@@ -62,6 +100,8 @@ export async function saveLineup(input: SaveLineupInput) {
           captainPlayerId: input.captainPlayerId,
           coachId: input.coachId,
           budgetUsed: input.budgetUsed,
+          pinsSpent: pinsNeeded,
+          changesMade: changes,
         })
         .returning()
     )[0];
@@ -79,8 +119,12 @@ export async function saveLineup(input: SaveLineupInput) {
     );
   }
 
+  if (delta !== 0) {
+    await addPins(user.id, -delta, "transfer", { roundId: round.id });
+  }
+
   revalidatePath("/mi-equipo");
-  return { ok: true as const };
+  return { ok: true as const, changes, pinsSpent: pinsNeeded };
 }
 
 function genCode(): string {

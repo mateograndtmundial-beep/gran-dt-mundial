@@ -137,6 +137,10 @@ export function FieldBuilder({
       router.push("/sign-in");
       return;
     }
+    if (!res.ok && res.error === "pins") {
+      setMessage(`Necesitás ${res.needed} pin(es) para esos cambios (tenés ${res.balance}).`);
+      return;
+    }
     if (!res.ok) {
       setMessage("No se pudo guardar. Revisá la base de datos.");
       return;

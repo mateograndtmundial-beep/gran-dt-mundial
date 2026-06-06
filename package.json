@@ -12,6 +12,7 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
+    "seed:products": "tsx scripts/seed-products.ts",
     "make-admin": "tsx scripts/make-admin.ts"
   },
   "dependencies": {

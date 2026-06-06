@@ -3,6 +3,7 @@
 export const BUDGET = 250; // presupuesto a calibrar post-seed
 export const SQUAD = { STARTERS: 11, SUBS: 4, TOTAL: 15 } as const;
 export const MAX_PER_COUNTRY = 3;
+export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha; los extra cuestan pines
 
 export const POSITIONS = ['GK', 'DEF', 'MID', 'FWD'] as const;
 export type Position = (typeof POSITIONS)[number];
