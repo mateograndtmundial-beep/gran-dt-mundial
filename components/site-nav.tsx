@@ -51,7 +51,7 @@ export function SiteNav() {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-pitch/90 backdrop-blur">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-1.5 text-lg font-extrabold tracking-tight">
-            <span className="text-gold">DT</span> Mundial
+            Los <span className="text-gold">11</span> de Sampa
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {links.map((l) => (

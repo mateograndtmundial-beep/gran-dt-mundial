@@ -8,12 +8,20 @@ export const SEASON = Number(process.env.API_FOOTBALL_SEASON ?? 2026);
 async function apiGet<T = unknown>(
   path: string,
   params: Record<string, string | number> = {},
+  attempt = 0,
 ): Promise<T[]> {
   if (!KEY) throw new Error('Falta API_FOOTBALL_KEY en el entorno');
   const url = new URL(`${BASE_URL}/${path}`);
   for (const [k, v] of Object.entries(params)) url.searchParams.set(k, String(v));
 
   const res = await fetch(url, { headers: { 'x-apisports-key': KEY } });
+
+  // Rate limit (plan gratis): esperar y reintentar.
+  if (res.status === 429 && attempt < 5) {
+    const retryAfter = Number(res.headers.get('retry-after')) || 6;
+    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    return apiGet<T>(path, params, attempt + 1);
+  }
   if (!res.ok) throw new Error(`API-Football ${path} -> ${res.status} ${res.statusText}`);
 
   const json = (await res.json()) as { response: T[]; errors?: unknown };

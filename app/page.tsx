@@ -28,7 +28,7 @@ export default function Home() {
       <section className="rounded-2xl border border-white/10 bg-gradient-to-b from-pitch-card to-pitch p-8 text-center md:p-12">
         <p className="text-sm font-semibold uppercase tracking-widest text-accent">Mundial 2026</p>
         <h1 className="mt-2 text-4xl font-extrabold md:text-6xl">
-          DT <span className="text-gold">Mundial</span>
+          Los <span className="text-gold">11</span> de Sampa
         </h1>
         <p className="mt-3 text-white/70">Armá tu equipo. Ganale a tus amigos.</p>
         <div className="mt-8 flex justify-center">

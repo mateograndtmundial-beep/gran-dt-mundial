@@ -6,6 +6,8 @@ import { ROUNDS } from '../lib/game/config';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 async function seedRounds(): Promise<Map<number, number>> {
   console.log('→ Fechas (rounds)...');
   const existing = await db.select().from(rounds);
@@ -77,6 +79,7 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
     } catch (e) {
       console.warn(`  squad ${apiId}:`, (e as Error).message);
     }
+    await sleep(6500);
 
     try {
       const cs = (await apiFootball.coach(apiId)) as any[];
@@ -90,6 +93,7 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
     } catch (e) {
       console.warn(`  coach ${apiId}:`, (e as Error).message);
     }
+    await sleep(6500);
   }
 }
 

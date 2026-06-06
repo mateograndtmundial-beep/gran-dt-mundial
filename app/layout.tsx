@@ -4,7 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { SiteNav } from "@/components/site-nav";
 
 export const metadata: Metadata = {
-  title: "DT Mundial — Fantasy del Mundial 2026",
+  title: "Los 11 de Sampa — Fantasy del Mundial 2026",
   description: "Armá tu equipo del Mundial 2026, sumá puntos y competí con amigos.",
 };
 
