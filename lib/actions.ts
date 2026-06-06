@@ -13,11 +13,14 @@ import { round1 } from "@/lib/pricing/map";
 type BatchOp = Parameters<typeof db.batch>[0][number];
 
 export type SaveLineupInput = {
+  teamName: string;
   formation: string;
   captainPlayerId: number | null;
   coachId: number | null;
   players: { playerId: number; isStarter: boolean; slot: string }[];
 };
+
+const TEAM_NAME_MAX = 40;
 
 export async function saveLineup(input: SaveLineupInput) {
   const user = await getCurrentUser();
@@ -25,6 +28,9 @@ export async function saveLineup(input: SaveLineupInput) {
   const editable = await getEditableRound();
   if (!editable) return { ok: false as const, error: "locked" as const };
   const round = editable.round;
+
+  const teamName = input.teamName.trim().slice(0, TEAM_NAME_MAX);
+  if (!teamName) return { ok: false as const, error: "name" as const };
 
   // Validación server-side: recalculamos costo y composición desde la DB,
   // no confiamos en lo que manda el cliente (budgetUsed, conteos).
@@ -60,12 +66,9 @@ export async function saveLineup(input: SaveLineupInput) {
 
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];
   if (!entry) {
-    entry = (
-      await db
-        .insert(entries)
-        .values({ userId: user.id, name: user.username ?? "Mi equipo" })
-        .returning()
-    )[0];
+    entry = (await db.insert(entries).values({ userId: user.id, name: teamName }).returning())[0];
+  } else if (entry.name !== teamName) {
+    await db.update(entries).set({ name: teamName }).where(eq(entries.id, entry.id));
   }
   if (!entry) throw new Error("No se pudo crear el equipo");
 

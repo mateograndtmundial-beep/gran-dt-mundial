@@ -159,7 +159,7 @@ export async function getEditableLineup(userId: number) {
     .where(eq(entryRoundPlayers.entryRoundId, er.id));
   const slots: Record<string, number> = {};
   for (const r of lp) if (r.slot) slots[r.slot] = r.playerId;
-  return { formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
+  return { teamName: entry.name, formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
 }
 
 export async function getMyLeagues(userId: number) {

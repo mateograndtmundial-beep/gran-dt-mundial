@@ -68,9 +68,9 @@ export function LeagueRanking({
                     rank === 1 ? "text-lg" : isTop3 ? "text-base" : "text-sm",
                   )}
                 >
-                  {r.entryName ?? "Sin equipo"}
+                  {r.username ?? "DT"}
                 </span>
-                <span className="block truncate text-xs text-ink-3">{r.username ?? "DT"}</span>
+                <span className="block truncate text-xs text-ink-3">{r.entryName ?? "Sin equipo"}</span>
               </span>
 
               {/* Puntos — cascada descendente 1 > 2 > 3 > resto */}

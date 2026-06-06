@@ -63,6 +63,7 @@ export default async function EquipoPage() {
           budget={BUDGET}
           maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
           initial={initial}
+          initialTeamName={initial?.teamName ?? ""}
           deadlineLabel={deadlineLabel}
         />
       )}

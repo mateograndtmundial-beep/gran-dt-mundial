@@ -36,6 +36,7 @@ export function FieldBuilder({
   budget = BUDGET,
   maxPerCountry = MAX_PER_COUNTRY,
   initial,
+  initialTeamName = "",
   deadlineLabel = "CERRÁ TU EQUIPO",
 }: {
   players: PlayerRow[];
@@ -43,6 +44,7 @@ export function FieldBuilder({
   budget?: number;
   maxPerCountry?: number | null;
   initial?: InitialLineup | null;
+  initialTeamName?: string;
   deadlineLabel?: string;
 }) {
   const router = useRouter();
@@ -57,6 +59,7 @@ export function FieldBuilder({
     }
     return m;
   });
+  const [teamName, setTeamName]     = useState(initialTeamName);
   const [captainId, setCaptainId]   = useState<number | null>(initial?.captainPlayerId ?? null);
   const [coachId, setCoachId]       = useState<number | null>(initial?.coachId ?? null);
   const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | null>(null);
@@ -88,6 +91,7 @@ export function FieldBuilder({
   const captainOk      = captainId != null && starterSlots.some((s) => picks[s.id]?.id === captainId);
 
   const errors: string[] = [];
+  if (!teamName.trim()) errors.push("Ponele un nombre a tu equipo");
   if (!startersFilled) errors.push("Completá los 11 titulares");
   if (!subsFilled)     errors.push(`Completá los ${subSlots.length} suplentes`);
   if (remaining < 0)   errors.push("Te pasaste del presupuesto");
@@ -176,6 +180,7 @@ export function FieldBuilder({
       slot,
     }));
     const res = await saveLineup({
+      teamName,
       formation,
       captainPlayerId: captainId,
       coachId,
@@ -197,6 +202,10 @@ export function FieldBuilder({
     }
     if (!res.ok && res.error === "locked") {
       setMessage("El equipo está bloqueado: la fecha ya empezó.");
+      return;
+    }
+    if (!res.ok && res.error === "name") {
+      setMessage("Ponele un nombre a tu equipo antes de guardar.");
       return;
     }
     if (!res.ok) { setMessage("No se pudo guardar. Revisá la base de datos."); return; }
@@ -295,6 +304,19 @@ export function FieldBuilder({
 
         {/* Rail derecho (scrollea solo, la cancha nunca se corta) */}
         <div className="flex flex-col gap-3 md:max-h-[calc(100dvh-16.5rem)] md:overflow-y-auto md:pr-0.5">
+          {/* Nombre del equipo (aparece en el ranking) */}
+          <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
+            <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
+            <input
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              maxLength={40}
+              placeholder="Ej: Los Galácticos"
+              aria-label="Nombre del equipo"
+              className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
+            />
+          </div>
+
           {/* Suplentes */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Suplentes</Eyebrow>
