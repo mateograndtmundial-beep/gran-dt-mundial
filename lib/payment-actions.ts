@@ -6,14 +6,22 @@ import { products, orders } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getProvider, providerForCountry } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
+import { headers } from "next/headers";
 
 /**
  * Crea una orden de compra de pines y devuelve la URL de checkout del proveedor
  * (Mercado Pago para AR, dLocal para el resto). El frontend redirige a esa URL.
  */
-export async function createPinOrder(productSku: string, country: string) {
+export async function createPinOrder(productSku: string, country?: string) {
   const user = await getCurrentUser();
   if (!user) return { ok: false as const, error: "auth" as const };
+
+  // País: lo manda el front, o lo autodetectamos por geo (header de Vercel) → fallback AR.
+  let cc = (country ?? "").toUpperCase();
+  if (!cc) {
+    const h = await headers();
+    cc = (h.get("x-vercel-ip-country") ?? "AR").toUpperCase();
+  }
 
   const product = (
     await db
@@ -24,7 +32,7 @@ export async function createPinOrder(productSku: string, country: string) {
   )[0];
   if (!product) return { ok: false as const, error: "product" as const };
 
-  const providerName = providerForCountry(country);
+  const providerName = providerForCountry(cc);
   const isAr = providerName === "mercadopago";
   const amount = isAr ? product.priceArs : product.priceUsd;
   const currency = isAr ? "ARS" : "USD";
@@ -54,7 +62,7 @@ export async function createPinOrder(productSku: string, country: string) {
       product: { sku: product.sku, name: product.name, pins: product.pins },
       amount,
       currency,
-      country: country.toUpperCase(),
+      country: cc,
       successUrl: `${base}/pines?status=success`,
       failureUrl: `${base}/pines?status=failure`,
       notificationUrl: `${base}/api/payments/webhook/${providerName}`,
@@ -72,4 +80,19 @@ export async function getMyPins(): Promise<number> {
   const user = await getCurrentUser();
   if (!user) return 0;
   return getPinBalance(user.id);
+}
+
+/** Estado de una orden (para la página de retorno /pines?status=...&order=...). */
+export async function getOrderStatus(orderId: number) {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const o = (
+    await db
+      .select({ status: orders.status, pins: orders.pins, userId: orders.userId })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1)
+  )[0];
+  if (!o || o.userId !== user.id) return null;
+  return { status: o.status, pins: o.pins };
 }

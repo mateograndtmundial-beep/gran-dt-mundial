@@ -1,8 +1,9 @@
 import type { CheckoutInput, CheckoutResult, PaymentProvider, WebhookResult } from "./types";
 
 // dLocal Go — resto de LatAm (Paraguay, Bolivia, etc.) con métodos locales.
-// NOTA: verificar endpoints/campos exactos y firma del webhook contra la doc de
-// dLocal Go cuando tengas la cuenta real; dejé la forma estándar de su API.
+// Verificado contra docs.dlocalgo.com: POST /v1/payments · auth "Bearer API_KEY:SECRET_KEY"
+// · estados PENDING/PAID/REJECTED/CANCELLED/EXPIRED · webhook = POST con { payment_id }.
+// Sandbox: DLOCAL_GO_BASE_URL=https://api-sbx.dlocalgo.com
 const API = process.env.DLOCAL_GO_BASE_URL ?? "https://api.dlocalgo.com";
 const KEY = process.env.DLOCAL_GO_API_KEY ?? "";
 const SECRET = process.env.DLOCAL_GO_SECRET_KEY ?? "";
