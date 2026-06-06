@@ -280,6 +280,7 @@ export function Pitch({
   onOpenSlot,
   onClearSlot,
   onToggleCaptain,
+  dropPosition,
   className,
   style,
 }: {
@@ -290,6 +291,8 @@ export function Pitch({
   onOpenSlot?: (slot: Slot) => void;
   onClearSlot?: (slotId: string) => void;
   onToggleCaptain?: (slotId: string) => void;
+  /** Posición que se está arrastrando: resalta los titulares compatibles como destino. */
+  dropPosition?: Position | null;
   className?: string;
   style?: React.CSSProperties;
 }) {
@@ -315,17 +318,28 @@ export function Pitch({
           return (
             <div key={pos} className="flex items-center justify-evenly gap-1">
               {rowSlots.map((s) => (
-                <Figurita
+                <div
                   key={s.id}
-                  slot={s}
-                  player={picks[s.id]}
-                  isCaptain={picks[s.id]?.id === captainId}
-                  editable={editable}
-                  eliminated={picks[s.id]?.eliminatedRound != null}
-                  onOpen={() => onOpenSlot?.(s)}
-                  onClear={() => onClearSlot?.(s.id)}
-                  onToggleCaptain={() => onToggleCaptain?.(s.id)}
-                />
+                  data-slot-id={s.id}
+                  data-position={s.position}
+                  data-starter="1"
+                  className={cn(
+                    "rounded-[10px] transition-shadow",
+                    dropPosition === s.position &&
+                      "ring-2 ring-gold ring-offset-2 ring-offset-[#16713F]",
+                  )}
+                >
+                  <Figurita
+                    slot={s}
+                    player={picks[s.id]}
+                    isCaptain={picks[s.id]?.id === captainId}
+                    editable={editable}
+                    eliminated={picks[s.id]?.eliminatedRound != null}
+                    onOpen={() => onOpenSlot?.(s)}
+                    onClear={() => onClearSlot?.(s.id)}
+                    onToggleCaptain={() => onToggleCaptain?.(s.id)}
+                  />
+                </div>
               ))}
             </div>
           );

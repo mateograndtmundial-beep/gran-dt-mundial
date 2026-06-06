@@ -3,13 +3,14 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X } from "lucide-react";
+import { X, GripVertical } from "lucide-react";
 import {
   FORMATIONS,
   DEFAULT_FORMATION,
   BUDGET,
   MAX_PER_COUNTRY,
   POSITION_LABELS,
+  type Position,
 } from "@/lib/game/config";
 import { saveLineup } from "@/lib/actions";
 import type { PlayerRow, CoachRow } from "@/lib/queries";
@@ -140,6 +141,49 @@ export function FieldBuilder({
     const p = picks[slotId];
     if (!p) return;
     setCaptainId((prev) => (prev === p.id ? null : p.id));
+  }
+
+  // Intercambia un suplente con un titular (mismo puesto). El titular desplazado
+  // pasa al banco; si era capitán, se limpia.
+  function swapSlots(subSlot: string, starterSlot: string) {
+    const benched = picks[starterSlot];
+    setNotice(null);
+    setPicks((prev) => {
+      const next = { ...prev };
+      const subP = next[subSlot];
+      const startP = next[starterSlot];
+      if (startP) next[subSlot] = startP; else delete next[subSlot];
+      if (subP) next[starterSlot] = subP; else delete next[starterSlot];
+      return next;
+    });
+    if (benched && benched.id === captainId) setCaptainId(null);
+  }
+
+  // Drag & drop (mouse + touch) de un suplente hacia un titular del mismo puesto.
+  const [drag, setDrag] = useState<
+    { slotId: string; position: Position; player: PlayerRow; x: number; y: number } | null
+  >(null);
+
+  function startSubDrag(e: React.PointerEvent, slotId: string, position: Position, player: PlayerRow) {
+    e.preventDefault();
+    setDrag({ slotId, position, player, x: e.clientX, y: e.clientY });
+    const move = (ev: PointerEvent) =>
+      setDrag((d) => (d ? { ...d, x: ev.clientX, y: ev.clientY } : d));
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      setDrag(null);
+      const el = document.elementFromPoint(ev.clientX, ev.clientY);
+      const target = el?.closest("[data-slot-id]") as HTMLElement | null;
+      if (!target) return;
+      const ts = target.getAttribute("data-slot-id");
+      const tp = target.getAttribute("data-position");
+      if (target.getAttribute("data-starter") === "1" && tp === position && ts && ts !== slotId) {
+        swapSlots(slotId, ts);
+      }
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
   }
 
   const pickedIds    = new Set(chosen.map((p) => p.id));
@@ -298,6 +342,7 @@ export function FieldBuilder({
             onOpenSlot={openSlot}
             onClearSlot={clearSlot}
             onToggleCaptain={toggleCaptain}
+            dropPosition={drag?.position ?? null}
             style={{ width: PITCH_FIT }}
           />
         </div>
@@ -324,10 +369,25 @@ export function FieldBuilder({
               {subSlots.map((s) => {
                 const p = picks[s.id];
                 return (
-                  <div key={s.id} className="flex items-center gap-2">
+                  <div
+                    key={s.id}
+                    className={cn(
+                      "flex items-center gap-2 rounded-[6px]",
+                      drag?.slotId === s.id && "opacity-40",
+                    )}
+                  >
                     <PositionChip position={s.position} />
                     {p ? (
                       <>
+                        <button
+                          type="button"
+                          onPointerDown={(e) => startSubDrag(e, s.id, s.position, p)}
+                          aria-label={`Arrastrar ${p.name} hacia un titular`}
+                          title="Arrastrá hacia un titular para intercambiarlos"
+                          className="shrink-0 cursor-grab touch-none text-ink-faint hover:text-ink-2 active:cursor-grabbing"
+                        >
+                          <GripVertical size={14} />
+                        </button>
                         {p.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img src={p.flagUrl} alt={p.countryName} className="h-4 w-6 rounded-sm object-cover shrink-0" />
@@ -563,6 +623,20 @@ export function FieldBuilder({
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Fantasma que sigue al puntero mientras se arrastra un suplente */}
+      {drag && (
+        <div
+          className="pointer-events-none fixed z-[60] flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-[6px] border border-gold-border bg-surface px-2 py-1 card-shadow-lg"
+          style={{ left: drag.x, top: drag.y }}
+        >
+          {drag.player.flagUrl && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={drag.player.flagUrl} alt="" className="h-4 w-6 rounded-sm object-cover" />
+          )}
+          <span className="text-xs font-bold text-ink">{drag.player.name}</span>
         </div>
       )}
     </div>
