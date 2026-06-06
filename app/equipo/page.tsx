@@ -3,7 +3,7 @@ import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
 import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, type PlayerRow, type CoachRow } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
-import { BUDGET } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY } from "@/lib/game/config";
 
 export const dynamic = "force-dynamic";
 
@@ -61,6 +61,7 @@ export default async function EquipoPage() {
           players={players}
           coaches={coaches}
           budget={BUDGET}
+          maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
           initial={initial}
           deadlineLabel={deadlineLabel}
         />

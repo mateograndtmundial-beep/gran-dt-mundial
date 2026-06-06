@@ -48,10 +48,14 @@ export async function saveLineup(input: SaveLineupInput) {
   if (budgetUsed > BUDGET + 0.05) {
     return { ok: false as const, error: "budget" as const, used: budgetUsed, budget: BUDGET };
   }
-  const perCountry = new Map<number, number>();
-  for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
-  if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
-    return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
+  // El tope por nacionalidad rige solo en fase de grupos; en playoffs quedan
+  // pocas selecciones vivas y mantenerlo lo haría imposible.
+  if (round.type === "group") {
+    const perCountry = new Map<number, number>();
+    for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
+    if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
+      return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
+    }
   }
 
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];

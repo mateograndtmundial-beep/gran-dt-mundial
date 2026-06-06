@@ -34,12 +34,14 @@ export function FieldBuilder({
   players,
   coaches,
   budget = BUDGET,
+  maxPerCountry = MAX_PER_COUNTRY,
   initial,
   deadlineLabel = "CERRÁ TU EQUIPO",
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
   budget?: number;
+  maxPerCountry?: number | null;
   initial?: InitialLineup | null;
   deadlineLabel?: string;
 }) {
@@ -59,11 +61,17 @@ export function FieldBuilder({
   const [coachId, setCoachId]       = useState<number | null>(initial?.coachId ?? null);
   const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | null>(null);
   const [search, setSearch]         = useState("");
+  const [modalCountry, setModalCountry] = useState<string>("ALL");
+  const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc">("price-desc");
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
   const [notice, setNotice]         = useState<string | null>(null);
 
   const slots     = useMemo(() => buildSlots(formation), [formation]);
+  const playerCountries = useMemo(
+    () => Array.from(new Set(players.map((p) => p.countryName))).sort((a, b) => a.localeCompare(b)),
+    [players],
+  );
   const coach     = coaches.find((c) => c.id === coachId) ?? null;
   const chosen    = Object.values(picks);
   const used      = round1(chosen.reduce((s, p) => s + p.price, 0) + (coach?.price ?? 0));
@@ -83,7 +91,8 @@ export function FieldBuilder({
   if (!startersFilled) errors.push("Completá los 11 titulares");
   if (!subsFilled)     errors.push(`Completá los ${subSlots.length} suplentes`);
   if (remaining < 0)   errors.push("Te pasaste del presupuesto");
-  if (maxCountry > MAX_PER_COUNTRY) errors.push(`Máx ${MAX_PER_COUNTRY} jugadores por selección`);
+  if (maxPerCountry != null && maxCountry > maxPerCountry)
+    errors.push(`Máx ${maxPerCountry} jugadores por selección`);
   if (!captainOk)      errors.push("Elegí un capitán");
   if (!coachId)        errors.push("Elegí un técnico");
   const valid = errors.length === 0;
@@ -137,8 +146,14 @@ export function FieldBuilder({
           (p) =>
             p.position === modal.slot.position &&
             !pickedIds.has(p.id) &&
+            (modalCountry === "ALL" || p.countryName === modalCountry) &&
             (nq === "" || normalizeName(p.name).includes(nq) || normalizeName(p.countryName).includes(nq)),
         )
+        .sort((a, b) => {
+          if (modalSort === "name-asc") return a.name.localeCompare(b.name);
+          if (modalSort === "price-asc") return a.price - b.price || a.name.localeCompare(b.name);
+          return b.price - a.price || a.name.localeCompare(b.name);
+        })
         .slice(0, 120)
     : [];
   const modalCoaches = modal?.type === "coach"
@@ -192,8 +207,17 @@ export function FieldBuilder({
 
   function openSlot(s: Slot) {
     setSearch("");
+    setModalCountry("ALL");
+    setModalSort("price-desc");
     setModal({ type: "player", slot: s });
   }
+
+  // Presupuesto disponible para ESTE slot: si ya hay alguien, su precio se libera
+  // al reemplazarlo. Sirve para sombrear a los que no entran (no para bloquear el
+  // resto del equipo).
+  const slotCurrent = modal?.type === "player" ? picks[modal.slot.id] : null;
+  const freeForSlot = round1(budget - used + (slotCurrent?.price ?? 0));
+  const freeForCoach = round1(budget - used + (coach?.price ?? 0));
 
   return (
     <div className="flex flex-col gap-3">
@@ -411,8 +435,33 @@ export function FieldBuilder({
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 placeholder="Buscar…"
-                className="mb-3 w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
+                className="mb-2 w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
               />
+              {modal.type === "player" && (
+                <div className="mb-3 flex gap-2">
+                  <select
+                    value={modalCountry}
+                    onChange={(e) => setModalCountry(e.target.value)}
+                    aria-label="Filtrar por país"
+                    className="min-w-0 flex-1 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
+                  >
+                    <option value="ALL">Todos los países</option>
+                    {playerCountries.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={modalSort}
+                    onChange={(e) => setModalSort(e.target.value as typeof modalSort)}
+                    aria-label="Ordenar"
+                    className="shrink-0 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
+                  >
+                    <option value="price-desc">Precio: mayor a menor</option>
+                    <option value="price-asc">Precio: menor a mayor</option>
+                    <option value="name-asc">Nombre: A → Z</option>
+                  </select>
+                </div>
+              )}
               <div className="max-h-[50vh] space-y-0.5 overflow-y-auto">
                 {modal.type === "player" && modalPlayers.length === 0 && (
                   <p className="px-3 py-8 text-center text-sm text-ink-3">
@@ -425,11 +474,18 @@ export function FieldBuilder({
                   </p>
                 )}
                 {modal.type === "player"
-                  ? modalPlayers.map((p) => (
+                  ? modalPlayers.map((p) => {
+                      const affordable = p.price <= freeForSlot + 0.05;
+                      return (
                       <button
                         key={p.id}
-                        onClick={() => pickPlayer(modal.slot.id, p)}
-                        className="flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left hover:bg-surface-2 transition-colors group"
+                        onClick={() => affordable && pickPlayer(modal.slot.id, p)}
+                        disabled={!affordable}
+                        title={affordable ? undefined : "No te alcanza el presupuesto"}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
+                          affordable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
+                        )}
                       >
                         {p.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -438,19 +494,30 @@ export function FieldBuilder({
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-ink group-hover:text-blue">
+                          <span className={cn("block truncate text-sm font-semibold text-ink", affordable && "group-hover:text-blue")}>
                             {p.name}
                           </span>
-                          <span className="block truncate text-xs text-ink-3">{p.countryName}</span>
+                          <span className="block truncate text-xs text-ink-3">
+                            {p.countryName}
+                            {!affordable && <span className="text-danger"> · no te alcanza</span>}
+                          </span>
                         </span>
-                        <span className="jersey-numeral text-sm text-blue shrink-0">{formatPrice(p.price)}M</span>
+                        <span className={cn("jersey-numeral text-sm shrink-0", affordable ? "text-blue" : "text-danger")}>{formatPrice(p.price)}M</span>
                       </button>
-                    ))
-                  : modalCoaches.map((c) => (
+                      );
+                    })
+                  : modalCoaches.map((c) => {
+                      const affordable = c.price <= freeForCoach + 0.05;
+                      return (
                       <button
                         key={c.id}
-                        onClick={() => { setCoachId(c.id); setModal(null); }}
-                        className="flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left hover:bg-surface-2 transition-colors group"
+                        onClick={() => { if (!affordable) return; setCoachId(c.id); setModal(null); }}
+                        disabled={!affordable}
+                        title={affordable ? undefined : "No te alcanza el presupuesto"}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
+                          affordable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
+                        )}
                       >
                         {c.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -459,14 +526,18 @@ export function FieldBuilder({
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-semibold text-ink group-hover:text-blue">
+                          <span className={cn("block truncate text-sm font-semibold text-ink", affordable && "group-hover:text-blue")}>
                             {c.name}
                           </span>
-                          <span className="block truncate text-xs text-ink-3">{c.countryName}</span>
+                          <span className="block truncate text-xs text-ink-3">
+                            {c.countryName}
+                            {!affordable && <span className="text-danger"> · no te alcanza</span>}
+                          </span>
                         </span>
-                        <span className="jersey-numeral text-sm text-blue shrink-0">{formatPrice(c.price)}M</span>
+                        <span className={cn("jersey-numeral text-sm shrink-0", affordable ? "text-blue" : "text-danger")}>{formatPrice(c.price)}M</span>
                       </button>
-                    ))}
+                      );
+                    })}
               </div>
             </div>
           </div>
