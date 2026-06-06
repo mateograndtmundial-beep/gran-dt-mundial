@@ -1,0 +1,1 @@
+ALTER TABLE "players" ADD COLUMN "price_manual" boolean DEFAULT false NOT NULL;

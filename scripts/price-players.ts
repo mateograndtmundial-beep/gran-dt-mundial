@@ -161,23 +161,29 @@ async function main() {
     `→ mvRef (p${PRICING.MV_REF_PERCENTILE}) = €${(mvRef / 1e6).toFixed(1)}M → mapea a ~${PRICING.MAX}M.`,
   );
 
-  // 2ª pasada: precio por jugador.
+  // 2ª pasada: precio por jugador. Los precios fijados a mano (priceManual) NO se
+  // recalculan: conservan su valor actual y no se reescriben.
   const priced = rows.map((r) => ({
     id: r.p.id,
     name: r.p.name,
     country: r.p.countryName,
     position: r.p.position,
-    price: r.mv != null ? computePrice(r.mv, mvRef) : PRICING.MIN,
+    manual: r.p.priceManual,
+    price: r.p.priceManual ? r.p.price : r.mv != null ? computePrice(r.mv, mvRef) : PRICING.MIN,
   }));
+  const manualCount = priced.filter((p) => p.manual).length;
 
   // ── Escritura ──
   if (DRY) {
-    console.log("\n(--dry: no se escribió nada)");
+    console.log(`\n(--dry: no se escribió nada · ${manualCount} manuales se respetarían)`);
   } else {
+    let written = 0;
     for (const row of priced) {
+      if (row.manual) continue; // respetamos los precios fijados a mano
       await db.update(players).set({ price: row.price }).where(eq(players.id, row.id));
+      written++;
     }
-    console.log(`\n✅ ${priced.length} precios actualizados.`);
+    console.log(`\n✅ ${written} precios actualizados · ${manualCount} manuales respetados.`);
   }
 
   // ── Calibración ──
