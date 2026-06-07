@@ -64,7 +64,13 @@ export function Countdown({ target }: { target: string }) {
   const isSecChanging = prevSec !== null && prevSec !== s;
 
   return (
-    <div className="flex items-start gap-2 md:gap-4">
+    // role=timer + label estático: describe la cuenta sin anunciar cada segundo
+    // (un aria-live por tick sería ruido para lectores de pantalla).
+    <div
+      className="flex items-start gap-2 md:gap-4"
+      role="timer"
+      aria-label={`Faltan ${d} días, ${h} horas y ${m} minutos para el inicio`}
+    >
       <Digit v={d} l="DÍAS" isChanging={false} />
       <span className="jersey-numeral text-2xl text-ink-3 self-start mt-3">:</span>
       <Digit v={h} l="HS" isChanging={false} />

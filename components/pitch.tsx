@@ -235,6 +235,10 @@ export function Figurita({
             <img
               src={player.flagUrl}
               alt={player.countryName}
+              width={48}
+              height={32}
+              loading="lazy"
+              decoding="async"
               className="h-8 w-12 object-cover"
             />
           ) : (

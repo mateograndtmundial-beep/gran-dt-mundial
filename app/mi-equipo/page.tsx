@@ -140,7 +140,7 @@ export default async function MiEquipoPage() {
                         <PositionChip position={s.position as Position} />
                         {s.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.flagUrl} alt={s.countryName} className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                          <img src={s.flagUrl} alt={s.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
                         ) : (
                           <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
                         )}
