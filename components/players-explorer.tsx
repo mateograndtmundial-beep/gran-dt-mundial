@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Search, ChevronDown, X } from "lucide-react";
-import { POSITIONS, type Position } from "@/lib/game/config";
+import { POSITIONS, POSITION_ABBR, type Position } from "@/lib/game/config";
 import { PlayerCard } from "@/components/player-card";
 import { cn, formatPrice } from "@/lib/utils";
 import { normalizeName } from "@/lib/pricing/normalize";
@@ -18,12 +18,10 @@ type P = {
   eliminatedRound: number | null;
 };
 
+// Etiquetas en español (POR/DEF/MED/DEL), fuente única en POSITION_ABBR.
 const POS_LABELS: Record<Position | "ALL", string> = {
   ALL: "Todos",
-  GK:  "Arq",
-  DEF: "Def",
-  MID: "Vol",
-  FWD: "Del",
+  ...POSITION_ABBR,
 };
 
 type SortKey = "price-desc" | "price-asc" | "name-asc";

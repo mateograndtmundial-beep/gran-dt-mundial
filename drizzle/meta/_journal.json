@@ -43,6 +43,13 @@
       "when": 1780858723170,
       "tag": "0005_ancient_dragon_man",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780860725543,
+      "tag": "0006_dry_warbound",
+      "breakpoints": true
     }
   ]
 }

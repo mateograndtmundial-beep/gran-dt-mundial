@@ -30,7 +30,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ provider: stri
   return handle(req, provider);
 }
 
-export async function GET(req: Request, ctx: { params: Promise<{ provider: string }> }) {
-  const { provider } = await ctx.params;
-  return handle(req, provider);
+// Solo POST: un webhook nunca llega por GET. Aceptarlo abría un vector tipo
+// `<img src=".../webhook?...">` (CSRF) y exposición vía query params en logs.
+export function GET() {
+  return new Response("método no permitido", { status: 405, headers: { Allow: "POST" } });
 }

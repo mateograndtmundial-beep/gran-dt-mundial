@@ -43,6 +43,26 @@ export function Badge({ children, className }: { children: ReactNode; className?
   );
 }
 
+/* Skeleton — bloque gris pulsante para estados de carga */
+export function Skeleton({ className }: { className?: string }) {
+  return <div aria-hidden className={cn("animate-pulse-skeleton rounded-[6px] bg-surface-2", className)} />;
+}
+
+/* SkeletonList — grilla de cards skeleton para listas */
+export function SkeletonList({ count = 6, className }: { count?: number; className?: string }) {
+  return (
+    <div
+      role="status"
+      aria-label="Cargando…"
+      className={cn("grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3", className)}
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <Skeleton key={i} className="h-20 w-full" />
+      ))}
+    </div>
+  );
+}
+
 /* EmptyState — centrado, tono apagado */
 export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (

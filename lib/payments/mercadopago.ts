@@ -1,8 +1,40 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { CheckoutInput, CheckoutResult, PaymentProvider, WebhookResult } from "./types";
 
 // Mercado Pago — Checkout Pro (Argentina). Vía REST API con access token.
 const MP_TOKEN = process.env.MP_ACCESS_TOKEN ?? "";
 const MP_API = "https://api.mercadopago.com";
+
+/**
+ * Verifica la firma `x-signature` del webhook (HMAC-SHA256 sobre el manifest
+ * `id:<data.id>;request-id:<x-request-id>;ts:<ts>;`). Opt-in: solo se exige si está
+ * configurado MP_WEBHOOK_SECRET; sin secreto (dev/pre-lanzamiento) no se bloquea.
+ */
+function verifyMpSignature(req: Request, dataId: string | null): boolean {
+  const secret = process.env.MP_WEBHOOK_SECRET;
+  if (!secret) return true;
+  const sig = req.headers.get("x-signature");
+  const requestId = req.headers.get("x-request-id");
+  if (!sig || !dataId) return false;
+  const parts = Object.fromEntries(
+    sig.split(",").map((kv) => {
+      const i = kv.indexOf("=");
+      return [kv.slice(0, i).trim(), kv.slice(i + 1).trim()];
+    }),
+  );
+  const ts = parts.ts;
+  const v1 = parts.v1;
+  if (!ts || !v1) return false;
+  // MP: si data.id es alfanumérico, va en minúsculas en el manifest.
+  const id = /^[a-zA-Z0-9]+$/.test(dataId) ? dataId.toLowerCase() : dataId;
+  const manifest = `id:${id};request-id:${requestId ?? ""};ts:${ts};`;
+  const expected = createHmac("sha256", secret).update(manifest).digest("hex");
+  try {
+    return timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(v1, "hex"));
+  } catch {
+    return false;
+  }
+}
 
 export const mercadopago: PaymentProvider = {
   name: "mercadopago",
@@ -40,7 +72,10 @@ export const mercadopago: PaymentProvider = {
     if (!MP_TOKEN) return null;
     const url = new URL(req.url);
     const type = url.searchParams.get("type") ?? url.searchParams.get("topic");
-    let paymentId = url.searchParams.get("data.id") ?? url.searchParams.get("id");
+    const dataIdQuery = url.searchParams.get("data.id") ?? url.searchParams.get("id");
+    // Firma sobre el data.id de la query (lo que MP firma en la IPN).
+    if (!verifyMpSignature(req, dataIdQuery)) return null;
+    let paymentId = dataIdQuery;
     if (!paymentId) {
       try {
         const body = (await req.json()) as { data?: { id?: string } };

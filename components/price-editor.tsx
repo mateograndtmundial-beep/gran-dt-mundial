@@ -99,7 +99,7 @@ export function PriceEditor({ players }: { players: P[] }) {
             >
               {p.flagUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.flagUrl} alt={p.countryName} className="h-4 w-6 rounded-sm object-cover shrink-0" />
+                <img src={p.flagUrl} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
               ) : (
                 <div className="h-4 w-6 rounded-sm bg-surface-2 shrink-0" />
               )}

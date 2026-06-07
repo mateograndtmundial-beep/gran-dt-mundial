@@ -276,7 +276,18 @@ export function FieldBuilder({
       setMessage("Ponele un nombre a tu equipo antes de guardar.");
       return;
     }
-    if (!res.ok) { setMessage("No se pudo guardar. Revisá la base de datos."); return; }
+    if (
+      !res.ok &&
+      (res.error === "invalid_formation" ||
+        res.error === "invalid_squad_size" ||
+        res.error === "invalid_formation_composition" ||
+        res.error === "invalid_captain" ||
+        res.error === "invalid")
+    ) {
+      setMessage("La alineación no es válida. Revisá titulares, suplentes y capitán.");
+      return;
+    }
+    if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
     router.push("/mi-equipo");
   }
 
@@ -336,11 +347,13 @@ export function FieldBuilder({
         </div>
 
         {/* formaciones — fila scrollable */}
-        <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5">
+        <div className="mt-2.5 flex gap-1.5 overflow-x-auto pb-0.5" role="group" aria-label="Formación">
           {Object.keys(FORMATIONS).map((f) => (
             <button
               key={f}
               onClick={() => onFormationChange(f)}
+              aria-label={`Formación ${f}`}
+              aria-pressed={formation === f}
               className={cn(
                 "shrink-0 rounded-[4px] px-2.5 py-1 font-display text-sm leading-none transition-colors",
                 formation === f
@@ -420,7 +433,7 @@ export function FieldBuilder({
                         </button>
                         {p.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt={p.countryName} className="h-4 w-6 rounded-sm object-cover shrink-0" />
+                          <img src={p.flagUrl} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-4 w-6 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -626,7 +639,7 @@ export function FieldBuilder({
                       >
                         {p.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt={p.countryName} className="h-5 w-7 rounded-sm object-cover shrink-0" />
+                          <img src={p.flagUrl} alt={p.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -658,7 +671,7 @@ export function FieldBuilder({
                       >
                         {c.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.flagUrl} alt={c.countryName} className="h-5 w-7 rounded-sm object-cover shrink-0" />
+                          <img src={c.flagUrl} alt={c.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -705,7 +718,7 @@ export function FieldBuilder({
                   <li key={p.id} className="flex items-center gap-2 text-sm font-semibold text-ink">
                     {p.flagUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.flagUrl} alt="" className="h-4 w-6 rounded-sm object-cover" />
+                      <img src={p.flagUrl} alt="" aria-hidden width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover" />
                     ) : (
                       <span className="h-4 w-6 rounded-sm bg-surface-2" />
                     )}
@@ -740,7 +753,7 @@ export function FieldBuilder({
         >
           {drag.player.flagUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={drag.player.flagUrl} alt="" className="h-4 w-6 rounded-sm object-cover" />
+            <img src={drag.player.flagUrl} alt="" aria-hidden width={24} height={16} decoding="async" className="h-4 w-6 rounded-sm object-cover" />
           )}
           <span className="text-xs font-bold text-ink">{drag.player.name}</span>
         </div>

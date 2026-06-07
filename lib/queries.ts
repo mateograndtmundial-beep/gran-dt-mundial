@@ -89,7 +89,7 @@ export async function getAllRounds() {
   return db.select().from(rounds).orderBy(asc(rounds.order));
 }
 
-export async function getGlobalLeaderboard(limit = 100) {
+export async function getGlobalLeaderboard(limit = 100, offset = 0) {
   return db
     .select({
       entryId: entries.id,
@@ -99,8 +99,9 @@ export async function getGlobalLeaderboard(limit = 100) {
     })
     .from(entries)
     .innerJoin(users, eq(entries.userId, users.id))
-    .orderBy(desc(entries.totalPoints))
-    .limit(limit);
+    .orderBy(desc(entries.totalPoints), asc(entries.id))
+    .limit(Math.max(1, Math.min(limit, 200)))
+    .offset(Math.max(0, offset));
 }
 
 /** Posición global de un entry: 1 + cantidad de entries con más puntos. */

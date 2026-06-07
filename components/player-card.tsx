@@ -42,7 +42,7 @@ export function PlayerCard({
     >
       {flagUrl ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={flagUrl} alt={countryName} className="h-5 w-7 rounded-sm object-cover shrink-0" />
+        <img src={flagUrl} alt={countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
       ) : (
         <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
       )}

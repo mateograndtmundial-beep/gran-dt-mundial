@@ -3,8 +3,28 @@ import { db } from "@/lib/db";
 import { matches, players, playerMatchStats } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
+import { chunkedBatch, type BatchOp } from "@/lib/db/batch";
+import { SCORING } from "@/lib/game/config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
+
+// Partidos sincronizados en paralelo. Acotado para no saturar el rate limit de
+// API-Football (el client igual reintenta con backoff ante 429).
+const SYNC_CONCURRENCY = 3;
+
+/** Corre `fn` sobre los items con un máximo de `limit` en paralelo. */
+async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const idx = next++;
+      results[idx] = await fn(items[idx]!);
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
+}
 
 /**
  * Trae las estadísticas de todos los partidos de una fecha desde API-Football,
@@ -24,19 +44,20 @@ export async function syncRound(roundId: number) {
     .from(players);
   const byApi = new Map(allPlayers.filter((p) => p.apiId != null).map((p) => [p.apiId as number, p]));
 
-  let updated = 0;
-  for (const m of ms) {
-    if (!m.apiFootballFixtureId) continue;
+  const syncMatch = async (m: (typeof ms)[number]): Promise<boolean> => {
+    if (!m.apiFootballFixtureId) return false;
 
-    const fx = (await apiFootball.fixtureById(m.apiFootballFixtureId)) as any[];
+    // Las dos llamadas del partido van en paralelo.
+    const [fx, data] = (await Promise.all([
+      apiFootball.fixtureById(m.apiFootballFixtureId),
+      apiFootball.fixturePlayers(m.apiFootballFixtureId),
+    ])) as [any[], any[]];
     const f = fx?.[0];
     const homeScore: number | null = f?.goals?.home ?? null;
     const awayScore: number | null = f?.goals?.away ?? null;
     const statusShort: string | undefined = f?.fixture?.status?.short;
     const finished = ["FT", "AET", "PEN"].includes(statusShort ?? "");
     const homeTeamApi = f?.teams?.home?.id;
-
-    const data = (await apiFootball.fixturePlayers(m.apiFootballFixtureId)) as any[];
 
     type Raw = {
       our: NonNullable<ReturnType<typeof byApi.get>>;
@@ -73,16 +94,17 @@ export async function syncRound(roundId: number) {
       }
     }
 
-    // Figura: mayor rating con >= 20'. (Empates: se queda el primero; el admin puede ajustar.)
+    // Figura: mayor rating con >= minMinutes. (Empates: se queda el primero; el admin puede ajustar.)
     let motmPlayerId: number | null = null;
     let best = -1;
     for (const r of raws) {
-      if (r.minutes >= 20 && r.rating != null && r.rating > best) {
+      if (r.minutes >= SCORING.minMinutes && r.rating != null && r.rating > best) {
         best = r.rating;
         motmPlayerId = r.our.id;
       }
     }
 
+    const ops: BatchOp[] = [];
     for (const r of raws) {
       const concededTeam = r.isHome ? awayScore ?? 0 : homeScore ?? 0;
       const cleanSheet = finished ? concededTeam === 0 : false;
@@ -123,26 +145,32 @@ export async function syncRound(roundId: number) {
         isMotm,
         fantasyPoints: bd.total,
       };
-      await db
-        .insert(playerMatchStats)
-        .values(values)
-        .onConflictDoUpdate({
-          target: [playerMatchStats.playerId, playerMatchStats.matchId],
-          set: values,
-        });
+      ops.push(
+        db
+          .insert(playerMatchStats)
+          .values(values)
+          .onConflictDoUpdate({
+            target: [playerMatchStats.playerId, playerMatchStats.matchId],
+            set: values,
+          }),
+      );
     }
 
-    await db
-      .update(matches)
-      .set({
-        homeScore,
-        awayScore,
-        status: finished ? "finished" : "scheduled",
-        motmPlayerId,
-      })
-      .where(eq(matches.id, m.id));
-    updated++;
-  }
+    ops.push(
+      db
+        .update(matches)
+        .set({
+          homeScore,
+          awayScore,
+          status: finished ? "finished" : "scheduled",
+          motmPlayerId,
+        })
+        .where(eq(matches.id, m.id)),
+    );
+    await chunkedBatch(ops);
+    return true;
+  };
 
-  return { matches: updated };
+  const results = await mapLimit(ms, SYNC_CONCURRENCY, syncMatch);
+  return { matches: results.filter(Boolean).length };
 }
