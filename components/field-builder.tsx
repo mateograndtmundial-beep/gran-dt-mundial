@@ -20,8 +20,11 @@ import { normalizeName } from "@/lib/pricing/normalize";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 
-/* Altura reservada para el chrome de arriba (header + título + control bar). */
-const PITCH_FIT = "min(100%, calc((100dvh - 16.5rem) * 0.6977))";
+/* Altura reservada para el chrome de arriba (header + título + control bar).
+   Usamos svh (small viewport) en vez de dvh: es estático y no cambia cuando la
+   barra de iOS Safari colapsa/aparece durante el scroll, así la cancha no se
+   redimensiona. */
+const PITCH_FIT = "min(100%, calc((100svh - 16.5rem) * 0.6977))";
 
 /* ─── FieldBuilder ─── */
 export type InitialLineup = {
@@ -371,7 +374,7 @@ export function FieldBuilder({
         </div>
 
         {/* Rail derecho (scrollea solo, la cancha nunca se corta) */}
-        <div className="flex flex-col gap-3 md:max-h-[calc(100dvh-16.5rem)] md:overflow-y-auto md:pr-0.5">
+        <div className="flex flex-col gap-3 md:max-h-[calc(100svh-16.5rem)] md:overflow-y-auto md:pr-0.5">
           {/* Nombre del equipo (aparece en el ranking) */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Manrope, Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
@@ -26,6 +26,16 @@ const archivoBlack = Archivo_Black({
   variable: "--font-archivo",
   display: "swap",
 });
+
+/* ─── Viewport ─── */
+// maximumScale: 1 evita el auto-zoom de iOS Safari al enfocar inputs (campos
+// con texto < 16px). iOS moderno sigue permitiendo el pinch-zoom manual por
+// accesibilidad, así que sólo desactivamos el zoom automático indeseado.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+};
 
 /* ─── Metadatos ─── */
 export const metadata: Metadata = {
