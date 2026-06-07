@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { and, desc, eq, inArray, lt } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches, pinTransactions } from "@/lib/db/schema";
+import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getEditableRound } from "@/lib/queries";
-import { getPinBalance } from "@/lib/pins";
+import { getPinBalance, pinMovementOps, isInsufficientPinsError } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND, type Position } from "@/lib/game/config";
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
@@ -142,11 +142,22 @@ export async function saveLineup(rawInput: SaveLineupInput) {
     isStarter: p.isStarter,
     slot: p.slot,
   }));
-  // El movimiento de pines va en el mismo ledger; delta>0 descuenta, delta<0 reembolsa.
-  const pinRow =
-    delta !== 0
-      ? { userId: user.id, delta: -delta, reason: "transfer" as const, roundId: round.id }
-      : null;
+  // El movimiento de pines va en el mismo batch (=misma transacción) que la
+  // alineación. Para delta>0 son ops atómicas (lock + débito) que abortan el batch si
+  // el saldo no alcanza (ver pinMovementOps), evitando guardar sin cobrar y negativos.
+  const pinOps = delta !== 0 ? (pinMovementOps(user.id, delta, round.id) as BatchOp[]) : [];
+
+  // Ejecuta el batch mapeando el guard de pines (1/0) a un error "pins" limpio.
+  const runBatch = async (ops: BatchOp[]) => {
+    if (!ops.length) return { pins: false as const };
+    try {
+      await db.batch(ops as [BatchOp, ...BatchOp[]]);
+      return { pins: false as const };
+    } catch (e) {
+      if (isInsufficientPinsError(e)) return { pins: true as const };
+      throw e;
+    }
+  };
 
   if (er0) {
     // Re-edición: reemplazo de la alineación. El delete + insert + ajuste de pines
@@ -164,8 +175,9 @@ export async function saveLineup(rawInput: SaveLineupInput) {
           .values(playerRows.map((p) => ({ ...p, entryRoundId: er0.id }))),
       );
     }
-    if (pinRow) ops.push(db.insert(pinTransactions).values(pinRow));
-    await db.batch(ops as [BatchOp, ...BatchOp[]]);
+    ops.push(...pinOps);
+    const r = await runBatch(ops);
+    if (r.pins) return { ok: false as const, error: "pins" as const, needed: delta, balance: await getPinBalance(user.id) };
   } else {
     // Primera alineación de la fecha: necesitamos el id generado antes de insertar
     // los jugadores, así que el insert del entryRound va aparte. No hay delete acá,
@@ -184,8 +196,9 @@ export async function saveLineup(rawInput: SaveLineupInput) {
         db.insert(entryRoundPlayers).values(playerRows.map((p) => ({ ...p, entryRoundId: er.id }))),
       );
     }
-    if (pinRow) ops.push(db.insert(pinTransactions).values(pinRow));
-    if (ops.length) await db.batch(ops as [BatchOp, ...BatchOp[]]);
+    ops.push(...pinOps);
+    const r = await runBatch(ops);
+    if (r.pins) return { ok: false as const, error: "pins" as const, needed: delta, balance: await getPinBalance(user.id) };
   }
 
   revalidatePath("/mi-equipo");
