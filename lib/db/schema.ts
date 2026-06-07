@@ -65,19 +65,23 @@ export const rounds = pgTable('rounds', {
   status: roundStatusEnum('status').notNull().default('open'),
 });
 
-export const matches = pgTable('matches', {
-  id: serial('id').primaryKey(),
-  roundId: integer('round_id').references(() => rounds.id).notNull(),
-  homeCountryId: integer('home_country_id').references(() => countries.id),
-  awayCountryId: integer('away_country_id').references(() => countries.id),
-  kickoff: timestamp('kickoff', { withTimezone: true }),
-  venue: text('venue'),
-  homeScore: integer('home_score'),
-  awayScore: integer('away_score'),
-  status: matchStatusEnum('status').notNull().default('scheduled'),
-  motmPlayerId: integer('motm_player_id'),
-  apiFootballFixtureId: integer('api_football_fixture_id').unique(),
-});
+export const matches = pgTable(
+  'matches',
+  {
+    id: serial('id').primaryKey(),
+    roundId: integer('round_id').references(() => rounds.id).notNull(),
+    homeCountryId: integer('home_country_id').references(() => countries.id),
+    awayCountryId: integer('away_country_id').references(() => countries.id),
+    kickoff: timestamp('kickoff', { withTimezone: true }),
+    venue: text('venue'),
+    homeScore: integer('home_score'),
+    awayScore: integer('away_score'),
+    status: matchStatusEnum('status').notNull().default('scheduled'),
+    motmPlayerId: integer('motm_player_id'),
+    apiFootballFixtureId: integer('api_football_fixture_id').unique(),
+  },
+  (t) => [index('matches_round').on(t.roundId)],
+);
 
 export const playerMatchStats = pgTable(
   'player_match_stats',
@@ -100,7 +104,10 @@ export const playerMatchStats = pgTable(
     isMotm: boolean('is_motm').notNull().default(false),
     fantasyPoints: doublePrecision('fantasy_points').notNull().default(0),
   },
-  (t) => [uniqueIndex('pms_player_match').on(t.playerId, t.matchId)],
+  (t) => [
+    uniqueIndex('pms_player_match').on(t.playerId, t.matchId),
+    index('pms_match').on(t.matchId), // publishRound: inArray(matchId, ...)
+  ],
 );
 
 export const playerRoundPoints = pgTable(
@@ -111,7 +118,10 @@ export const playerRoundPoints = pgTable(
     roundId: integer('round_id').references(() => rounds.id).notNull(),
     points: doublePrecision('points').notNull().default(0),
   },
-  (t) => [uniqueIndex('prp_player_round').on(t.playerId, t.roundId)],
+  (t) => [
+    uniqueIndex('prp_player_round').on(t.playerId, t.roundId),
+    index('prp_round').on(t.roundId),
+  ],
 );
 
 // ---------- Datos del juego (usuarios) ----------
@@ -133,13 +143,18 @@ export const users = pgTable(
   (t) => [uniqueIndex('users_username_lower_unique').on(sql`lower(${t.username})`)],
 );
 
-export const entries = pgTable('entries', {
-  id: serial('id').primaryKey(),
-  userId: integer('user_id').references(() => users.id).notNull().unique(),
-  name: text('name').notNull(),
-  totalPoints: doublePrecision('total_points').notNull().default(0),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const entries = pgTable(
+  'entries',
+  {
+    id: serial('id').primaryKey(),
+    userId: integer('user_id').references(() => users.id).notNull().unique(),
+    name: text('name').notNull(),
+    totalPoints: doublePrecision('total_points').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Ranking global: ORDER BY total_points DESC (Postgres escanea el índice en reversa).
+  (t) => [index('entries_total_points').on(t.totalPoints)],
+);
 
 export const entryRounds = pgTable(
   'entry_rounds',
@@ -155,16 +170,23 @@ export const entryRounds = pgTable(
     pinsSpent: integer('pins_spent').notNull().default(0),
     changesMade: integer('changes_made').notNull().default(0),
   },
-  (t) => [uniqueIndex('er_entry_round').on(t.entryId, t.roundId)],
+  (t) => [
+    uniqueIndex('er_entry_round').on(t.entryId, t.roundId),
+    index('er_round').on(t.roundId), // publishRound: where(roundId = X)
+  ],
 );
 
-export const entryRoundPlayers = pgTable('entry_round_players', {
-  id: serial('id').primaryKey(),
-  entryRoundId: integer('entry_round_id').references(() => entryRounds.id).notNull(),
-  playerId: integer('player_id').references(() => players.id).notNull(),
-  isStarter: boolean('is_starter').notNull().default(true),
-  slot: text('slot'),
-});
+export const entryRoundPlayers = pgTable(
+  'entry_round_players',
+  {
+    id: serial('id').primaryKey(),
+    entryRoundId: integer('entry_round_id').references(() => entryRounds.id).notNull(),
+    playerId: integer('player_id').references(() => players.id).notNull(),
+    isStarter: boolean('is_starter').notNull().default(true),
+    slot: text('slot'),
+  },
+  (t) => [index('erp_entry_round').on(t.entryRoundId)],
+);
 
 export const leagues = pgTable('leagues', {
   id: serial('id').primaryKey(),
