@@ -2,7 +2,9 @@ import { PageTitle, EmptyState } from "@/components/ui";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { getGlobalLeaderboard } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+// ISR: ranking global no dependiente del usuario. Se revalida cada 60s y on-demand
+// (publishRound hace revalidatePath("/ranking")).
+export const revalidate = 60;
 
 export default async function RankingPage() {
   let rows: Awaited<ReturnType<typeof getGlobalLeaderboard>> = [];

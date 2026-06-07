@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   matches,
@@ -12,6 +12,7 @@ import {
   countries,
 } from "@/lib/db/schema";
 import { computeEntryTotal, sumRoundPoints, type ScoringContext } from "@/lib/scoring/puntos-equipo";
+import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
 import { SCORING } from "@/lib/game/config";
 
 /**
@@ -48,15 +49,18 @@ export async function publishRound(roundId: number) {
   }
   const played = (pid: number) => (minutesByPlayer.get(pid) ?? 0) >= SCORING.minMinutes;
 
-  for (const [playerId, points] of pts) {
-    await db
-      .insert(playerRoundPoints)
-      .values({ playerId, roundId, points })
-      .onConflictDoUpdate({
-        target: [playerRoundPoints.playerId, playerRoundPoints.roundId],
-        set: { points },
-      });
-  }
+  // Upsert de puntos por jugador en lotes (en vez de N queries secuenciales).
+  await runChunked(
+    [...pts].map(([playerId, points]) =>
+      db
+        .insert(playerRoundPoints)
+        .values({ playerId, roundId, points })
+        .onConflictDoUpdate({
+          target: [playerRoundPoints.playerId, playerRoundPoints.roundId],
+          set: { points },
+        }),
+    ),
+  );
 
   // Resultado de cada selección en la fecha (para el técnico).
   const countryResult = new Map<number, "win" | "loss" | "draw">();
@@ -74,47 +78,70 @@ export async function publishRound(roundId: number) {
     }
   }
 
-  const allCoaches = await db.select({ id: coaches.id, countryId: coaches.countryId }).from(coaches);
-  const coachCountry = new Map(allCoaches.map((c) => [c.id, c.countryId]));
-
   const ers = await db.select().from(entryRounds).where(eq(entryRounds.roundId, roundId));
   const affectedEntryIds = new Set<number>();
+
+  // Solo los técnicos usados en esta fecha (no todos).
+  const coachIds = [...new Set(ers.map((er) => er.coachId).filter((id): id is number => id != null))];
+  const usedCoaches = coachIds.length
+    ? await db.select({ id: coaches.id, countryId: coaches.countryId }).from(coaches).where(inArray(coaches.id, coachIds))
+    : [];
+  const coachCountry = new Map(usedCoaches.map((c) => [c.id, c.countryId]));
+
+  // Batch-load de TODAS las alineaciones de la fecha (en vez de una query por entry).
+  const erIds = ers.map((er) => er.id);
+  const allLineup = erIds.length
+    ? await db.select().from(entryRoundPlayers).where(inArray(entryRoundPlayers.entryRoundId, erIds))
+    : [];
+  const lineupByEr = new Map<number, typeof allLineup>();
+  for (const l of allLineup) {
+    const arr = lineupByEr.get(l.entryRoundId) ?? [];
+    arr.push(l);
+    lineupByEr.set(l.entryRoundId, arr);
+  }
 
   // Contexto de scoring compartido (puro, testeable en puntos-equipo.ts).
   const ctx: ScoringContext = { pts, base, played, coachCountry, countryResult };
 
+  const erUpdates: BatchOp[] = [];
   for (const er of ers) {
-    const lineup = await db
-      .select()
-      .from(entryRoundPlayers)
-      .where(eq(entryRoundPlayers.entryRoundId, er.id));
-
     const total = computeEntryTotal(
-      { captainPlayerId: er.captainPlayerId, coachId: er.coachId, lineup },
+      { captainPlayerId: er.captainPlayerId, coachId: er.coachId, lineup: lineupByEr.get(er.id) ?? [] },
       ctx,
     );
-    await db.update(entryRounds).set({ points: total }).where(eq(entryRounds.id, er.id));
+    erUpdates.push(db.update(entryRounds).set({ points: total }).where(eq(entryRounds.id, er.id)));
     affectedEntryIds.add(er.entryId);
   }
+  await runChunked(erUpdates);
 
-  // Recalcular el total de cada equipo afectado.
-  for (const entryId of affectedEntryIds) {
-    const rows = await db
-      .select({ points: entryRounds.points })
+  // Recalcular el total de cada equipo afectado: una sola query agrupada + updates en lote.
+  const affected = [...affectedEntryIds];
+  if (affected.length) {
+    const totals = await db
+      .select({ entryId: entryRounds.entryId, total: sql<number>`sum(${entryRounds.points})` })
       .from(entryRounds)
-      .where(eq(entryRounds.entryId, entryId));
-    const total = sumRoundPoints(rows.map((r) => r.points));
-    await db.update(entries).set({ totalPoints: total }).where(eq(entries.id, entryId));
+      .where(inArray(entryRounds.entryId, affected))
+      .groupBy(entryRounds.entryId);
+    await runChunked(
+      totals.map((t) =>
+        db
+          .update(entries)
+          .set({ totalPoints: sumRoundPoints([Number(t.total)]) })
+          .where(eq(entries.id, t.entryId)),
+      ),
+    );
   }
 
   // Marcar eliminados (perdedores en eliminatorias).
   if (round.type === "knockout") {
+    const eliminations: BatchOp[] = [];
     for (const m of ms) {
       if (m.homeScore == null || m.awayScore == null || m.homeCountryId == null || m.awayCountryId == null) continue;
       if (m.homeScore === m.awayScore) continue; // definición por penales no modelada acá
       const loserId = m.homeScore > m.awayScore ? m.awayCountryId : m.homeCountryId;
-      await db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, loserId));
+      eliminations.push(db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, loserId)));
     }
+    await runChunked(eliminations);
   }
 
   await db.update(rounds).set({ status: "published" }).where(eq(rounds.id, roundId));

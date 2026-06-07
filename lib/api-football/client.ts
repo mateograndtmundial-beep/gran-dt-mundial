@@ -16,10 +16,12 @@ async function apiGet<T = unknown>(
 
   const res = await fetch(url, { headers: { 'x-apisports-key': KEY } });
 
-  // Rate limit (plan gratis): esperar y reintentar.
+  // Rate limit (plan gratis): respetar retry-after si viene; si no, backoff
+  // exponencial (1,2,4,8,16s) con tope de 60s.
   if (res.status === 429 && attempt < 5) {
-    const retryAfter = Number(res.headers.get('retry-after')) || 6;
-    await new Promise((r) => setTimeout(r, retryAfter * 1000));
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const waitSec = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : Math.min(60, 2 ** attempt);
+    await new Promise((r) => setTimeout(r, waitSec * 1000));
     return apiGet<T>(path, params, attempt + 1);
   }
   if (!res.ok) throw new Error(`API-Football ${path} -> ${res.status} ${res.statusText}`);

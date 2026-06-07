@@ -2,7 +2,9 @@ import { PageTitle, EmptyState } from "@/components/ui";
 import { PlayersExplorer } from "@/components/players-explorer";
 import { getPlayersWithCountry, type PlayerRow } from "@/lib/queries";
 
-export const dynamic = "force-dynamic";
+// ISR: contenido no dependiente del usuario. Se revalida cada 60s y on-demand
+// (updatePlayerPrice hace revalidatePath("/jugadores")).
+export const revalidate = 60;
 
 export default async function JugadoresPage() {
   let players: PlayerRow[] = [];
