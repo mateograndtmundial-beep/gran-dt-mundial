@@ -1,9 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import { Bebas_Neue, Manrope, Archivo_Black } from "next/font/google";
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
+import { getCurrentUser } from "@/lib/auth";
 
 /* ─── Fuentes (next/font/google → CSS variables) ─── */
 const bebasNeue = Bebas_Neue({
@@ -60,9 +63,28 @@ export const metadata: Metadata = {
 const clerkEnabled =
   !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && !!process.env.CLERK_SECRET_KEY;
 
-export default function RootLayout({
+// Rutas que no se gatean: la propia bienvenida y el flujo de auth (evita loops).
+function isExemptFromOnboarding(pathname: string): boolean {
+  return (
+    pathname.startsWith("/bienvenida") ||
+    pathname.startsWith("/sign-in") ||
+    pathname.startsWith("/sign-up")
+  );
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  // Gate de onboarding: si el usuario está logueado pero todavía no eligió su
+  // nickname (username null), lo mandamos a /bienvenida antes de ver la app.
+  if (clerkEnabled) {
+    const pathname = (await headers()).get("x-pathname") ?? "";
+    if (!isExemptFromOnboarding(pathname)) {
+      const user = await getCurrentUser();
+      if (user && !user.username) redirect("/bienvenida");
+    }
+  }
+
   const fontVars = [bebasNeue.variable, manrope.variable, archivoBlack.variable].join(" ");
 
   const tree = (
