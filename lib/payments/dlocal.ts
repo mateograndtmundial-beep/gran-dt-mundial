@@ -35,6 +35,10 @@ export const dlocal: PaymentProvider = {
 
   async parseWebhook(req: Request): Promise<WebhookResult | null> {
     if (!KEY || !SECRET) return null;
+    // Integridad: no se confía en el payload. Más abajo se re-consulta el pago contra
+    // la API de dLocal (auth con KEY:SECRET) y el estado/order_id se toman de ESA
+    // respuesta, no del cuerpo del webhook. Un webhook forjado con un payment_id ajeno
+    // termina acreditando, a lo sumo, el order_id real de ese pago (su dueño legítimo).
     let paymentId: string | null = null;
     let orderId: number | null = null;
     let statusRaw: string | undefined;

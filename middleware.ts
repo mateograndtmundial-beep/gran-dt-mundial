@@ -1,8 +1,14 @@
 import { clerkMiddleware } from "@clerk/nextjs/server";
 import { NextResponse, type NextRequest } from "next/server";
 
-// Si no hay keys de Clerk configuradas, el middleware deja pasar todo
-// (así la app corre igual mientras se termina la config de auth).
+// En producción la auth NO es opcional: si falta la key, fallamos el arranque en
+// vez de dejar pasar todo silenciosamente (que desprotegería toda la app).
+if (process.env.NODE_ENV === "production" && !process.env.CLERK_SECRET_KEY) {
+  throw new Error("CLERK_SECRET_KEY es obligatoria en producción");
+}
+
+// En dev, si no hay keys de Clerk, el middleware deja pasar todo (así la app corre
+// igual mientras se termina la config de auth).
 const enabled = !!process.env.CLERK_SECRET_KEY;
 
 // Propagamos el pathname en un header del request para que el layout (server
