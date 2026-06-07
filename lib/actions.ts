@@ -14,7 +14,8 @@ import { round1 } from "@/lib/pricing/map";
 
 type BatchOp = Parameters<typeof db.batch>[0][number];
 
-export type { SaveLineupInput };
+// El tipo SaveLineupInput vive en @/lib/validation/lineup. No se re-exporta acá:
+// este archivo es "use server" y solo puede exportar funciones async.
 
 export async function saveLineup(rawInput: SaveLineupInput) {
   const user = await getCurrentUser();
