@@ -6,17 +6,17 @@
  */
 import { X } from "lucide-react";
 import {
-  FORMATIONS,
-  DEFAULT_FORMATION,
   POSITION_COLORS,
   POSITION_BG,
   POSITION_LABELS,
   type Position,
 } from "@/lib/game/config";
 import { cn, formatPrice } from "@/lib/utils";
+// Lógica de slots centralizada en lib/game/lineup (compartida con el server action).
+import { buildSlots, ROWS, type Slot } from "@/lib/game/lineup";
 
-export type Slot = { id: string; position: Position; isStarter: boolean };
-export const ROWS: Position[] = ["GK", "DEF", "MID", "FWD"];
+export { buildSlots, ROWS };
+export type { Slot };
 
 /** Forma mínima de jugador que la figurita necesita. */
 export type PitchPlayer = {
@@ -28,17 +28,6 @@ export type PitchPlayer = {
   price?: number;
   eliminatedRound?: number | null;
 };
-
-export function buildSlots(formation: string): Slot[] {
-  const shape = FORMATIONS[formation] ?? FORMATIONS[DEFAULT_FORMATION];
-  const slots: Slot[] = [];
-  ROWS.forEach((pos) => {
-    for (let i = 0; i < shape[pos]; i++)
-      slots.push({ id: `${pos}_${i + 1}`, position: pos, isStarter: true });
-  });
-  ROWS.forEach((pos) => slots.push({ id: `SUB_${pos}`, position: pos, isStarter: false }));
-  return slots;
-}
 
 /* Partículas que forman parte del apellido y deben conservarse:
    "De Bruyne", "Van Dijk", "Van de Beek", "Di María", "De Paul"… */

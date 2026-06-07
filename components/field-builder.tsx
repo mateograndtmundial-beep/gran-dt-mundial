@@ -276,7 +276,18 @@ export function FieldBuilder({
       setMessage("Ponele un nombre a tu equipo antes de guardar.");
       return;
     }
-    if (!res.ok) { setMessage("No se pudo guardar. Revisá la base de datos."); return; }
+    if (
+      !res.ok &&
+      (res.error === "invalid_formation" ||
+        res.error === "invalid_squad_size" ||
+        res.error === "invalid_formation_composition" ||
+        res.error === "invalid_captain" ||
+        res.error === "invalid")
+    ) {
+      setMessage("La alineación no es válida. Revisá titulares, suplentes y capitán.");
+      return;
+    }
+    if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
     router.push("/mi-equipo");
   }
 
