@@ -4,6 +4,7 @@ import { matches, players, playerMatchStats } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { chunkedBatch, type BatchOp } from "@/lib/db/batch";
+import { SCORING } from "@/lib/game/config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -93,11 +94,11 @@ export async function syncRound(roundId: number) {
       }
     }
 
-    // Figura: mayor rating con >= 20'. (Empates: se queda el primero; el admin puede ajustar.)
+    // Figura: mayor rating con >= minMinutes. (Empates: se queda el primero; el admin puede ajustar.)
     let motmPlayerId: number | null = null;
     let best = -1;
     for (const r of raws) {
-      if (r.minutes >= 20 && r.rating != null && r.rating > best) {
+      if (r.minutes >= SCORING.minMinutes && r.rating != null && r.rating > best) {
         best = r.rating;
         motmPlayerId = r.our.id;
       }
