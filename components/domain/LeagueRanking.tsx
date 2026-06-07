@@ -1,4 +1,4 @@
-import { ChevronRight } from "lucide-react";
+import { Award, ChevronRight, Trophy } from "lucide-react";
 import { cn, formatPoints } from "@/lib/utils";
 
 export type RankingRow = {
@@ -31,7 +31,9 @@ export function LeagueRanking({
           const isTop3 = rank <= 3;
           const isMine = r.username && currentUserId && r.username === currentUserId;
 
-          const podioMedal = ["🥇", "🥈", "🥉"][i] ?? null;
+          const PodiumIcon = rank === 1 ? Trophy : rank <= 3 ? Award : null;
+          const podiumIconColor =
+            rank === 1 ? "text-gold" : rank === 2 ? "text-ink-3" : "text-[#A8703A]";
 
           return (
             <li
@@ -48,16 +50,26 @@ export function LeagueRanking({
               )}
             >
               {/* Posición — cascada descendente 1 > 2 > 3 > resto */}
-              <span
-                className={cn(
-                  "jersey-numeral w-7 text-center leading-none shrink-0",
-                  rank === 1 ? "text-2xl text-gold-ink"
-                  : rank === 2 ? "text-xl text-gold-ink"
-                  : rank === 3 ? "text-lg text-gold-ink"
-                  : "text-sm text-ink-3",
+              <span className="flex w-9 shrink-0 flex-col items-center gap-0.5">
+                {PodiumIcon && (
+                  <PodiumIcon
+                    size={rank === 1 ? 18 : 15}
+                    strokeWidth={1.5}
+                    className={podiumIconColor}
+                    aria-hidden
+                  />
                 )}
-              >
-                {podioMedal ?? rank}
+                <span
+                  className={cn(
+                    "jersey-numeral text-center leading-none",
+                    rank === 1 ? "text-2xl text-gold-ink"
+                    : rank === 2 ? "text-xl text-gold-ink"
+                    : rank === 3 ? "text-lg text-gold-ink"
+                    : "text-sm text-ink-3",
+                  )}
+                >
+                  {rank}
+                </span>
               </span>
 
               {/* Info */}

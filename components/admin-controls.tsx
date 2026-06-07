@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { syncRoundAction, publishRoundAction } from "@/lib/admin-actions";
 import { Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
@@ -74,7 +75,14 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
                       : "bg-blue hover:bg-blue-hover",
                   )}
                 >
-                  {r.status === "published" ? "PUBLICADA ✓" : "PUBLICAR FECHA"}
+                  {r.status === "published" ? (
+                    <span className="inline-flex items-center gap-1.5">
+                      <Check size={16} strokeWidth={1.5} aria-hidden />
+                      PUBLICADA
+                    </span>
+                  ) : (
+                    "PUBLICAR FECHA"
+                  )}
                 </button>
               </div>
             </div>
