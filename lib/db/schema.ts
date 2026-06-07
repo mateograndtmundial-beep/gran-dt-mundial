@@ -11,6 +11,7 @@ import {
   index,
   pgEnum,
 } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
 
 // ---------- Enums ----------
 export const positionEnum = pgEnum('position', ['GK', 'DEF', 'MID', 'FWD']);
@@ -114,14 +115,23 @@ export const playerRoundPoints = pgTable(
 );
 
 // ---------- Datos del juego (usuarios) ----------
-export const users = pgTable('users', {
-  id: serial('id').primaryKey(),
-  clerkId: text('clerk_id').notNull().unique(),
-  username: text('username'),
-  isAdmin: boolean('is_admin').notNull().default(false),
-  isPremium: boolean('is_premium').notNull().default(false),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const users = pgTable(
+  'users',
+  {
+    id: serial('id').primaryKey(),
+    clerkId: text('clerk_id').notNull().unique(),
+    // El nickname elige el usuario en /bienvenida. Es null hasta que lo setea
+    // (ese null dispara el onboarding). Único de forma case-insensitive: el
+    // índice de abajo es sobre lower(username), así "Bruno" y "bruno" chocan.
+    // Postgres permite múltiples NULL en un índice único, así que varios
+    // usuarios pueden estar pendientes de onboarding a la vez.
+    username: text('username'),
+    isAdmin: boolean('is_admin').notNull().default(false),
+    isPremium: boolean('is_premium').notNull().default(false),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('users_username_lower_unique').on(sql`lower(${t.username})`)],
+);
 
 export const entries = pgTable('entries', {
   id: serial('id').primaryKey(),

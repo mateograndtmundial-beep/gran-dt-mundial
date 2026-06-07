@@ -64,7 +64,7 @@ export function LeagueManagement({
         <Eyebrow className="mb-2">Miembros ({members.length})</Eyebrow>
         <div className="space-y-1">
           {members.map((m) => {
-            const label = m.entryName ?? m.username ?? "DT";
+            const label = m.username ?? m.entryName ?? "DT";
             const isOwner = m.userId === ownerId;
             return (
               <div key={m.userId} className="flex items-center justify-between rounded-[6px] px-2 py-1.5 hover:bg-surface-2">
