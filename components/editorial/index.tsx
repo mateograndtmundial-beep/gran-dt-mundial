@@ -5,7 +5,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { POSITION_COLORS, POSITION_BG, type Position } from "@/lib/game/config";
+import { POSITION_COLORS, POSITION_BG, POSITION_ABBR, type Position } from "@/lib/game/config";
 
 /* ─── Eyebrow ─── */
 export function Eyebrow({
@@ -39,7 +39,7 @@ export function PositionChip({
         backgroundColor: POSITION_BG[position],
       }}
     >
-      {position}
+      {POSITION_ABBR[position]}
     </span>
   );
 }

@@ -9,6 +9,7 @@ import {
   POSITION_COLORS,
   POSITION_BG,
   POSITION_LABELS,
+  POSITION_ABBR,
   type Position,
 } from "@/lib/game/config";
 import { cn, formatPrice } from "@/lib/utils";
@@ -169,7 +170,7 @@ export function Figurita({
           style={{ backgroundColor: color + "2e" }}
         >
           <span className="font-display text-[11px] leading-none text-white/85">
-            {slot.position}
+            {POSITION_ABBR[slot.position]}
           </span>
         </div>
         <span className="text-[9px] font-semibold leading-none text-white/70">+ Agregar</span>
@@ -246,7 +247,7 @@ export function Figurita({
               className="flex h-8 w-12 items-center justify-center font-display text-[11px]"
               style={{ backgroundColor: POSITION_BG[slot.position], color }}
             >
-              {slot.position}
+              {POSITION_ABBR[slot.position]}
             </span>
           )}
         </span>

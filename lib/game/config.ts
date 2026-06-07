@@ -25,6 +25,15 @@ export const POSITION_LABELS: Record<Position, string> = {
   FWD: 'Delantero',
 };
 
+// Abreviatura en español que se MUESTRA al usuario (chips, slots). El enum interno
+// y las claves de slot siguen en inglés (GK/DEF/MID/FWD); esto es solo presentación.
+export const POSITION_ABBR: Record<Position, string> = {
+  GK: 'POR',
+  DEF: 'DEF',
+  MID: 'MED',
+  FWD: 'DEL',
+};
+
 // Colores Panini — texto del chip (sobre fondo claro)
 export const POSITION_COLORS: Record<Position, string> = {
   GK:  '#D97706', // ámbar
