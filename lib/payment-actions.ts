@@ -6,6 +6,7 @@ import { products, orders } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getProvider, providerForCountry } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
+import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
 import { headers } from "next/headers";
 
 /**
@@ -68,9 +69,21 @@ export async function createPinOrder(productSku: string, country?: string) {
       notificationUrl: `${base}/api/payments/webhook/${providerName}`,
     });
     await db.update(orders).set({ providerRef: checkout.providerRef }).where(eq(orders.id, order.id));
+    // Funnel: checkout iniciado (todavía sin pagar; el webhook avisa la acreditación).
+    notifyCheckoutStarted({
+      orderId: order.id,
+      userId: user.id,
+      username: user.username,
+      productName: product.name,
+      pins: product.pins,
+      amount,
+      currency,
+      provider: providerName,
+    });
     return { ok: true as const, url: checkout.url, orderId: order.id };
   } catch (e) {
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, order.id));
+    notifyError({ source: "checkout", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }

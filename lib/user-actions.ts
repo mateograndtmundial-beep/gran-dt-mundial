@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { validateUsernameFormat, type UsernameError } from "@/lib/username";
+import { notifyOnboardingComplete } from "@/lib/notify/slack";
 
 /** ¿Está libre el nickname? Compara case-insensitive, ignorando al propio usuario. */
 async function isAvailable(username: string, exceptUserId?: number): Promise<boolean> {
@@ -48,5 +49,7 @@ export async function setUsername(
   }
 
   revalidatePath("/", "layout");
+  // Onboarding completo → usuario activado: avisamos a Slack.
+  notifyOnboardingComplete({ userId: user.id, username });
   return { ok: true, username };
 }

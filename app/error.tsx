@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { PrimaryButton, SecondaryButton } from "@/components/editorial";
+import { reportClientError } from "@/lib/error-actions";
 
 // Error boundary global: captura fallos de render/datos en cualquier ruta y ofrece
 // reintentar, en vez de mostrar un estado vacío ambiguo o una pantalla rota.
@@ -9,6 +10,12 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
   useEffect(() => {
     // Visibilidad en consola/observabilidad. Reemplazable por un logger real.
     console.error(error);
+    // Reporte a Slack (no bloquea ni rompe si falla).
+    reportClientError({
+      message: error.message,
+      digest: error.digest,
+      url: typeof window !== "undefined" ? window.location.pathname : undefined,
+    }).catch(() => {});
   }, [error]);
 
   return (

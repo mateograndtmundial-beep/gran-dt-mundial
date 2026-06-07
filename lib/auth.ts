@@ -2,6 +2,7 @@ import { auth, currentUser } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
+import { notifyNewUser } from "@/lib/notify/slack";
 
 export const clerkEnabled =
   !!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && !!process.env.CLERK_SECRET_KEY;
@@ -22,6 +23,8 @@ export async function getCurrentUser() {
   // duplicados (dos "Bruno", tres "mateo"). Lo dejamos null para que el gate de
   // onboarding (/bienvenida) obligue a elegir un nickname único.
   const inserted = await db.insert(users).values({ clerkId: userId, username: null }).returning();
+  // Alta nueva → avisamos a Slack (no bloquea: se manda después de la respuesta).
+  if (inserted[0]) notifyNewUser({ userId: inserted[0].id });
   return inserted[0];
 }
 

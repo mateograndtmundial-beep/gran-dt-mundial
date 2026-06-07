@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders } from "@/lib/db/schema";
 import { addPins } from "@/lib/pins";
+import { notifyPaymentPaid } from "@/lib/notify/slack";
 
 /**
  * Acredita los pines de una orden pagada. Idempotente: solo transiciona si la
@@ -17,6 +18,8 @@ export async function creditOrder(orderId: number, providerRef?: string): Promis
   if (updated.length && updated[0]) {
     const o = updated[0];
     await addPins(o.userId, o.pins, "purchase", { orderId: o.id });
+    // Notifica a Slack una sola vez (va dentro del path idempotente).
+    notifyPaymentPaid({ orderId: o.id });
     return true;
   }
   return false;

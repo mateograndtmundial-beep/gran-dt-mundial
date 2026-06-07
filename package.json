@@ -17,7 +17,8 @@
     "seed:products": "tsx scripts/seed-products.ts",
     "make-admin": "tsx scripts/make-admin.ts",
     "prices:fetch": "tsx scripts/fetch-market-values.ts",
-    "prices:apply": "tsx scripts/price-players.ts"
+    "prices:apply": "tsx scripts/price-players.ts",
+    "test:slack": "tsx scripts/test-slack.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
@@ -29,6 +30,7 @@
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^1.17.0",
     "next": "16.2.7",
+    "posthog-js": "^1.382.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "shadcn": "^4.10.0",

@@ -9,6 +9,7 @@ import { syncRound } from "@/lib/api-football/sync";
 import { publishRound } from "@/lib/scoring/publicar-fecha";
 import { clamp, round1 } from "@/lib/pricing/map";
 import { PRICING } from "@/lib/game/config";
+import { notifyRoundPublished, notifyError } from "@/lib/notify/slack";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
 async function currentAdmin() {
@@ -32,6 +33,7 @@ export async function syncRoundAction(roundId: number) {
     return { ok: true as const, info: `${r.matches} partidos sincronizados` };
   } catch (e) {
     logAdmin("syncRound", admin.id, { roundId, ok: false, error: (e as Error).message });
+    notifyError({ source: "syncRound", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }
@@ -60,9 +62,14 @@ export async function publishRoundAction(roundId: number) {
     logAdmin("publishRound", admin.id, { roundId, entries: r.entries, players: r.players, ok: true });
     revalidatePath("/admin");
     revalidatePath("/ranking");
+    // No notificamos si la fecha ya estaba publicada (reintento idempotente → 0 equipos).
+    if (!("alreadyPublished" in r)) {
+      notifyRoundPublished({ roundId, entries: r.entries, players: r.players });
+    }
     return { ok: true as const, info: `${r.entries} equipos · ${r.players} jugadores` };
   } catch (e) {
     logAdmin("publishRound", admin.id, { roundId, ok: false, error: (e as Error).message });
+    notifyError({ source: "publishRound", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }
