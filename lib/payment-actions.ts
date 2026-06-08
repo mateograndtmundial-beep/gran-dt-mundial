@@ -4,7 +4,7 @@ import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { products, orders } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { getProvider, providerForCountry } from "@/lib/payments";
+import { getProvider, providerForCountry, isProviderConfigured } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
 import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
 import { headers } from "next/headers";
@@ -34,6 +34,9 @@ export async function createPinOrder(productSku: string, country?: string) {
   if (!product) return { ok: false as const, error: "product" as const };
 
   const providerName = providerForCountry(cc);
+  // dLocal: cuenta en trámite, sin credenciales todavía → no ofrecemos compra fuera de AR
+  // (evitamos crear órdenes que nunca van a poder cobrarse).
+  if (!isProviderConfigured(providerName)) return { ok: false as const, error: "unavailable" as const };
   const isAr = providerName === "mercadopago";
   const amount = isAr ? product.priceArs : product.priceUsd;
   const currency = isAr ? "ARS" : "USD";

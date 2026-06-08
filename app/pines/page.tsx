@@ -1,8 +1,10 @@
+import { headers } from "next/headers";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { ValidationCallout } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
 import { getActiveProducts } from "@/lib/queries";
 import { getPinBalance } from "@/lib/pins";
+import { isProviderConfigured } from "@/lib/payments";
 import { PinStore } from "@/components/pin-store";
 
 export const dynamic = "force-dynamic";
@@ -13,6 +15,11 @@ export default async function PinesPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status } = await searchParams;
+
+  // País detectado por geo (header de Vercel) — el front lo usa como default del selector.
+  const h = await headers();
+  const detectedCountry = (h.get("x-vercel-ip-country") ?? "AR").toUpperCase();
+  const dlocalReady = isProviderConfigured("dlocal");
 
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let products: Awaited<ReturnType<typeof getActiveProducts>> = [];
@@ -46,11 +53,14 @@ export default async function PinesPage({
         <PinStore
           balance={balance}
           isPremium={user?.isPremium ?? false}
+          detectedCountry={detectedCountry}
+          dlocalReady={dlocalReady}
           products={products.map((p) => ({
             sku: p.sku,
             name: p.name,
             pins: p.pins,
             priceArs: p.priceArs,
+            priceUsd: p.priceUsd,
             unlimited: p.unlimited,
           }))}
         />

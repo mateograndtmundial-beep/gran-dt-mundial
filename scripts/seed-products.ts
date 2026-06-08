@@ -2,18 +2,18 @@ import "dotenv/config";
 import { db } from "../lib/db";
 import { products } from "../lib/db/schema";
 
-// Packs de pines. priceUsd es placeholder (dLocal pendiente).
+// Packs de pines (priceArs = Mercado Pago AR, priceUsd = dLocal LatAm).
 const PRODUCTS = [
   { sku: "pin_1", name: "1 pin", pins: 1, priceArs: 1500, priceUsd: 1.5, unlimited: false },
   { sku: "pin_3", name: "3 pines", pins: 3, priceArs: 4000, priceUsd: 4, unlimited: false },
-  { sku: "pin_5", name: "5 pines", pins: 5, priceArs: 6000, priceUsd: 5, unlimited: false },
-  { sku: "pin_10", name: "10 pines", pins: 10, priceArs: 10000, priceUsd: 9, unlimited: false },
+  { sku: "pin_5", name: "5 pines", pins: 5, priceArs: 6000, priceUsd: 6, unlimited: false },
+  { sku: "pin_10", name: "10 pines", pins: 10, priceArs: 10000, priceUsd: 10, unlimited: false },
   {
     sku: "pin_unlimited",
     name: "Pines ilimitados",
     pins: 0,
     priceArs: 25000,
-    priceUsd: 20,
+    priceUsd: 25,
     unlimited: true,
   },
 ];

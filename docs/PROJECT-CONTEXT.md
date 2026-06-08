@@ -51,7 +51,7 @@ npm run make-admin [username]  # marca usuario(s) como admin
 - **Drizzle ORM** + **Neon Postgres** (driver `@neondatabase/serverless`, HTTP).
 - **Clerk** (auth) — **en producción** (pk_live/sk_live en Vercel; Google OAuth propio). En local se usan las keys de **dev** (pk_test).
 - **Tailwind v4** + **shadcn/ui** + `lucide-react`. Design system editorial propio (ver §Diseño).
-- **Mercado Pago** (Checkout Pro) para Argentina — **en producción**. **dLocal Go** para el resto de LatAm — **pendiente** (les rechazaron el review de website, está apelado).
+- **Mercado Pago** (Checkout Pro) para Argentina — **en producción**. **dLocal Go** para el resto de LatAm — **front + adapter listos y feature-flaggeados** (`isProviderConfigured`); falta crear la cuenta en dLocal desde cero y cargar `DLOCAL_GO_API_KEY/SECRET` (hasta entonces, `/pines` muestra "próximamente" fuera de Argentina).
 - **API-Football** (api-sports.io, plan PRO pago) para datos del Mundial.
 
 ---
@@ -151,7 +151,7 @@ Editorial claro estilo Gran DT + Panini. Fuentes: **Bebas Neue** (display), **Ma
 
 ## Variables de entorno (ver `.env.example`)
 `DATABASE_URL` · `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` · `CLERK_SECRET_KEY` (+ las `NEXT_PUBLIC_CLERK_*_URL`) · `API_FOOTBALL_KEY` · `API_FOOTBALL_BASE_URL` · `API_FOOTBALL_LEAGUE_ID=1` · `API_FOOTBALL_SEASON=2026` · `NEXT_PUBLIC_TOURNAMENT_START` · `NEXT_PUBLIC_APP_URL` · `MP_ACCESS_TOKEN` · `NEXT_PUBLIC_MP_PUBLIC_KEY` · `DLOCAL_GO_BASE_URL` · `DLOCAL_GO_API_KEY` · `DLOCAL_GO_SECRET_KEY`.
-> Local: Clerk **dev** + MP **sandbox**. Vercel (prod): Clerk **live** + MP **producción**. dLocal: pendiente.
+> Local: Clerk **dev** + MP **sandbox**. Vercel (prod): Clerk **live** + MP **producción**. dLocal: sin cuenta/credenciales todavía (front feature-flaggeado a la espera de `DLOCAL_GO_API_KEY/SECRET`).
 
 ---
 
@@ -160,7 +160,7 @@ Editorial claro estilo Gran DT + Panini. Fuentes: **Bebas Neue** (display), **Ma
 
 **Pendiente / a futuro:**
 - 🔜 **Probar un pago real de pines** end-to-end en prod (pagar → webhook acredita). Ojo: en localhost el webhook NO llega (MP no alcanza tu compu) y mezclar token sandbox con tarjeta real da *"una de las partes es de prueba"* → probar en prod o con usuario de prueba MP.
-- 🔜 **dLocal**: esperando la apelación del review; cuando aprueben, cargar `DLOCAL_GO_API_KEY/SECRET` (sandbox primero, base `api-sbx.dlocalgo.com`) y smoke-test.
+- 🔜 **dLocal**: hay que **crear la cuenta dLocal Go desde cero** (todavía no existe) y pasar su review; cuando esté, cargar `DLOCAL_GO_API_KEY/SECRET` (sandbox primero, base `api-sbx.dlocalgo.com`) y smoke-test. El front (`/pines`) ya está listo — `isProviderConfigured("dlocal")` lo enciende solo apenas las credenciales estén en el entorno (hasta entonces muestra "próximamente" para países fuera de AR).
 - ⏳ **Scoring**: se valida cuando empiecen los partidos (11/06).
 - 📉 **Optimizaciones para ~5.000 users** (deferidas): cachear lecturas (jugadores, ranking) + revalidar al publicar fecha, y un par de índices (entries.totalPoints, FKs calientes).
 - ⏰ **Vercel Cron** para auto-sincronizar fechas tras los partidos (hoy es manual desde `/admin`).
