@@ -474,8 +474,10 @@ export function FieldBuilder({
           />
         </div>
 
-        {/* Rail derecho (scrollea solo, la cancha nunca se corta) */}
-        <div className="flex flex-col gap-3 md:max-h-[calc(100svh-16.5rem)] md:overflow-y-auto md:pr-0.5">
+        {/* Rail derecho: el contenido scrollea, pero Guardar + el link de abajo
+            quedan fijos al pie para que nunca se corten (a cualquier nivel de zoom). */}
+        <div className="flex flex-col md:max-h-[calc(100svh-16.5rem)]">
+        <div className="flex flex-col gap-3 md:overflow-y-auto md:pr-0.5">
           {/* Nombre del equipo (aparece en el ranking) — fijo una vez seteado */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
@@ -611,8 +613,10 @@ export function FieldBuilder({
               </Link>
             )}
           </div>
+        </div>
 
-          {/* Guardar */}
+        {/* Guardar — fuera del área que scrollea, siempre visible al pie del rail */}
+        <div className="shrink-0 space-y-2 pt-3">
           <PrimaryButton
             onClick={onSave}
             disabled={!valid || saving}
@@ -627,6 +631,7 @@ export function FieldBuilder({
           >
             ¿Cómo se suman los puntos?
           </Link>
+        </div>
         </div>
       </div>
 
@@ -657,6 +662,12 @@ export function FieldBuilder({
             </div>
 
             <div className="p-4">
+              {modal.type === "coach" && (
+                <p className="mb-3 text-xs leading-relaxed text-ink-3">
+                  Tu DT suma según el resultado de su selección en cada fecha:{" "}
+                  <strong className="text-ink-2">+2 si gana, −2 si pierde, 0 si empata</strong>.
+                </p>
+              )}
               <input
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setModalShown(MODAL_PAGE); }}

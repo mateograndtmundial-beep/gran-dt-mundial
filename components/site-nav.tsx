@@ -59,7 +59,7 @@ export function SiteNav() {
           {/* Logo + wordmark */}
           <Link href="/" className="flex items-center gap-2.5 group">
             <Image
-              src="/images/logo/logo-badge-32.png"
+              src="/images/logo/logo-badge-512.png"
               alt="Los 11 de Sampa"
               width={32}
               height={32}
