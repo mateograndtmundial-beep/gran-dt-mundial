@@ -31,6 +31,11 @@
 
 ## Pagos (fuera de alcance — requieren PR aparte, son críticos antes de procesar volumen real)
 
+> ⚠️ Estos dos ítems son **hardening de seguridad sobre pagos ya en producción** (Mercado
+> Pago activo, plata real entrando) — no son mejoras opcionales. Resumen del riesgo y por
+> qué importa → `docs/PRODUCCION.md` §6 ("Pagos en producción").
+
+
 - **dLocal fail-open** (`lib/payments/dlocal.ts`): si la reconfirmación contra la API no
   responde `res.ok`, cae al `status` del body del webhook → puede acreditar un `PAID` forjado.
   Nunca derivar `paid` del body; fail-closed.

@@ -1,7 +1,12 @@
 # Contexto del proyecto — Los 11 de Sampa (handoff para agentes)
 
 > Doc de onboarding para que un agente (o persona) nuevo tenga **todo el contexto** sin re-descubrirlo. Si vas a tocar código, **leé primero la sección "Cómo trabajar en este repo"**.
-> Otros docs útiles: [`SPEC.md`](../SPEC.md) (diseño original del juego + puntaje), [`docs/PINES-API.md`](./PINES-API.md) (contrato del backend de pines para el front), [`docs/ui/UI-DIRECTION.md`](./ui/UI-DIRECTION.md) (dirección de diseño).
+> Otros docs útiles: [`SPEC.md`](../SPEC.md) (diseño original del juego + puntaje), [`docs/PINES-API.md`](./PINES-API.md) (contrato del backend de pines para el front), [`docs/ui/UI-DIRECTION.md`](./ui/UI-DIRECTION.md) (dirección de diseño), [`docs/README.md`](./README.md) (índice de toda la documentación).
+>
+> 🟢 **La app está EN PRODUCCIÓN, con usuarios reales jugando.** Antes de tocar algo que pueda
+> impactar lo live (DB compartida, deploy, scoring, pagos), **leé [`docs/PRODUCCION.md`](./PRODUCCION.md)** —
+> ahí está centralizado todo lo que hay que cuidar para no romper nada ni arriesgar los datos
+> de la gente ya registrada.
 
 ---
 
@@ -22,12 +27,12 @@ Se desarrolla **entre dos**: el dueño (Mateo) + un compañero que trabaja sobre
 
 1. **Es Next.js 16 (App Router, Turbopack), React 19.** Hay breaking changes vs versiones viejas. Para APIs de Next, leé `node_modules/next/dist/docs/` antes de escribir (lo dice `AGENTS.md`). Detalles que ya mordieron: `params`/`searchParams` y `headers()`/`cookies()` son **async** (await).
 2. **Repo compartido, el compañero pushea seguido.** SIEMPRE `git pull --rebase origin main` antes de empezar. Si tenés commits locales, rebaseálos. Las carreras de push son normales → fetch+rebase+push de nuevo.
-3. **Push a `main` = auto-deploy a PRODUCCIÓN (Vercel).** Antes de pushear, **corré `npm run build` localmente** para no romper el sitio live. (Excepción: cambios solo de markdown/docs.)
+3. **Push a `main` = auto-deploy a PRODUCCIÓN (Vercel).** Antes de pushear, **corré `npm run build` localmente** para no romper el sitio live. (Excepción: cambios solo de markdown/docs.) Checklist completo de pre-push y qué hacer si algo se rompe → [`docs/PRODUCCION.md`](./PRODUCCION.md).
 4. **Commits**: terminá el mensaje con `Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>`. Commiteá/pusheá solo cuando el usuario lo pida.
 5. **Secrets**: `.env` está gitignored y tiene las keys reales (Neon, Clerk, API-Football, Mercado Pago). `.env.example` es el template. **Nunca** commitees `.env`. En Vercel las env de producción se cargan en el dashboard.
 6. **Neon es HTTP (sin transacciones clásicas).** Para atomicidad usá **`db.batch([...])`** (corre todo en 1 transacción del server). `saveLineup` ya lo hace.
 7. **Validá la plata/puntos siempre server-side**, nunca confíes en el cliente (presupuesto, máx por país, pines, pagos se recalculan en el server / se confirman contra el proveedor).
-8. **DB local = la misma Neon de producción** (comparten `DATABASE_URL`). Ojo al correr seeds/scripts.
+8. **DB local = la misma Neon de producción** (comparten `DATABASE_URL`). No hay staging — cualquier seed/script/migración pega contra datos reales de usuarios. **Antes de correr `db:push`, seeds o scripts contra la DB, leé [`docs/PRODUCCION.md`](./PRODUCCION.md) §2** (lista de comandos peligrosos y su efecto real).
 9. **UI = 100% responsive, SIEMPRE (OBLIGATORIO).** Todo lo que toques de UI tiene que verse bien en **mobile Y desktop** (≈320px → 1920px+), **sin scroll horizontal**. La mayoría de los usuarios juega desde el **celular** → **probá el render en mobile antes de dar por terminado un cambio de UI** (no lo asumas). Patrones: tablas anchas → scroll interno en un contenedor o layout que reacomoda columnas; modales/diálogos → considerá **bottom-sheet / ancho completo** en mobile; áreas táctiles cómodas. Ver `docs/ui/UI-DIRECTION.md`.
 
 ### Comandos
@@ -174,4 +179,8 @@ Editorial claro estilo Gran DT + Panini. Fuentes: **Bebas Neue** (display), **Ma
 - Penales en playoffs (ganador por definición) **no** están modelados en `publishRound` (solo compara goles).
 - Los fixtures de **eliminatorias** (16avos+) recién están cuando API-Football los publica; re-correr `npm run seed` (es idempotente) para sumarlos.
 - `data/players.csv` y `data/market-values.json` están gitignored (se regeneran con `prices:fetch`).
+
+> Estos son gotchas de **código/comportamiento**. Para los cuidados **operativos** de no
+> romper producción (comandos peligrosos contra la DB compartida, scoring irreversible,
+> checklist de deploy, datos de usuarios que no se tocan) → [`docs/PRODUCCION.md`](./PRODUCCION.md).
 </content>

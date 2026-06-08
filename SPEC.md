@@ -1,7 +1,7 @@
 # DT Mundial — Especificación de Arquitectura y Producto
 
 > **Doc maestro del proyecto.** Fantasy football del Mundial FIFA 2026, estilo *Gran DT* pero moderno, pensado para Argentina.
-> Estado: borrador vivo · Última actualización: 2026-06-06
+> Estado: 🟢 **lanzado, en producción** ([los11desampa.com](https://www.los11desampa.com)) — este doc sigue siendo la fuente de verdad de **diseño** del juego (mecánicas, puntaje, modelo de datos). Para el estado operativo y los cuidados de producción, ver [`docs/PRODUCCION.md`](./docs/PRODUCCION.md) y [`docs/PROJECT-CONTEXT.md`](./docs/PROJECT-CONTEXT.md). · Última actualización: 2026-06-08
 >
 > Este documento es la fuente de verdad para diseño + desarrollo. El compañero lo usa para generar el diseño (Google Stitch, ver §14) y como referencia de implementación.
 
@@ -35,9 +35,9 @@
 App web de **fantasy football para el Mundial 2026**. El usuario arma un equipo con jugadores reales del torneo dentro de un presupuesto y una formación táctica, elige un **capitán** y un **técnico**, y suma puntos según el **rendimiento real** de los jugadores en cada fecha. Compite en un **ranking global** y en **ligas privadas con amigos**.
 
 - **Inspiración:** Gran DT (Clarín), adaptado a un torneo corto con eliminación.
-- **Público:** Argentina (UI en español).
-- **Objetivo:** lanzar **lo antes posible** para promocionar antes/durante el Mundial.
-- **Nombre de trabajo:** "DT Mundial" (definir nombre final; evitar la marca "Gran DT").
+- **Público:** Argentina/LatAm (UI en español).
+- **Estado:** lanzado y en producción — live en [los11desampa.com](https://www.los11desampa.com), promocionando antes/durante el Mundial (arranca 11/06/2026).
+- **Nombre:** "Los 11 de Sampa" (nombre de trabajo original: "DT Mundial"; se evitó la marca "Gran DT").
 
 ---
 

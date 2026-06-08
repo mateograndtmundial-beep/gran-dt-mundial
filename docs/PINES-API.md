@@ -1,6 +1,11 @@
 # Pines — contrato de backend para el frontend
 
-Todo lo que el front necesita para la tienda de pines y los cambios. **No hay que tocar el backend de pagos** — solo llamar a estas funciones.
+> 🟢 `/pines` ya está **en producción** (Mercado Pago activo para Argentina; dLocal
+> feature-flaggeado, "próximamente" para el resto de LatAm hasta tener credenciales —
+> ver `docs/PRODUCCION.md` §1 y §6). Este doc describe el contrato **vigente** que expone
+> el backend — no hay que recrear `/pines`, sino consumir/extender lo que ya existe.
+
+Todo lo que el front necesita para la tienda de pines y los cambios. **No hay que tocar el backend de pagos** — solo llamar a estas funciones. Si vas a tocar algo que mueve plata o pines reales, primero leé `docs/PRODUCCION.md` §6 (riesgos abiertos de pagos).
 
 ## Server actions / queries (importar desde el server)
 
@@ -28,9 +33,10 @@ Cada producto trae `priceArs` (pesos, para Mercado Pago/Argentina) y `priceUsd` 
 
 > La acreditación de pines la hace el **webhook** (`/api/payments/webhook/[provider]`) de forma asíncrona e idempotente. Por eso la página de retorno hace polling en vez de confiar en el redirect.
 
-## Página que tenés que crear: `/pines`
+## La página `/pines` (ya existe, en producción)
 - **Tienda**: lista `getActiveProducts()`, muestra `getMyPins()`, botones de compra.
-- **Retorno**: leé `?status` y `?order` del query. Si `success`, poleá `getOrderStatus(order)` hasta `paid` y refrescá el saldo. Si `failure`, mostrá "el pago no se completó".
+- **Retorno**: lee `?status` y `?order` del query. Si `success`, poleá `getOrderStatus(order)` hasta `paid` y refrescá el saldo. Si `failure`, muestra "el pago no se completó".
+- Si vas a extenderla (nuevo país, nuevo flujo, etc.), seguí el mismo contrato de abajo — no inventes un camino paralelo a `createPinOrder`/`creditOrder`.
 
 ## Cómo se usan los pines (ya está en el backend)
 - En **`/equipo`** (armador), al guardar: el **1er cambio de la fecha es gratis**; los extra **descuentan pines**.
