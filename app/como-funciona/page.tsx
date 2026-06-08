@@ -67,8 +67,13 @@ const NEGATIVES: Row[] = [
 
 function ScoringTable({ rows }: { rows: Row[] }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[420px] border-collapse text-sm">
+    <div className="relative">
+      {/* La tabla mide 420px de ancho mínimo (5 columnas) y en mobile no entra
+          completa: agregamos una pista de que se puede deslizar + un degradé
+          sobre el borde derecho para que no parezca que el contenido corta ahí. */}
+      <p className="mb-1.5 text-[11px] text-ink-faint sm:hidden">Deslizá para ver todas las posiciones →</p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[420px] border-collapse text-sm">
         <thead>
           <tr className="border-b-2 border-border text-center">
             <th className="py-2 pr-3 text-left">
@@ -104,7 +109,12 @@ function ScoringTable({ rows }: { rows: Row[] }) {
             </tr>
           ))}
         </tbody>
-      </table>
+        </table>
+      </div>
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent sm:hidden"
+      />
     </div>
   );
 }

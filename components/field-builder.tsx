@@ -586,11 +586,16 @@ export function FieldBuilder({
           {/* Validación */}
           <div className="space-y-2">
             {errors.length > 0 ? (
-              errors.map((e) => (
-                <ValidationCallout key={e} type="warning">
-                  {e}
-                </ValidationCallout>
-              ))
+              <ValidationCallout type="warning">
+                <p className="mb-1.5">Para guardar, te falta:</p>
+                <ul className="space-y-0.5 font-normal">
+                  {errors.map((e) => (
+                    <li key={e} className="flex items-start gap-1.5">
+                      <span aria-hidden>·</span> {e}
+                    </li>
+                  ))}
+                </ul>
+              </ValidationCallout>
             ) : (
               <ValidationCallout type="success">
                 ¡Equipo válido! Listo para guardar.
