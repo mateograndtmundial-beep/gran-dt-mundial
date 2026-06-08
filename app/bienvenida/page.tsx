@@ -6,7 +6,11 @@ import { validateUsernameFormat } from "@/lib/username";
 
 export const dynamic = "force-dynamic";
 
-export default async function BienvenidaPage() {
+export default async function BienvenidaPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
   if (!clerkEnabled) redirect("/");
 
   const user = await getCurrentUser();
@@ -17,6 +21,10 @@ export default async function BienvenidaPage() {
   // Pre-cargamos el nombre de Clerk como sugerencia sólo si es un formato válido.
   const raw = await suggestedUsername();
   const suggestion = validateUsernameFormat(raw) ? "" : raw;
+
+  // Destino post-onboarding. Sólo rutas internas (evita open-redirect).
+  const { next } = await searchParams;
+  const redirectTo = next && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
 
   return (
     <div className="flex flex-col items-center py-10 gap-6">
@@ -35,7 +43,7 @@ export default async function BienvenidaPage() {
           Elegí tu nombre de DT. Es único y te identifica en el ranking y las ligas.
         </p>
         <div className="mt-5">
-          <OnboardingForm suggestion={suggestion} />
+          <OnboardingForm suggestion={suggestion} redirectTo={redirectTo} />
         </div>
       </div>
     </div>

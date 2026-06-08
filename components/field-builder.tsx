@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { X, GripVertical } from "lucide-react";
@@ -19,6 +19,7 @@ import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
+import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } from "@/lib/lineup-draft";
 
 /* Altura reservada para el chrome de arriba (header + título + control bar).
    Usamos svh (small viewport) en vez de dvh: es estático y no cambia cuando la
@@ -42,6 +43,7 @@ export function FieldBuilder({
   initial,
   initialTeamName = "",
   deadlineLabel = "CERRÁ TU EQUIPO",
+  isAuthed = false,
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
@@ -50,6 +52,7 @@ export function FieldBuilder({
   initial?: InitialLineup | null;
   initialTeamName?: string;
   deadlineLabel?: string;
+  isAuthed?: boolean;
 }) {
   const router = useRouter();
   const [formation, setFormation]   = useState(initial?.formation ?? DEFAULT_FORMATION);
@@ -73,6 +76,9 @@ export function FieldBuilder({
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
+  const [draftConflict, setDraftConflict] = useState<LineupDraft | null>(null);
+  const draftHandled = useRef(false);
+  const autoSaveArmed = useRef(false);
 
   const slots     = useMemo(() => buildSlots(formation), [formation]);
   const playerCountries = useMemo(
@@ -239,6 +245,57 @@ export function FieldBuilder({
         .slice(0, 120)
     : [];
 
+  // Aplica un borrador (equipo armado sin loguearse) al estado del armador.
+  function applyDraft(d: LineupDraft) {
+    const byId = new Map(players.map((p) => [p.id, p]));
+    const nextPicks: Record<string, PlayerRow> = {};
+    for (const [slot, pid] of Object.entries(d.slots)) {
+      const p = byId.get(pid);
+      if (p) nextPicks[slot] = p;
+    }
+    setFormation(d.formation in FORMATIONS ? d.formation : DEFAULT_FORMATION);
+    setPicks(nextPicks);
+    setCaptainId(d.captainPlayerId);
+    setCoachId(d.coachId);
+    if (d.teamName) setTeamName(d.teamName);
+  }
+
+  // Al montar: si hay un borrador (equipo armado sin login), lo restauramos. Si
+  // además ya hay un equipo guardado y el borrador difiere, el usuario elige
+  // cuál usar (no se pisa nada en la DB hasta que toque Guardar).
+  // localStorage es client-only: leerlo en render rompería la hidratación, por
+  // eso el setState va en un effect de montaje (corre solo en el cliente).
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    if (draftHandled.current) return;
+    draftHandled.current = true;
+    const d = readDraft();
+    if (!d) return;
+    if (!initial) {
+      // Usuario sin equipo guardado (típicamente recién registrado): restauramos
+      // el borrador. Si además tocó Guardar antes de loguearse, lo guardamos solo.
+      applyDraft(d);
+      if (d.submitted) autoSaveArmed.current = true;
+    } else if (draftDiffers(d, initial)) {
+      setDraftConflict(d);
+    } else {
+      clearDraft();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  // Mientras NO estés logueado, persistimos el equipo en construcción para no
+  // perderlo al mandarte a iniciar sesión. Logueado, la verdad es la DB.
+  useEffect(() => {
+    if (isAuthed) return;
+    const hasContent = Object.keys(picks).length > 0 || teamName.trim() !== "" || coachId != null;
+    if (!hasContent) return;
+    const slotsMap: Record<string, number> = {};
+    for (const [slot, p] of Object.entries(picks)) slotsMap[slot] = p.id;
+    writeDraft({ formation, slots: slotsMap, captainPlayerId: captainId, coachId, teamName, submitted: false });
+  }, [isAuthed, picks, formation, captainId, coachId, teamName]);
+
   async function onSave() {
     setSaving(true);
     setMessage(null);
@@ -255,7 +312,15 @@ export function FieldBuilder({
       players: payloadPlayers,
     });
     setSaving(false);
-    if (!res.ok && res.error === "auth") { router.push("/sign-in"); return; }
+    if (!res.ok && res.error === "auth") {
+      // Guardamos el borrador y volvemos a /equipo tras iniciar sesión, para no
+      // perder el equipo recién armado.
+      const slotsMap: Record<string, number> = {};
+      for (const [slot, p] of Object.entries(picks)) slotsMap[slot] = p.id;
+      writeDraft({ formation, slots: slotsMap, captainPlayerId: captainId, coachId, teamName, submitted: true });
+      router.push(`/sign-in?redirect_url=${encodeURIComponent("/equipo")}`);
+      return;
+    }
     if (!res.ok && res.error === "pins") {
       setMessage(`Necesitás ${res.needed} pin(es) para esos cambios (tenés ${res.balance}).`);
       return;
@@ -288,8 +353,18 @@ export function FieldBuilder({
       return;
     }
     if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
+    clearDraft(); // guardado OK → el borrador local ya no hace falta
     router.push("/mi-equipo");
   }
+
+  // Auto-guardado: si el equipo se restauró desde un borrador "submitted" (tocaste
+  // Guardar sin estar logueado) y ya es válido, lo guardamos sin pedir otro click.
+  useEffect(() => {
+    if (!autoSaveArmed.current || saving || !valid) return;
+    autoSaveArmed.current = false;
+    void onSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [valid, saving]);
 
   const budgetPct = Math.min(100, Math.round((used / budget) * 100));
 
@@ -689,6 +764,38 @@ export function FieldBuilder({
                       );
                     })}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Equipo armado sin login: cargarlo o mantener el equipo guardado */}
+      {draftConflict && (
+        <div
+          className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Tenés un equipo sin guardar"
+        >
+          <div className="w-full max-w-sm rounded-[12px] border border-border bg-surface card-shadow-lg p-5 animate-slide-up">
+            <h3 className="font-display text-xl text-ink">Tenés un equipo sin guardar</h3>
+            <p className="mt-2 text-sm text-ink-2">
+              Armaste un equipo antes de iniciar sesión. ¿Querés cargarlo o seguir con tu
+              equipo ya guardado? No se pisa nada hasta que toques Guardar.
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button
+                onClick={() => { applyDraft(draftConflict); setDraftConflict(null); }}
+                className="rounded-[6px] bg-blue px-4 py-2.5 text-sm font-display text-white hover:bg-blue-hover transition-colors"
+              >
+                Cargar el equipo que armé
+              </button>
+              <button
+                onClick={() => { clearDraft(); setDraftConflict(null); }}
+                className="rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
+              >
+                Mantener mi equipo guardado
+              </button>
             </div>
           </div>
         </div>

@@ -19,7 +19,7 @@ type Status =
   | { kind: "ok" }
   | { kind: "error"; error: UsernameError };
 
-export function OnboardingForm({ suggestion }: { suggestion?: string }) {
+export function OnboardingForm({ suggestion, redirectTo }: { suggestion?: string; redirectTo?: string }) {
   const router = useRouter();
   const [value, setValue] = useState(suggestion ?? "");
   const [status, setStatus] = useState<Status>({ kind: "idle" });
@@ -27,7 +27,9 @@ export function OnboardingForm({ suggestion }: { suggestion?: string }) {
   const seq = useRef(0);
 
   // Chequeo de disponibilidad con debounce. seq evita que una respuesta lenta
-  // pise a una más nueva (carrera de typing).
+  // pise a una más nueva (carrera de typing). El setState va en el effect porque
+  // es validación asíncrona (consulta al server con debounce), no estado derivado puro.
+  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const v = value.trim();
     if (!v) return setStatus({ kind: "idle" });
@@ -43,13 +45,14 @@ export function OnboardingForm({ suggestion }: { suggestion?: string }) {
     }, 350);
     return () => clearTimeout(t);
   }, [value]);
+  /* eslint-enable react-hooks/set-state-in-effect */
 
   async function submit() {
     if (saving) return;
     setSaving(true);
     const res = await setUsername(value);
     if (res.ok) {
-      router.replace("/");
+      router.replace(redirectTo ?? "/");
       router.refresh();
       return;
     }

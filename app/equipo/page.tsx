@@ -12,6 +12,7 @@ export default async function EquipoPage() {
   let coaches: CoachRow[] = [];
   let initial: Awaited<ReturnType<typeof getEditableLineup>> = null;
   let editable: Awaited<ReturnType<typeof getEditableRound>> = null;
+  let isAuthed = false;
   let error = false;
   try {
     [players, coaches, editable] = await Promise.all([
@@ -20,6 +21,7 @@ export default async function EquipoPage() {
       getEditableRound(),
     ]);
     const user = await getCurrentUser();
+    isAuthed = !!user;
     if (user) initial = await getEditableLineup(user.id);
   } catch {
     error = true;
@@ -65,6 +67,7 @@ export default async function EquipoPage() {
           initial={initial}
           initialTeamName={initial?.teamName ?? ""}
           deadlineLabel={deadlineLabel}
+          isAuthed={isAuthed}
         />
       )}
     </div>

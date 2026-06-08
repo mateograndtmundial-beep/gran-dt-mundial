@@ -83,7 +83,12 @@ export default async function RootLayout({
     const pathname = (await headers()).get("x-pathname") ?? "";
     if (!isExemptFromOnboarding(pathname)) {
       const user = await getCurrentUser();
-      if (user && !user.username) redirect("/bienvenida");
+      if (user && !user.username) {
+        // Tras elegir nickname, volvemos al destino original (p. ej. /equipo,
+        // para auto-guardar el equipo que venía armando).
+        const next = pathname && pathname !== "/" ? `?next=${encodeURIComponent(pathname)}` : "";
+        redirect(`/bienvenida${next}`);
+      }
     }
   }
 
