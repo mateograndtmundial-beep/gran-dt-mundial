@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
@@ -49,6 +50,21 @@ export async function setUsername(
   }
 
   revalidatePath("/", "layout");
+
+  // Marcamos `onboarded:true` en publicMetadata: el middleware lo lee del JWT
+  // de la sesión para no tener que pegarle a Neon en cada navegación (antes
+  // corría un SELECT por cada click de cualquier usuario logueado). Best-effort:
+  // si Clerk falla acá, el fallback a DB en el middleware sigue cubriendo.
+  const { userId: clerkId } = await auth();
+  if (clerkId) {
+    try {
+      const client = await clerkClient();
+      await client.users.updateUserMetadata(clerkId, { publicMetadata: { onboarded: true } });
+    } catch {
+      // No bloqueamos el onboarding por esto — el middleware cae a la DB.
+    }
+  }
+
   // Onboarding completo → usuario activado: avisamos a Slack.
   notifyOnboardingComplete({ userId: user.id, username });
   return { ok: true, username };

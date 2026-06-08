@@ -33,10 +33,22 @@ function isExemptFromOnboarding(pathname: string): boolean {
 // layout raíz puede reusarse entre navegaciones ("shared layouts" de Next),
 // lo que permitía entrar una vez a una ruta exenta (p. ej. /bienvenida) y
 // después navegar a cualquier lado sin volver a pasar por el gate.
-async function enforceOnboarding(req: NextRequest, userId: string | null) {
+async function enforceOnboarding(
+  req: NextRequest,
+  userId: string | null,
+  sessionClaims: { publicMetadata?: { onboarded?: boolean } } | null | undefined,
+) {
   if (!userId) return null;
   const pathname = req.nextUrl.pathname;
   if (isExemptFromOnboarding(pathname)) return null;
+
+  // Camino rápido: si el JWT de la sesión ya trae `onboarded:true` (lo setea
+  // setUsername vía publicMetadata al completar el gate), no hace falta pegarle
+  // a Neon en cada navegación — que es lo que pasaba antes para TODO usuario
+  // logueado, en cada click. El fallback a DB cubre el período hasta que el
+  // token se refresca (Clerk lo hace solo, ~1 min) y a usuarios viejos que
+  // onboardearon antes de que existiera este flag.
+  if (sessionClaims?.publicMetadata?.onboarded === true) return null;
 
   const rows = await db
     .select({ username: users.username })
@@ -55,8 +67,12 @@ async function enforceOnboarding(req: NextRequest, userId: string | null) {
 
 export default enabled
   ? clerkMiddleware(async (auth, req) => {
-      const { userId } = await auth();
-      const redirectRes = await enforceOnboarding(req, userId);
+      const { userId, sessionClaims } = await auth();
+      const redirectRes = await enforceOnboarding(
+        req,
+        userId,
+        sessionClaims as { publicMetadata?: { onboarded?: boolean } } | null | undefined,
+      );
       return redirectRes ?? NextResponse.next();
     })
   : () => NextResponse.next();
