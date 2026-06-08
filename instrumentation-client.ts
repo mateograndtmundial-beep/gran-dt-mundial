@@ -14,6 +14,10 @@ if (key) {
       defaults: "2026-05-30",
       // Sólo crea perfil de persona para usuarios identificados (logueados).
       person_profiles: "identified_only",
+      // Observabilidad: captura excepciones no manejadas (window.onerror,
+      // unhandledrejection) automáticamente — sin esto los 500 del cliente
+      // sólo se ven como mensajes sueltos en Slack.
+      capture_exceptions: true,
     });
   } catch (e) {
     console.error("[posthog] init failed:", e);
