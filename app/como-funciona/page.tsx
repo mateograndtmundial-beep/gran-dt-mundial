@@ -8,6 +8,7 @@ import {
   PositionChip,
   ValidationCallout,
   PrimaryButton,
+  SecondaryButton,
 } from "@/components/editorial";
 import {
   Accordion,
@@ -331,6 +332,27 @@ export default function ComoFuncionaPage() {
               </AccordionContent>
             </AccordionItem>
           </Accordion>
+        </Card>
+      </section>
+
+      {/* ─── Soporte ─── */}
+      <section>
+        <SectionHeader title="¿TE QUEDÓ UNA DUDA?" />
+        <Card className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-[15px] font-semibold text-ink">¿Necesitás ayuda?</p>
+            <p className="text-sm leading-relaxed text-ink-3">
+              Escribinos y te damos una mano con tu cuenta, los pagos o el juego. También podés
+              leer nuestra{" "}
+              <Link href="/privacidad" className="font-semibold text-blue hover:underline">
+                política de privacidad
+              </Link>
+              .
+            </p>
+          </div>
+          <SecondaryButton href="/soporte" className="shrink-0">
+            Ir a Soporte →
+          </SecondaryButton>
         </Card>
       </section>
 

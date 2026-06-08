@@ -6,6 +6,8 @@ import { WelcomeBanner } from "@/components/welcome-banner";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
+import { SITE } from "@/lib/site";
+import { InstagramIcon } from "@/components/icons";
 
 function Feature({
   icon,
@@ -112,6 +114,29 @@ export default function Home() {
             text="Creá tu liga, sumá a los amigos y peleá el primer puesto durante las 8 fechas del Mundial."
           />
         </div>
+      </section>
+
+      {/* ─── Instagram ─── */}
+      <section>
+        <a
+          href={SITE.instagram.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group flex items-center justify-between gap-4 rounded-[8px] border border-border bg-surface px-5 py-4 card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:card-shadow-md"
+        >
+          <div className="flex items-center gap-3.5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue text-white">
+              <InstagramIcon size={22} />
+            </span>
+            <div>
+              <p className="text-base font-semibold text-ink">Seguinos en Instagram</p>
+              <p className="text-sm text-ink-3">
+                Para enterarte de todo: novedades, tips y el día a día del Mundial.
+              </p>
+            </div>
+          </div>
+          <span className="shrink-0 font-display text-base text-blue">{SITE.instagram.handle} →</span>
+        </a>
       </section>
     </div>
   );
