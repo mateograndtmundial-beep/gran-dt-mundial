@@ -440,11 +440,27 @@ export async function getMyLeagues(userId: number) {
     .where(eq(leagueMembers.userId, userId));
 }
 
-export async function getLeagueRanking(code: string) {
+export const LEAGUE_RANKING_PAGE_SIZE = 50;
+
+/**
+ * Ranking de una liga, paginado: una liga viral grande puede tener cientos de
+ * miembros y antes se traían y renderizaban todos de una. `page` es 1-based.
+ */
+export async function getLeagueRanking(code: string, page = 1) {
   const league = (
     await db.select().from(leagues).where(eq(leagues.code, code.toUpperCase())).limit(1)
   )[0];
   if (!league) return null;
+
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leagueMembers)
+    .where(eq(leagueMembers.leagueId, league.id));
+  const total = Number(count);
+
+  const safePage = Math.max(1, page);
+  const offset = (safePage - 1) * LEAGUE_RANKING_PAGE_SIZE;
+
   const rows = await db
     .select({
       userId: leagueMembers.userId,
@@ -456,8 +472,25 @@ export async function getLeagueRanking(code: string) {
     .innerJoin(users, eq(leagueMembers.userId, users.id))
     .leftJoin(entries, eq(entries.userId, users.id))
     .where(eq(leagueMembers.leagueId, league.id))
-    .orderBy(desc(entries.totalPoints));
-  return { league, rows };
+    .orderBy(desc(entries.totalPoints))
+    .limit(LEAGUE_RANKING_PAGE_SIZE)
+    .offset(offset);
+
+  return { league, rows, total, page: safePage, pageSize: LEAGUE_RANKING_PAGE_SIZE };
+}
+
+/**
+ * Lista completa de miembros de una liga (sin paginar): la usa LeagueManagement
+ * para que el dueño pueda expulsar a cualquiera, no solo a los de la página
+ * visible del ranking. Es owner-only y on-demand, no el camino caliente.
+ */
+export async function getLeagueMembersForManagement(leagueId: number) {
+  return db
+    .select({ userId: leagueMembers.userId, username: users.username, entryName: entries.name })
+    .from(leagueMembers)
+    .innerJoin(users, eq(leagueMembers.userId, users.id))
+    .leftJoin(entries, eq(entries.userId, users.id))
+    .where(eq(leagueMembers.leagueId, leagueId));
 }
 
 export async function getLineupPlayers(entryRoundId: number) {

@@ -1,21 +1,31 @@
+import Link from "next/link";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
-import { getLeagueRanking } from "@/lib/queries";
+import { getLeagueRanking, getLeagueMembersForManagement } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
-export default async function LeaguePage({ params }: { params: Promise<{ code: string }> }) {
+export default async function LeaguePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ code: string }>;
+  searchParams: Promise<{ page?: string }>;
+}) {
   const { code } = await params;
+  const { page: pageParam } = await searchParams;
+  const page = Math.max(1, Number(pageParam) || 1);
 
   let data: Awaited<ReturnType<typeof getLeagueRanking>> = null;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let error = false;
   try {
-    [user, data] = await Promise.all([getCurrentUser(), getLeagueRanking(code)]);
+    [user, data] = await Promise.all([getCurrentUser(), getLeagueRanking(code, page)]);
   } catch {
     error = true;
   }
@@ -52,20 +62,47 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
       </div>
 
       <LeagueRanking
+        startRank={(data.page - 1) * data.pageSize + 1}
         rows={data.rows.map((r, i) => ({
-          entryId: i,
+          entryId: (data.page - 1) * data.pageSize + i,
           entryName: r.entryName,
           username: r.username,
           totalPoints: r.totalPoints ?? 0,
         }))}
       />
 
+      {data.total > data.pageSize && (
+        <div className="flex items-center justify-between gap-3">
+          <Link
+            href={`/ligas/${data.league.code}${data.page > 2 ? `?page=${data.page - 1}` : ""}`}
+            aria-disabled={data.page <= 1}
+            className={`inline-flex items-center gap-1 rounded-[6px] border border-border px-3 py-2 text-xs font-semibold text-ink-2 transition-colors ${
+              data.page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-surface-2"
+            }`}
+          >
+            <ChevronLeft size={14} aria-hidden /> Anterior
+          </Link>
+          <span className="text-xs text-ink-3">
+            Página {data.page} de {Math.ceil(data.total / data.pageSize)} · {data.total} miembros
+          </span>
+          <Link
+            href={`/ligas/${data.league.code}?page=${data.page + 1}`}
+            aria-disabled={data.page * data.pageSize >= data.total}
+            className={`inline-flex items-center gap-1 rounded-[6px] border border-border px-3 py-2 text-xs font-semibold text-ink-2 transition-colors ${
+              data.page * data.pageSize >= data.total ? "pointer-events-none opacity-40" : "hover:bg-surface-2"
+            }`}
+          >
+            Siguiente <ChevronRight size={14} aria-hidden />
+          </Link>
+        </div>
+      )}
+
       {user && user.id === data.league.ownerId && (
         <LeagueManagement
           leagueId={data.league.id}
           leagueName={data.league.name}
           ownerId={data.league.ownerId}
-          members={data.rows.map((r) => ({ userId: r.userId, username: r.username, entryName: r.entryName }))}
+          members={await getLeagueMembersForManagement(data.league.id)}
         />
       )}
     </div>

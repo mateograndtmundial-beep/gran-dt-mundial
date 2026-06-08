@@ -11,9 +11,12 @@ export type RankingRow = {
 export function LeagueRanking({
   rows,
   currentUserId,
+  startRank = 1,
 }: {
   rows: RankingRow[];
   currentUserId?: string | null;
+  /** Posición del primer registro de `rows` (1-based) — útil para paginar sin perder el ranking real. */
+  startRank?: number;
 }) {
   if (rows.length === 0) {
     return (
@@ -27,7 +30,7 @@ export function LeagueRanking({
     <div className="rounded-[8px] border border-border bg-surface card-shadow overflow-hidden">
       <ol>
         {rows.map((r, i) => {
-          const rank = i + 1;
+          const rank = startRank + i;
           const isTop3 = rank <= 3;
           const isMine = r.username && currentUserId && r.username === currentUserId;
 
