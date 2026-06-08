@@ -13,6 +13,15 @@
 
 ## Pendientes
 
+- **`scripts/fix-groups.ts` — script de uso único, suelto en el repo, sin entrada en
+  `package.json`** (commit `d42bc1d`, 2026-06-08): corrige a mano `countries.groupLetter`
+  contra la API (pisó un pseudo-grupo "Ranking of third-placed teams" del seed). Ya cumplió
+  su propósito (el fix de `seed.ts` que lo acompaña evita que vuelva a pasar). Es justo el
+  tipo de script "uno-shot contra la DB compartida" que alguien puede correr sin querer
+  meses después y reescribir grupos reales — **borrarlo** (o, si se prefiere conservar el
+  approach para casos futuros, documentarlo en `scripts/README.md` y sacarlo de la raíz de
+  `scripts/`). Ver `docs/PRODUCCION.md` §2 sobre riesgos de scripts uno-shot contra Neon.
+
 - **Fotos de jugador a hosting propio / `next/image`** (continuación de 0.7): hoy `photoUrl`
   viene de `media.api-sports.io` (CDN del proveedor PRO ya usado para todos los datos del
   Mundial — riesgo bajo, son SVG). Si se quiere sacar la dependencia del todo, bajar las fotos
