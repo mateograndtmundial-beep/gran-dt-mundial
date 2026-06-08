@@ -308,6 +308,14 @@ export function FieldBuilder({
     writeDraft({ formation, slots: slotsMap, captainPlayerId: captainId, coachId, teamName, submitted: false });
   }, [isAuthed, picks, formation, captainId, coachId, teamName]);
 
+  // Si el usuario corrige el equipo (cambia jugadores, capitán, técnico o
+  // formación) después de un error de guardado, limpiamos el mensaje viejo:
+  // si no, queda pegado mostrando un problema que ya no existe.
+  useEffect(() => {
+    setMessage(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [picks, coachId, captainId, formation]);
+
   async function onSave() {
     setSaving(true);
     setMessage(null);
@@ -393,7 +401,6 @@ export function FieldBuilder({
   // resto del equipo).
   const slotCurrent = modal?.type === "player" ? picks[modal.slot.id] : null;
   const freeForSlot = round1(budget - used + (slotCurrent?.price ?? 0));
-  const freeForCoach = round1(budget - used + (coach?.price ?? 0));
 
   return (
     <div className="flex flex-col gap-3">
@@ -766,18 +773,11 @@ export function FieldBuilder({
                       </button>
                       );
                     })
-                  : modalCoaches.map((c) => {
-                      const affordable = c.price <= freeForCoach + 0.05;
-                      return (
+                  : modalCoaches.map((c) => (
                       <button
                         key={c.id}
-                        onClick={() => { if (!affordable) return; setCoachId(c.id); setModal(null); }}
-                        disabled={!affordable}
-                        title={affordable ? undefined : "Presupuesto insuficiente"}
-                        className={cn(
-                          "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
-                          affordable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
-                        )}
+                        onClick={() => { setCoachId(c.id); setModal(null); }}
+                        className="flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group hover:bg-surface-2"
                       >
                         {c.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
@@ -786,18 +786,14 @@ export function FieldBuilder({
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
                         <span className="min-w-0 flex-1">
-                          <span className={cn("block truncate text-sm font-semibold text-ink", affordable && "group-hover:text-blue")}>
+                          <span className="block truncate text-sm font-semibold text-ink group-hover:text-blue">
                             {c.name}
                           </span>
-                          <span className="block truncate text-xs text-ink-3">
-                            {c.countryName}
-                            {!affordable && <span className="text-danger"> · presupuesto insuficiente</span>}
-                          </span>
+                          <span className="block truncate text-xs text-ink-3">{c.countryName}</span>
                         </span>
-                        <span className={cn("jersey-numeral text-sm shrink-0", affordable ? "text-blue" : "text-danger")}>{formatPrice(c.price)}M</span>
+                        <span className="jersey-numeral text-sm shrink-0 text-blue">Gratis</span>
                       </button>
-                      );
-                    })}
+                    ))}
                 {modalHasMore && (
                   <button
                     type="button"
