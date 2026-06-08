@@ -2,6 +2,7 @@ import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { LeagueManagement } from "@/components/league-management";
+import { LeagueShare } from "@/components/league-share";
 import { getLeagueRanking } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -23,7 +24,7 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
     return (
       <div>
         <PageTitle title="Liga" />
-        <EmptyState title="No se pudo cargar la liga." hint="Revisá la base." />
+        <EmptyState title="No pudimos cargar la liga." hint="Probá recargar la página en un rato." />
       </div>
     );
   }
@@ -39,16 +40,14 @@ export default async function LeaguePage({ params }: { params: Promise<{ code: s
 
   return (
     <div className="space-y-5">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-4">
         <PageTitle title={data.league.name} />
         <div className="text-right shrink-0">
           <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
-          <p
-            className="font-display text-3xl text-ink-3 tracking-widest cursor-pointer select-all"
-            title="Copiá este código para invitar amigos"
-          >
+          <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
             {data.league.code}
           </p>
+          <LeagueShare code={data.league.code} leagueName={data.league.name} />
         </div>
       </div>
 

@@ -26,7 +26,7 @@ export default async function MiEquipoPage() {
     return (
       <div>
         <PageTitle title="Mi equipo" />
-        <EmptyState title="No se pudo cargar tu equipo." hint="Revisá la configuración de la base." />
+        <EmptyState title="No pudimos cargar tu equipo." hint="Probá recargar la página en un rato." />
       </div>
     );
   }

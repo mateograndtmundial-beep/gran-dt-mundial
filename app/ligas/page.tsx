@@ -25,7 +25,7 @@ export default async function LigasPage() {
       <PageTitle title="Ligas" subtitle="Creá una liga privada o unite con un código." />
 
       {error ? (
-        <EmptyState title="No se pudo cargar tus ligas." hint="Revisá la base." />
+        <EmptyState title="No pudimos cargar tus ligas." hint="Probá recargar la página en un rato." />
       ) : !user ? (
         <EmptyState
           title="Ingresá para crear o unirte a ligas."

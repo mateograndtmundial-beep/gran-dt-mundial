@@ -51,8 +51,8 @@ export default async function EquipoPage() {
       </div>
       {error || players.length === 0 ? (
         <EmptyState
-          title="Todavía no hay jugadores cargados."
-          hint="Configurá DATABASE_URL y corré: npm run seed"
+          title="No pudimos cargar la base de jugadores."
+          hint="Probá recargar la página en un rato."
         />
       ) : locked ? (
         <EmptyState

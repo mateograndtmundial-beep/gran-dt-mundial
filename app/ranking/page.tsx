@@ -26,7 +26,7 @@ export default async function RankingPage() {
           hint="Se habilita cuando se juegue y publique la Fecha 1 del Mundial — hasta entonces todos arrancan en 0 puntos."
         />
       ) : error ? (
-        <EmptyState title="No se pudo cargar el ranking." hint="Revisá la base." />
+        <EmptyState title="No pudimos cargar el ranking." hint="Probá recargar la página en un rato." />
       ) : rows.length === 0 ? (
         <EmptyState title="Todavía no hay equipos en el ranking." />
       ) : (

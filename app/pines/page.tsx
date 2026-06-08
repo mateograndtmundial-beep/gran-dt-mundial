@@ -41,7 +41,7 @@ export default async function PinesPage({
       {!user ? (
         <EmptyState title="Ingresá para comprar pines" hint="Necesitás iniciar sesión." />
       ) : products.length === 0 ? (
-        <EmptyState title="No hay productos disponibles." hint="Corré: npm run seed:products" />
+        <EmptyState title="No hay productos disponibles." hint="Volvé a entrar más tarde." />
       ) : (
         <PinStore
           balance={balance}

@@ -21,11 +21,11 @@ export default async function JugadoresPage() {
       <PageTitle title="Jugadores" subtitle="Explorá la base del Mundial y planificá tu equipo." />
       {error ? (
         <EmptyState
-          title="No se pudo cargar la base de jugadores."
-          hint="¿Configuraste DATABASE_URL y corriste el seed (npm run seed)?"
+          title="No pudimos cargar la base de jugadores."
+          hint="Probá recargar la página en un rato."
         />
       ) : players.length === 0 ? (
-        <EmptyState title="Todavía no hay jugadores cargados." hint="Corré: npm run seed" />
+        <EmptyState title="Todavía no hay jugadores cargados." hint="Volvé a entrar más tarde." />
       ) : (
         <PlayersExplorer players={players} fixtures={fixtures} />
       )}
