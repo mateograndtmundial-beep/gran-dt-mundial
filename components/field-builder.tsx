@@ -490,9 +490,13 @@ export function FieldBuilder({
               disabled={nameLocked}
               className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors disabled:cursor-not-allowed disabled:opacity-70"
             />
-            {nameLocked && (
+            {nameLocked ? (
               <p className="mt-1.5 text-[11px] text-ink-faint">
                 El nombre del equipo queda fijo una vez guardado.
+              </p>
+            ) : (
+              <p className="mt-1.5 text-[11px] text-gold-ink font-semibold">
+                Ojo: no vas a poder cambiarlo después de guardar por primera vez.
               </p>
             )}
           </div>
