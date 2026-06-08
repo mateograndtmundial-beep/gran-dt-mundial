@@ -82,13 +82,14 @@ describe("computeEntryTotal", () => {
     expect(total).toBe(15);
   });
 
-  it("si el capitán fue auto-sustituido, el bonus va al suplente", () => {
+  it("si el capitán no jugó, el bonus se pierde (no pasa al suplente)", () => {
     const total = computeEntryTotal(
       { captainPlayerId: 1, coachId: null, lineup: lineupDef },
       ctx({ pts: { 1: 8, 2: 6 }, base: { 2: 6.5 }, playedIds: [2] }),
     );
-    // titular 1 no jugó → puntúa suplente 2 (6) + bonus capitán = base del 2 (6.5)
-    expect(total).toBe(12.5);
+    // titular 1 (capitán) no jugó → puntúa el suplente 2 (6 pts) en su lugar,
+    // pero el bonus de capitán se pierde (no se duplica el rating del suplente)
+    expect(total).toBe(6);
   });
 
   it("capitán sin rating registrado: bonus 0", () => {

@@ -176,12 +176,14 @@ export default function ComoFuncionaPage() {
               jugador tiene un precio según su valor de mercado.
             </RuleItem>
             <RuleItem icon={<Shirt size={22} strokeWidth={1.5} />} title="15 jugadores">
-              11 titulares y 4 suplentes. Si un titular no juega, podés tenerlo cubierto desde
-              el banco.
+              11 titulares y 4 suplentes. Si un titular no llega a jugar 20 minutos, entra{" "}
+              <strong>automáticamente</strong> el primer suplente de su misma posición que sí haya
+              jugado, y puntúa en su lugar (no tenés que hacer nada vos).
             </RuleItem>
             <RuleItem icon={<Users size={22} strokeWidth={1.5} />} title="Máximo 3 por país">
-              No podés tener más de 3 jugadores de la misma selección. El técnico no cuenta para
-              este límite.
+              No podés tener más de 3 jugadores de la misma selección durante la{" "}
+              <strong>fase de grupos</strong>. Desde los <strong>16avos de final</strong> en
+              adelante (playoffs) ese tope se libera. El técnico nunca cuenta para este límite.
             </RuleItem>
             <RuleItem icon={<Crown size={22} strokeWidth={1.5} />} title="Capitán y técnico">
               Elegí 1 capitán entre tus titulares (duplica su puntaje base) y 1 técnico, atado a
@@ -217,8 +219,11 @@ export default function ComoFuncionaPage() {
             <p>
               La base del puntaje de cada jugador es su{" "}
               <strong>rating del partido (0 a 10)</strong>, siempre que haya jugado al menos{" "}
-              <strong>20 minutos</strong>. Si jugó menos, su base es 0 (pero igual puede sumar o
-              restar por las acciones de abajo).
+              <strong>20 minutos</strong> de tiempo reglamentario (90' o 120' si hay tiempo extra;
+              el agregado no cuenta). Si jugó menos de 20', <strong>no suma absolutamente nada</strong>{" "}
+              —ni el rating, ni goles, asistencias, tarjetas ni nada de lo que hizo en la cancha—:
+              puntúa en su lugar el suplente de su misma posición que sí haya jugado ≥20'. Así tu
+              equipo nunca suma más de 11 jugadores por fecha.
             </p>
             <p>
               A esa base se le suman (o restan) bonos según lo que hizo en la cancha. Los goles
@@ -229,7 +234,9 @@ export default function ComoFuncionaPage() {
 
           <ValidationCallout type="success">
             El capitán <strong>duplica solo su puntaje base</strong> (el rating del partido), no
-            los bonos por goles, asistencias ni la figura.
+            los bonos por goles, asistencias ni la figura. Si no llega a jugar 20 minutos, ese
+            bonus se <strong>pierde</strong> —no pasa al suplente que entra por él—, aunque el
+            suplente sí puntúa normalmente en su lugar.
           </ValidationCallout>
 
           <div>
@@ -266,12 +273,13 @@ export default function ComoFuncionaPage() {
             icon={<ArrowLeftRight size={22} strokeWidth={1.5} />}
             title="1 cambio libre por fecha"
           >
-            Antes de cada fecha podés hacer 1 cambio gratis en tu plantel. Los cambios extra
-            cuestan <strong>pines</strong>, la moneda del juego que podés conseguir en la sección{" "}
+            Antes de cada fecha podés hacer 1 cambio gratis en tu plantel. Cada cambio extra
+            cuesta <strong>1 pin</strong>, la moneda del juego que podés conseguir en la sección{" "}
             <Link href="/pines" className="font-semibold text-blue hover:underline">
               Pines
             </Link>
-            .
+            . Si tenés el <strong>pack premium de cambios ilimitados</strong>, no pagás pines por
+            los cambios extra.
           </RuleItem>
           <ValidationCallout type="warning">
             Cada fecha se cierra cuando arranca su primer partido. A partir de ahí, tu equipo de esa
@@ -304,7 +312,10 @@ export default function ComoFuncionaPage() {
               <AccordionContent>
                 <p className="text-ink-2">
                   No. El capitán duplica únicamente su puntaje base (el rating del partido). Los
-                  bonos por goles, asistencias, valla o figura se suman una sola vez.
+                  bonos por goles, asistencias, valla o figura se suman una sola vez. Y si el
+                  capitán no llega a jugar 20 minutos, ese bonus de duplicación se{" "}
+                  <strong>pierde</strong> —no se transfiere a nadie— aunque el suplente que entra
+                  por él sí suma sus puntos normalmente.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -312,8 +323,11 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Qué pasa si un jugador no juega?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Si jugó menos de 20 minutos, su puntaje base es 0. Por eso conviene tener buenos
-                  suplentes y revisar tu equipo antes del cierre de la fecha.
+                  Si un titular jugó menos de 20 minutos, entra <strong>automáticamente</strong> el
+                  primer suplente de su misma posición que sí haya jugado, y puntúa en su lugar
+                  (vos no hacés nada, es automático). El orden de tu banco define a quién le toca
+                  primero. Si no hay un suplente válido de esa posición, el titular queda con 0. Por
+                  eso conviene armar bien el banco y revisar tu equipo antes del cierre de la fecha.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -332,7 +346,8 @@ export default function ComoFuncionaPage() {
               <AccordionContent>
                 <p className="text-ink-2">
                   Tenés 1 cambio gratis por fecha. Si querés hacer más cambios en una misma fecha,
-                  cada cambio extra se paga con pines.
+                  cada cambio extra cuesta <strong>1 pin</strong>. Si comprás el pack premium de
+                  cambios ilimitados, dejás de pagar pines por los cambios extra.
                 </p>
               </AccordionContent>
             </AccordionItem>

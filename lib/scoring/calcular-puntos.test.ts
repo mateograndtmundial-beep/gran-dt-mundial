@@ -31,6 +31,33 @@ describe("calcularPuntos", () => {
     expect(r.total).toBe(0);
   });
 
+  it("si jugó menos de minMinutes no suma NADA, ni siquiera goles/asistencias/figura", () => {
+    const r = calcularPuntos({
+      ...base,
+      position: "FWD",
+      minutes: SCORING.minMinutes - 1,
+      rating: 9,
+      goals: 3,
+      assists: 2,
+      isMotm: true,
+      isCaptain: true,
+    });
+    expect(r).toEqual({
+      base: 0,
+      captainBonus: 0,
+      goals: 0,
+      assists: 0,
+      cleanSheet: 0,
+      penaltySaved: 0,
+      goalsConceded: 0,
+      motm: 0,
+      cards: 0,
+      ownGoals: 0,
+      penaltyMissed: 0,
+      total: 0,
+    });
+  });
+
   it("base 0 si no hay rating aunque haya jugado", () => {
     expect(calcularPuntos({ ...base, rating: null }).base).toBe(0);
   });

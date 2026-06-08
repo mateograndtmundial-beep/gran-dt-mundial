@@ -128,7 +128,7 @@ Estados de una fecha: `abierta` → `cerrada` (pasó el deadline) → `publicada
 
 ## 6. Sistema de puntos
 
-**Base (todos los puestos):** la **calificación de API-Football (0–10)** del jugador en el partido. Requiere **≥20 min** jugados; si jugó menos o no jugó → **0 de base**.
+**Base (todos los puestos):** la **calificación de API-Football (0–10)** del jugador en el partido. Requiere **≥20 min** jugados (tiempo reglamentario: 90' o 120' con tiempo extra, sin contar el agregado). Si jugó menos de 20' (o no jugó), **no suma absolutamente nada** en ese partido —ni base, ni goles, asistencias, tarjetas, etc.—; el suplente de su misma posición que sí haya jugado ≥20' puntúa en su lugar (auto-sustitución/comodín). Esto asegura que cada equipo nunca sume más de 11 jugadores por fecha.
 
 **Capitán:** **×2 SOLO sobre la calificación base** (los bonos NO se duplican).
 > Ej.: defensor capitán con rating 7 que mete un gol → `(7×2) + 9 = 23`.

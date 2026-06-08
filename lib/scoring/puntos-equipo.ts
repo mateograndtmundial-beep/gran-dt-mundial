@@ -70,9 +70,9 @@ export function computeEffectiveStarters(
  * Puntaje total del equipo en la fecha: titulares (con auto-sustitución) + bonus de
  * capitán + técnico.
  *
- * Bonus de capitán: duplica el rating base del capitán efectivo (si fue auto-sustituido,
- * va al suplente que lo reemplazó). Si ese jugador no tiene rating registrado (no jugó
- * o el proveedor no lo informó), el bonus es 0 — no hay rating que duplicar.
+ * Bonus de capitán: duplica el rating base del capitán (suma de su rating en partidos con
+ * >= minMinutes). Si el capitán no jugó lo suficiente o no tiene rating registrado, el
+ * bonus es 0 — se pierde, NO pasa al suplente que lo reemplazó como titular.
  */
 export function computeEntryTotal(entry: EntryScoringInput, ctx: ScoringContext): number {
   const starters = entry.lineup.filter((l) => l.isStarter);
@@ -83,8 +83,10 @@ export function computeEntryTotal(entry: EntryScoringInput, ctx: ScoringContext)
     terms.push(ctx.pts.get(effectiveOf.get(st.playerId) ?? st.playerId) ?? 0);
   }
   if (entry.captainPlayerId != null) {
-    const capId = effectiveOf.get(entry.captainPlayerId) ?? entry.captainPlayerId;
-    terms.push(ctx.base.get(capId) ?? 0);
+    // El bonus de capitán NO se transfiere: si el capitán no jugó (>= minMinutes),
+    // ctx.base no tiene su rating y el bonus es 0 — se pierde, no pasa al suplente
+    // que lo reemplazó como titular.
+    terms.push(ctx.base.get(entry.captainPlayerId) ?? 0);
   }
   if (entry.coachId != null) {
     const cc = ctx.coachCountry.get(entry.coachId);

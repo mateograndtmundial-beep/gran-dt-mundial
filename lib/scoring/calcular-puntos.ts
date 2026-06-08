@@ -36,17 +36,41 @@ export interface PointsBreakdown {
 /**
  * Calcula los puntos de un jugador en un partido según el SPEC §6.
  * Base = rating de API-Football (requiere >= 20'). El capitán duplica SOLO el rating base.
+ *
+ * Si el jugador no llegó a los 20' (tiempo reglamentario: 90' u 120' con tiempo extra,
+ * sin contar el agregado), NO suma absolutamente nada — ni el rating, ni goles,
+ * asistencias, tarjetas, etc. — y es el efectivo (titular o suplente que sí jugó
+ * >= 20') quien puntúa en su lugar (ver computeEffectiveStarters). Esto garantiza que
+ * cada equipo nunca sume más de 11 jugadores por fecha.
  */
 export function calcularPuntos(s: StatsInput): PointsBreakdown {
   const played = s.minutes >= SCORING.minMinutes;
-  const base = played && s.rating != null ? Number(s.rating) : 0;
+
+  if (!played) {
+    return {
+      base: 0,
+      captainBonus: 0,
+      goals: 0,
+      assists: 0,
+      cleanSheet: 0,
+      penaltySaved: 0,
+      goalsConceded: 0,
+      motm: 0,
+      cards: 0,
+      ownGoals: 0,
+      penaltyMissed: 0,
+      total: 0,
+    };
+  }
+
+  const base = s.rating != null ? Number(s.rating) : 0;
   const captainBonus = s.isCaptain ? base : 0; // duplica solo la calificación base
 
   const openPlayGoals = Math.max(0, s.goals - s.penaltyGoals);
   const goals = openPlayGoals * SCORING.goalByPosition[s.position] + s.penaltyGoals * SCORING.penaltyGoal;
 
   const assists = s.assists * SCORING.assist;
-  const cleanSheet = played && s.cleanSheet ? SCORING.cleanSheet[s.position] : 0;
+  const cleanSheet = s.cleanSheet ? SCORING.cleanSheet[s.position] : 0;
   const penaltySaved = s.penaltiesSaved * SCORING.penaltySaved;
   const goalsConceded = s.position === 'GK' ? s.goalsConceded * SCORING.goalConcededGK : 0;
   const motm = s.isMotm ? SCORING.motm : 0;

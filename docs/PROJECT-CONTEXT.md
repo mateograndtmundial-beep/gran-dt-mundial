@@ -105,7 +105,7 @@ npm run make-admin [username]  # marca usuario(s) como admin
 - `FORMATIONS` — 4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2, etc. (siempre 11 titulares).
 - `ROUNDS` — 8 fechas (3 grupos + 16avos + octavos + cuartos + semis + final).
 - **`SCORING`** (la tabla de puntaje — DECISIÓN CERRADA):
-  - Base = **rating de API-Football** (requiere ≥20'); el **capitán duplica SOLO el rating base**, no los bonos.
+  - Base = **rating de API-Football** (requiere ≥20' de tiempo reglamentario, sin contar agregado: 90' o 120' con tiempo extra); si jugó menos, **no suma nada en absoluto** (ni base ni bonos) y puntúa el suplente de su posición que sí jugó (auto-sustitución, garantiza nunca > 11 por equipo); el **capitán duplica SOLO el rating base**, no los bonos.
   - Gol por puesto: **GK 12, DEF 9, MID 6, FWD 4** · gol de penal **+3** (reemplaza el de puesto).
   - Asistencia **+2** (todas las posiciones).
   - Valla invicta (jugó ≥20', equipo no recibió): **GK +3, DEF +2**.
@@ -123,7 +123,7 @@ Recalcula TODO desde la DB (no confía en el cliente): valida presupuesto, máx 
 
 ### Scoring (`lib/scoring/`)
 - `calcularPuntos(stats)` — puntos de un jugador en un partido según `SCORING` (sin capitán).
-- `publishRound(roundId)` (`publicar-fecha.ts`, admin) — agrega `playerMatchStats.fantasyPoints` → `playerRoundPoints`; por equipo aplica **auto-sustitución (comodín)**: si un titular no jugó (≥20') lo reemplaza el suplente de su misma posición que sí jugó; suma titulares efectivos + **bonus de capitán** (rating base, va al sustituto si el capitán fue reemplazado) + **técnico** (±2/0). Actualiza `entries.totalPoints`, marca **eliminados** (`countries.eliminatedRound`) en playoffs, fecha → `published`. Corre **una sola vez por fecha**.
+- `publishRound(roundId)` (`publicar-fecha.ts`, admin) — agrega `playerMatchStats.fantasyPoints` → `playerRoundPoints`; por equipo aplica **auto-sustitución (comodín)**: si un titular no jugó (≥20') lo reemplaza el suplente de su misma posición que sí jugó; suma titulares efectivos + **bonus de capitán** (rating base del capitán; se pierde —no pasa al sustituto— si el capitán no jugó ≥20') + **técnico** (±2/0). Actualiza `entries.totalPoints`, marca **eliminados** (`countries.eliminatedRound`) en playoffs, fecha → `published`. Corre **una sola vez por fecha**.
 - `lib/api-football/sync.ts` — `syncRound(roundId)`: baja stats de cada partido desde API-Football, calcula `fantasyPoints`, detecta figura, actualiza marcador/estado. **No es tiempo real**: se corre después de los partidos; el admin sincroniza y luego publica.
 
 ### Pagos / pines (`lib/payment-actions.ts`, `lib/payments/`)
