@@ -40,20 +40,25 @@ export const coaches = pgTable('coaches', {
   apiFootballId: integer('api_football_id').unique(),
 });
 
-export const players = pgTable('players', {
-  id: serial('id').primaryKey(),
-  countryId: integer('country_id').references(() => countries.id).notNull(),
-  name: text('name').notNull(),
-  position: positionEnum('position').notNull(),
-  price: doublePrecision('price').notNull().default(5),
-  priceManual: boolean('price_manual').notNull().default(false), // precio fijado a mano: prices:apply no lo pisa
-  photoUrl: text('photo_url'),
-  club: text('club'),
-  birthYear: integer('birth_year'), // para desambiguar el cruce con Transfermarkt
-  jerseyNumber: integer('jersey_number'),
-  status: text('status').notNull().default('active'),
-  apiFootballId: integer('api_football_id').unique(),
-});
+export const players = pgTable(
+  'players',
+  {
+    id: serial('id').primaryKey(),
+    countryId: integer('country_id').references(() => countries.id).notNull(),
+    name: text('name').notNull(),
+    position: positionEnum('position').notNull(),
+    price: doublePrecision('price').notNull().default(5),
+    priceManual: boolean('price_manual').notNull().default(false), // precio fijado a mano: prices:apply no lo pisa
+    photoUrl: text('photo_url'),
+    club: text('club'),
+    birthYear: integer('birth_year'), // para desambiguar el cruce con Transfermarkt
+    jerseyNumber: integer('jersey_number'),
+    status: text('status').notNull().default('active'),
+    apiFootballId: integer('api_football_id').unique(),
+  },
+  // getPlayersWithCountry / getCountryFixtures: join+group por país en cada carga de /jugadores.
+  (t) => [index('players_country').on(t.countryId)],
+);
 
 export const rounds = pgTable('rounds', {
   id: serial('id').primaryKey(),
@@ -84,7 +89,12 @@ export const matches = pgTable(
     motmPlayerId: integer('motm_player_id'),
     apiFootballFixtureId: integer('api_football_fixture_id').unique(),
   },
-  (t) => [index('matches_round').on(t.roundId)],
+  (t) => [
+    index('matches_round').on(t.roundId),
+    // getCountryFixtures / publishRound: filtran y joinean por selección local/visitante.
+    index('matches_home_country').on(t.homeCountryId),
+    index('matches_away_country').on(t.awayCountryId),
+  ],
 );
 
 export const playerMatchStats = pgTable(
@@ -191,7 +201,11 @@ export const entryRoundPlayers = pgTable(
     isStarter: boolean('is_starter').notNull().default(true),
     slot: text('slot'),
   },
-  (t) => [index('erp_entry_round').on(t.entryRoundId)],
+  (t) => [
+    index('erp_entry_round').on(t.entryRoundId),
+    // publishRound / getLineupPlayers: cruzan roster contra stats por playerId.
+    index('erp_player').on(t.playerId),
+  ],
 );
 
 export const leagues = pgTable('leagues', {
@@ -270,5 +284,15 @@ export const pinTransactions = pgTable(
     roundId: integer('round_id').references(() => rounds.id),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('pin_tx_user').on(t.userId)],
+  (t) => [
+    index('pin_tx_user').on(t.userId),
+    // Blindaje a nivel DB contra doble acreditación: como mucho un movimiento
+    // "purchase" por orden, sin importar cuántas veces llegue/reintente el
+    // webhook del proveedor o si dos requests corren en paralelo. creditOrder
+    // ya es idempotente por el UPDATE atómico de `orders`, pero esto cierra
+    // el hueco si esa guarda fallara o si algo inserta por otro camino.
+    uniqueIndex('pin_tx_order_purchase_unique')
+      .on(t.orderId)
+      .where(sql`${t.reason} = 'purchase'`),
+  ],
 );

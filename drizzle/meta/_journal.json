@@ -64,6 +64,13 @@
       "when": 1780886143850,
       "tag": "0008_violet_mole_man",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780925374952,
+      "tag": "0009_fantastic_demogoblin",
+      "breakpoints": true
     }
   ]
 }

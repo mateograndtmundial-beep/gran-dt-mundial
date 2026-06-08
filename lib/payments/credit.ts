@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, products, users } from "@/lib/db/schema";
-import { addPins } from "@/lib/pins";
+import { addPins, isUniqueViolation } from "@/lib/pins";
 import { notifyPaymentPaid } from "@/lib/notify/slack";
 
 /**
@@ -26,7 +26,16 @@ export async function creditOrder(orderId: number, providerRef?: string): Promis
     if (product?.unlimited) {
       await db.update(users).set({ isPremium: true }).where(eq(users.id, o.userId));
     } else {
-      await addPins(o.userId, o.pins, "purchase", { orderId: o.id });
+      try {
+        await addPins(o.userId, o.pins, "purchase", { orderId: o.id });
+      } catch (e) {
+        // Blindaje: el índice único `pin_tx_order_purchase_unique` rechaza un
+        // segundo "purchase" para la misma orden (carrera entre webhooks que
+        // pasaron el UPDATE atómico de arriba, p.ej. si éste corriera fuera
+        // de un lock de fila). Tratamos la violación como "ya acreditado":
+        // no hay nada más que hacer, no perdemos ni duplicamos pines.
+        if (!isUniqueViolation(e)) throw e;
+      }
     }
     // Notifica a Slack una sola vez (va dentro del path idempotente).
     notifyPaymentPaid({ orderId: o.id });

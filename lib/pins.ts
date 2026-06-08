@@ -42,6 +42,14 @@ export function isInsufficientPinsError(e: unknown): boolean {
   return e instanceof Error && e.message.toLowerCase().includes(PIN_INSUFFICIENT_MARK);
 }
 
+/** ¿El error es una violación de constraint único de Postgres (código 23505)? */
+export function isUniqueViolation(e: unknown): boolean {
+  return (
+    e instanceof Error &&
+    ("code" in e ? (e as { code?: string }).code === "23505" : /duplicate key value/i.test(e.message))
+  );
+}
+
 /** Saldo de pines de un usuario (suma del ledger). */
 export async function getPinBalance(userId: number): Promise<number> {
   const r = await db
