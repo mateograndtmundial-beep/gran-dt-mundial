@@ -39,16 +39,32 @@ const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), selec
  * `active` gatea el efecto para no engancharlo cuando el modal está cerrado.
  */
 function useModalA11y(active: boolean, ref: React.RefObject<HTMLElement | null>, onClose: () => void) {
+  // onClose vía ref: el listener usa SIEMPRE el último onClose sin que el effect se
+  // re-ejecute en cada render. (Antes onClose era dependencia y, al pasarse como arrow
+  // inline, el effect corría en cada tecla y re-enfocaba el primer elemento → en mobile
+  // eso le robaba el foco al input de búsqueda y cerraba el teclado.)
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  // Mover el foco adentro del modal SOLO al abrirse (depende solo de `active`, no del render).
+  useEffect(() => {
+    if (!active) return;
+    ref.current?.querySelector<HTMLElement>(FOCUSABLE)?.focus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active]);
+
+  // Esc para cerrar + trap de Tab. Solo se re-engancha al abrir/cerrar, no al tipear.
   useEffect(() => {
     if (!active) return;
     const node = ref.current;
     const focusables = () => Array.from(node?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
-    focusables()[0]?.focus();
 
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
       if (e.key !== "Tab") return;
@@ -66,7 +82,7 @@ function useModalA11y(active: boolean, ref: React.RefObject<HTMLElement | null>,
     }
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [active, ref, onClose]);
+  }, [active, ref]);
 }
 
 /* ─── FieldBuilder ─── */
