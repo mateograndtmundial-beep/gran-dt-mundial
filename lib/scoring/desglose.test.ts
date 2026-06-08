@@ -108,3 +108,77 @@ describe("buildRoundBreakdown", () => {
     expect(result.published).toBe(true); // este escenario es 'published'
   });
 });
+
+// Escenario: el capitán (MID titular) NO juega y entra su suplente, que sí
+// rinde bien (rating + gol). Regresión del bug donde el desglose transfería
+// la capitanía (×2) al suplente — el bonus debe perderse, igual que en el
+// puntaje real (computeEntryTotal / publishRound), para que el total
+// mostrado nunca diverja del ranking.
+const lineupCapOut: BdLineupRow[] = [
+  L(1, "GK_1", "GK", true, "Arquero"),
+  L(2, "DEF_1", "DEF", true, "Defensor"),
+  L(3, "DEF_2", "DEF", true, "Defensor2"),
+  L(4, "MID_1", "MID", true, "Capitán"),
+  L(5, "FWD_1", "FWD", true, "Delantero"),
+  L(6, "SUB_GK", "GK", false, "SupArquero"),
+  L(7, "SUB_DEF", "DEF", false, "SupDefensor"),
+  L(8, "SUB_MID", "MID", false, "SupVolante"), // entra por el capitán que no jugó
+  L(9, "SUB_FWD", "FWD", false, "SupDelantero"),
+];
+const statsCapOut: BdStatRow[] = [
+  S(1, { rating: 7.0, cleanSheet: true }),
+  S(2, { rating: 6.0, cleanSheet: true }),
+  S(3, { rating: 6.0, cleanSheet: true }),
+  // 4 (capitán) no tiene stat row → no jugó
+  S(5, { rating: 6.5 }),
+  S(8, { rating: 8.0, goals: 1 }), // el suplente rinde mejor que cualquier titular
+];
+const resultCapOut = buildRoundBreakdown({
+  captainPlayerId: 4,
+  lineup: lineupCapOut,
+  stats: statsCapOut,
+  matches,
+  coach,
+});
+
+describe("buildRoundBreakdown — capitán que no jugó (sin transferencia de bonus)", () => {
+  it("el total coincide con computeEntryTotal: el bonus de capitán se pierde, no pasa al suplente", () => {
+    const pts = new Map<number, number>();
+    const base = new Map<number, number>();
+    const played = new Set<number>();
+    const posById = new Map(lineupCapOut.map((l) => [l.playerId, l.position]));
+    for (const s of statsCapOut) {
+      const bd = calcularPuntos({ position: posById.get(s.playerId)!, isCaptain: false, ...s });
+      pts.set(s.playerId, (pts.get(s.playerId) ?? 0) + bd.total);
+      if (s.minutes >= 20 && s.rating != null) base.set(s.playerId, (base.get(s.playerId) ?? 0) + s.rating);
+      if (s.minutes >= 20) played.add(s.playerId);
+    }
+    const ctx: ScoringContext = {
+      pts,
+      base,
+      played: (pid) => played.has(pid),
+      coachCountry: new Map([[500, 100]]),
+      countryResult: new Map([[100, "win"], [200, "loss"]]),
+    };
+    const expected = computeEntryTotal({ captainPlayerId: 4, coachId: 500, lineup: lineupCapOut }, ctx);
+    expect(resultCapOut.published).toBe(true);
+    if (resultCapOut.published) expect(resultCapOut.total).toBe(expected);
+  });
+
+  it("la fila del capitán muestra el chip 'Capitán' sin ×2 (bonus 0, no transferido)", () => {
+    if (!resultCapOut.published) throw new Error("publicado");
+    const capRow = resultCapOut.starters.find((l) => l.isCaptain)!;
+    expect(capRow).toBeDefined();
+    expect(capRow.playerId).toBe(8); // se muestra el suplente que entró
+    expect(capRow.note).toBe("Entró por Capitán");
+    expect(capRow.chips.some((c) => c.kind === "cap" && c.label.includes("×2"))).toBe(false);
+    expect(capRow.chips.some((c) => c.kind === "cap" && c.label === "Capitán")).toBe(true);
+  });
+
+  it("el suplente que entró NO recibe el ×2 sobre su propio rating", () => {
+    if (!resultCapOut.published) throw new Error("publicado");
+    const subRow = resultCapOut.starters.find((l) => l.playerId === 8)!;
+    // Sin ×2: rating 8.0 + gol de MID (6) = 14, redondeado a .1
+    expect(subRow.total).toBe(14);
+  });
+});

@@ -163,15 +163,18 @@ export function buildRoundBreakdown(input: {
     lineup.map((l) => ({ playerId: l.playerId, isStarter: l.isStarter, slot: l.slot })),
     played,
   );
-  const effCaptainId = captainPlayerId != null ? effectiveOf.get(captainPlayerId) ?? captainPlayerId : null;
-
   function line(pid: number, isCaptain: boolean, note: string | null): BreakdownLine {
     const info = byId.get(pid)!;
     const bd = bdBy.get(pid) ?? EMPTY_BD;
     const chips = chipsFor(bd, rawBy.get(pid));
     let total = bd.total;
     if (isCaptain) {
-      const baseSum = baseBy.get(pid) ?? 0;
+      // El bonus de capitán se computa SIEMPRE sobre el rating del capitán
+      // original (captainPlayerId), nunca sobre el del suplente que lo
+      // reemplazó como titular: si el capitán no jugó (>= minMinutes), su
+      // baseSum es 0 y el bonus se pierde — igual que computeEntryTotal, así
+      // el total mostrado nunca diverge del puntaje real del ranking.
+      const baseSum = baseBy.get(captainPlayerId!) ?? 0;
       if (baseSum > 0) {
         chips.push({ label: `Capitán ×2 +${formatPoints(baseSum)}`, kind: "cap" });
         total += baseSum;
@@ -193,7 +196,11 @@ export function buildRoundBreakdown(input: {
   const usedSub = new Set<number>();
   const starters: BreakdownLine[] = starterRows.map((st) => {
     const eff = effectiveOf.get(st.playerId) ?? st.playerId;
-    const isCap = effCaptainId === eff;
+    // La capitanía NO se transfiere al suplente que entró: marca la fila del
+    // titular cuyo slot es el de capitán (sea él mismo o el suplente que lo
+    // reemplazó), pero el bonus (en `line`) sigue el rating del capitán
+    // original — ver comentario ahí.
+    const isCap = captainPlayerId === st.playerId;
     if (eff !== st.playerId) {
       usedSub.add(eff);
       return line(eff, isCap, `Entró por ${byId.get(st.playerId)?.name ?? "un titular"}`);
