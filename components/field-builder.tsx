@@ -108,14 +108,14 @@ export function FieldBuilder({
   const captainOk      = captainId != null && starterSlots.some((s) => picks[s.id]?.id === captainId);
 
   const errors: string[] = [];
-  if (!teamName.trim()) errors.push("Ponele un nombre a tu equipo");
-  if (!startersFilled) errors.push("Completá los 11 titulares");
-  if (!subsFilled)     errors.push(`Completá los ${subSlots.length} suplentes`);
+  if (!teamName.trim()) errors.push("Ponerle un nombre a tu equipo");
+  if (!startersFilled) errors.push("Completar los 11 titulares");
+  if (!subsFilled)     errors.push(`Completar los ${subSlots.length} suplentes`);
   if (remaining < 0)   errors.push("Te pasaste del presupuesto");
   if (maxPerCountry != null && maxCountry > maxPerCountry)
     errors.push(`Máx ${maxPerCountry} jugadores por selección`);
-  if (!captainOk)      errors.push("Elegí un capitán");
-  if (!coachId)        errors.push("Elegí un técnico");
+  if (!captainOk)      errors.push("Elegir un capitán");
+  if (!coachId)        errors.push("Elegir un técnico");
   const valid = errors.length === 0;
 
   function droppedBy(f: string): PlayerRow[] {
