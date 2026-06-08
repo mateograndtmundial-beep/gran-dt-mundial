@@ -237,6 +237,8 @@ export const products = pgTable('products', {
   priceArs: integer('price_ars'), // Mercado Pago (Argentina)
   priceUsd: doublePrecision('price_usd'), // dLocal (resto de LatAm)
   active: boolean('active').notNull().default(true),
+  // Pack "ilimitado": no acredita pines, marca al usuario como premium (ver lib/payments/credit.ts)
+  unlimited: boolean('unlimited').notNull().default(false),
 });
 
 export const orders = pgTable(

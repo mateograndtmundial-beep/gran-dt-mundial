@@ -45,7 +45,14 @@ export default async function PinesPage({
       ) : (
         <PinStore
           balance={balance}
-          products={products.map((p) => ({ sku: p.sku, name: p.name, pins: p.pins, priceArs: p.priceArs }))}
+          isPremium={user?.isPremium ?? false}
+          products={products.map((p) => ({
+            sku: p.sku,
+            name: p.name,
+            pins: p.pins,
+            priceArs: p.priceArs,
+            unlimited: p.unlimited,
+          }))}
         />
       )}
     </div>

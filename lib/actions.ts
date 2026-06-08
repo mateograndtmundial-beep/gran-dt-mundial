@@ -121,7 +121,8 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   }
 
   // 1er cambio gratis por fecha; los extra cuestan pines. Reconcilia re-ediciones.
-  const pinsNeeded = Math.max(0, changes - FREE_CHANGES_PER_ROUND);
+  // Los usuarios premium (compraron el pack "ilimitado") no pagan cambios extra.
+  const pinsNeeded = user.isPremium ? 0 : Math.max(0, changes - FREE_CHANGES_PER_ROUND);
   const alreadySpent = er0?.pinsSpent ?? 0;
   const delta = pinsNeeded - alreadySpent;
 
