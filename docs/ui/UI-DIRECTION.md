@@ -397,7 +397,7 @@ La rotación leve imita levantar una figurita del álbum. Es el momento más mem
 **Layout mobile:** FormationSelector → BudgetMeter → pitch (full width, aspect-ratio 3/4) → banca (row) → CoachCard → botón sticky.
 
 **FormationSelector:**
-Segmented pills: `[4-4-2] [4-3-3] [3-5-2] [4-2-3-1] ...`
+Segmented pills: `[4-4-2] [4-3-3] [4-2-4] [3-4-3] [3-3-4]`
 - Activo: `bg-blue text-white font-display px-3 py-1.5 rounded-[4px]`
 - Scroll horizontal en mobile si no entran
 

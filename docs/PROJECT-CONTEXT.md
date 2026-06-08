@@ -103,7 +103,7 @@ npm run make-admin [username]  # marca usuario(s) como admin
 ## Constantes del juego (`lib/game/config.ts`)
 - `BUDGET = 600` · `SQUAD = {STARTERS:11, SUBS:4, TOTAL:15}` · `MAX_PER_COUNTRY = 3` (solo en grupos; en playoffs se libera) · `FREE_CHANGES_PER_ROUND = 1`.
 - `PRICING = { MIN:5, ANCHOR:85, MAX:150, MV_REF_PERCENTILE:98, GAMMA:0.85 }`.
-- `FORMATIONS` — 4-4-2, 4-3-3, 4-2-3-1, 3-5-2, 5-3-2, etc. (siempre 11 titulares).
+- `FORMATIONS` — 4-4-2, 4-3-3, 4-2-4, 3-4-3, 3-3-4 (siempre 11 titulares; solo formaciones a 3 líneas con máx. 4 jugadores por línea, para que la cancha en mobile no corte figuritas).
 - `ROUNDS` — 8 fechas (3 grupos + 16avos + octavos + cuartos + semis + final).
 - **`SCORING`** (la tabla de puntaje — DECISIÓN CERRADA):
   - Base = **rating de API-Football** (requiere ≥20' de tiempo reglamentario, sin contar agregado: 90' o 120' con tiempo extra); si jugó menos, **no suma nada en absoluto** (ni base ni bonos) y puntúa el suplente de su posición que sí jugó (auto-sustitución, garantiza nunca > 11 por equipo); el **capitán duplica SOLO el rating base**, no los bonos.
