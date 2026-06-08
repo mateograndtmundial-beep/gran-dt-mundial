@@ -16,23 +16,42 @@ export function LeagueActions() {
   async function onCreate() {
     setBusy(true);
     setMsg(null);
-    const r = await createLeague(name);
-    setBusy(false);
-    if (!r.ok && r.error === "auth") return router.push("/sign-in");
-    if (r.ok) router.push(`/ligas/${r.code}`);
+    try {
+      const r = await createLeague(name);
+      if (!r.ok && r.error === "auth") return router.push("/sign-in");
+      if (r.ok) return router.push(`/ligas/${r.code}`);
+      // createLeague hoy sólo devuelve "auth" o ok — pero cubrimos cualquier
+      // otro código que se agregue a futuro con un mensaje genérico.
+      setMsg("No pudimos crear la liga. Probá de nuevo.");
+    } catch {
+      // p.ej. colisión de código de invitación (genCode) u otro error del server.
+      setMsg("No pudimos crear la liga. Probá de nuevo en un momento.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function onJoin() {
     setBusy(true);
     setMsg(null);
-    const r = await joinLeague(code);
-    setBusy(false);
-    if (!r.ok && r.error === "auth") return router.push("/sign-in");
-    if (!r.ok) return setMsg("No se encontró ninguna liga con ese código.");
-    router.push(`/ligas/${r.code}`);
+    try {
+      const r = await joinLeague(code);
+      if (!r.ok && r.error === "auth") return router.push("/sign-in");
+      if (!r.ok) {
+        // joinLeague hoy sólo devuelve "auth" o "not-found" además de ok.
+        setMsg("No se encontró ninguna liga con ese código.");
+        return;
+      }
+      router.push(`/ligas/${r.code}`);
+    } catch {
+      setMsg("No pudimos unirte a la liga. Probá de nuevo en un momento.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
+    <div className="space-y-3">
     <div className="grid gap-3 md:grid-cols-2">
       {/* Crear liga */}
       <Card className="p-4 space-y-3">
@@ -65,10 +84,9 @@ export function LeagueActions() {
         >
           UNIRME
         </button>
-        {msg && (
-          <p className="text-xs font-semibold text-danger">{msg}</p>
-        )}
       </Card>
+    </div>
+    {msg && <p className="text-xs font-semibold text-danger">{msg}</p>}
     </div>
   );
 }
