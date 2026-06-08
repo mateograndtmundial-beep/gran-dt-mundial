@@ -164,7 +164,7 @@ export function PlayerDetailDialog({
             </div>
 
             <p className="text-[11px] text-ink-3">
-              Cuando arranque el Mundial sumamos acá su forma (puntos por fecha) y qué % de los equipos lo tiene.
+              Cuando arranque el Mundial, vas a poder ver acá su rendimiento por fecha y qué porcentaje de los equipos lo eligió.
             </p>
         </div>
       </div>
