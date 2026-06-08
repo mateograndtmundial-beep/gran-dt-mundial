@@ -13,25 +13,6 @@
 > jugaron, el equipo suma un jugador menos (no se cruza a otra posición). Confirmado con los
 > tests existentes en `puntos-equipo.test.ts`.
 
-## Resueltos en esta ronda
-
-- ✅ **`scripts/fix-groups.ts`** — era un script de uso único suelto en el repo (sin entrada
-  en `package.json`) que corregía a mano `countries.groupLetter` contra la API; ya había
-  cumplido su propósito (el fix en `seed.ts` que lo acompañaba evita que el problema vuelva
-  a pasar). Quedaba como un script "uno-shot contra la DB compartida" que alguien podía
-  correr sin querer meses después y reescribir grupos reales — **se borró** (`git rm`).
-
-- ✅ **Edge-case `getEditableRound`** (`lib/queries.ts`) — una ronda con todos los `kickoff`
-  null quedaba editable indefinidamente. Se cambió la condición de `!deadline || deadline > now`
-  a `deadline && deadline > now`: ahora `deadline=null` (fixtures sin cargar todavía) se trata
-  como **NO editable**, y el loop sigue buscando la siguiente ronda candidata.
-
-- ✅ **dLocal fail-open** (`lib/payments/dlocal.ts`) — `parseWebhook` ya no deriva `status`
-  ni `orderId` del body del webhook bajo ninguna circunstancia: solo extrae el `payment_id`
-  del payload para re-consultarlo, y si la API no responde `ok` (o no hay `payment_id`),
-  devuelve `status: "failed"` directamente (fail-closed). Un webhook forjado con
-  `status: "PAID"` ya no puede acreditar pines.
-
 ## Pendientes
 
 - **Fotos de jugador a hosting propio / `next/image`** (continuación de 0.7): hoy `photoUrl`
