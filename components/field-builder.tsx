@@ -736,10 +736,10 @@ export function FieldBuilder({
         >
           <div
             ref={modalRef}
-            className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-t-[12px] border border-border bg-surface card-shadow-lg md:rounded-[12px] animate-slide-up"
+            className="flex h-[85dvh] max-h-[85dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-[12px] border border-border bg-surface card-shadow-lg md:h-auto md:max-h-[80vh] md:rounded-[12px] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
               <h3 className="font-display text-xl text-ink">
                 {modal.type === "coach" ? "ELEGÍ TÉCNICO" : `ELEGÍ ${POSITION_LABELS[modal.slot.position].toUpperCase()}`}
               </h3>
@@ -752,7 +752,7 @@ export function FieldBuilder({
               </button>
             </div>
 
-            <div className="p-4">
+            <div className="shrink-0 px-4 pt-4 pb-2">
               {modal.type === "coach" && (
                 <p className="mb-3 text-xs leading-relaxed text-ink-3">
                   Tu DT suma según el resultado de su selección en cada fecha:{" "}
@@ -790,7 +790,8 @@ export function FieldBuilder({
                   </select>
                 </div>
               )}
-              <div className="max-h-[50vh] space-y-0.5 overflow-y-auto">
+            </div>
+            <div className="flex-1 space-y-0.5 overflow-y-auto px-4 pb-4">
                 {modal.type === "player" && modalPlayers.length === 0 && (
                   <p className="px-3 py-8 text-center text-sm text-ink-3">
                     No se encontraron jugadores.
@@ -884,7 +885,6 @@ export function FieldBuilder({
                   </button>
                 )}
               </div>
-            </div>
           </div>
         </div>
       )}
