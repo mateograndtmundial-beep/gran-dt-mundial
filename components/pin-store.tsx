@@ -21,6 +21,20 @@ type Product = {
 const BASE_PRICE_PER_PIN_ARS = 1500;
 const BASE_PRICE_PER_PIN_USD = 1.5;
 
+// Países LatAm con cobertura dLocal Go + Argentina. Lista curada, no exhaustiva.
+// Solo se muestra el selector cuando la geo detecta un país ≠ AR (la detección puede fallar con VPN).
+const COUNTRIES: { code: string; label: string }[] = [
+  { code: "AR", label: "Argentina" },
+  { code: "MX", label: "México" },
+  { code: "CL", label: "Chile" },
+  { code: "CO", label: "Colombia" },
+  { code: "PE", label: "Perú" },
+  { code: "UY", label: "Uruguay" },
+  { code: "PY", label: "Paraguay" },
+  { code: "BO", label: "Bolivia" },
+  { code: "EC", label: "Ecuador" },
+];
+
 function formatArs(n: number) {
   return `$${n.toLocaleString("es-AR")}`;
 }
@@ -45,7 +59,10 @@ export function PinStore({
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const country = detectedCountry;
+  // En AR seguimos 100% como antes (sin selector, solo ARS). Fuera de AR ofrecemos elegir
+  // país (la geo puede fallar con VPN / roaming) — default = país detectado si lo reconocemos.
+  const showCountryPicker = detectedCountry !== "AR";
+  const [country, setCountry] = useState(detectedCountry);
 
   const isAr = country === "AR";
   // Fuera de AR, mientras dLocal no tenga credenciales no ofrecemos la compra (evita botones rotos).
@@ -96,6 +113,26 @@ export function PinStore({
           </span>
         )}
       </Card>
+
+      {showCountryPicker && (
+        <Card className="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <Eyebrow>Pagás desde</Eyebrow>
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="h-10 w-full rounded-[6px] border border-ink-3/30 bg-surface px-3 text-sm font-semibold text-ink-2 sm:w-auto"
+          >
+            {COUNTRIES.map((c) => (
+              <option key={c.code} value={c.code}>
+                {c.label}
+              </option>
+            ))}
+            {!COUNTRIES.some((c) => c.code === country) && (
+              <option value={country}>{country}</option>
+            )}
+          </select>
+        </Card>
+      )}
 
       {purchaseLocked && (
         <p className="rounded-[6px] border border-gold-border bg-gold-bg px-3 py-2 text-sm font-semibold text-gold-ink">
