@@ -16,6 +16,8 @@ import {
   users,
   products,
 } from "@/lib/db/schema";
+import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
+import type { Position } from "@/lib/game/config";
 
 export type PlayerRow = Awaited<ReturnType<typeof getPlayersWithCountry>>[number];
 export type CoachRow = Awaited<ReturnType<typeof getCoaches>>[number];
@@ -371,6 +373,119 @@ export async function getLineupPlayers(entryRoundId: number) {
     .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))
     .innerJoin(countries, eq(players.countryId, countries.id))
     .where(eq(entryRoundPlayers.entryRoundId, entryRoundId));
+}
+
+/**
+ * Desglose por jugador de la fecha de un equipo, para "Puntos por fecha".
+ * Solo devuelve detalle si la fecha está `published`. Verifica que el entryRound
+ * sea del usuario. El cómputo (reusando la lógica real de scoring) vive en
+ * lib/scoring/desglose.ts; acá solo se traen los datos.
+ */
+export async function getRoundBreakdown(
+  entryRoundId: number,
+  userId: number,
+): Promise<RoundBreakdown | null> {
+  const er = (
+    await db
+      .select({
+        roundId: entryRounds.roundId,
+        captainPlayerId: entryRounds.captainPlayerId,
+        coachId: entryRounds.coachId,
+        ownerId: entries.userId,
+        roundStatus: rounds.status,
+      })
+      .from(entryRounds)
+      .innerJoin(entries, eq(entryRounds.entryId, entries.id))
+      .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+      .where(eq(entryRounds.id, entryRoundId))
+      .limit(1)
+  )[0];
+  if (!er || er.ownerId !== userId) return null;
+  if (er.roundStatus !== "published") return { published: false };
+
+  const lineup = await db
+    .select({
+      playerId: entryRoundPlayers.playerId,
+      isStarter: entryRoundPlayers.isStarter,
+      slot: entryRoundPlayers.slot,
+      name: players.name,
+      position: players.position,
+      countryName: countries.name,
+      flagUrl: countries.flagUrl,
+      eliminatedRound: countries.eliminatedRound,
+    })
+    .from(entryRoundPlayers)
+    .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))
+    .innerJoin(countries, eq(players.countryId, countries.id))
+    .where(eq(entryRoundPlayers.entryRoundId, entryRoundId));
+
+  const ms = await db
+    .select({
+      id: matches.id,
+      homeCountryId: matches.homeCountryId,
+      awayCountryId: matches.awayCountryId,
+      homeScore: matches.homeScore,
+      awayScore: matches.awayScore,
+      homePenalties: matches.homePenalties,
+      awayPenalties: matches.awayPenalties,
+    })
+    .from(matches)
+    .where(eq(matches.roundId, er.roundId));
+
+  const playerIds = lineup.map((l) => l.playerId);
+  const matchIds = ms.map((m) => m.id);
+  const stats =
+    playerIds.length && matchIds.length
+      ? await db
+          .select({
+            playerId: playerMatchStats.playerId,
+            minutes: playerMatchStats.minutes,
+            rating: playerMatchStats.rating,
+            goals: playerMatchStats.goals,
+            penaltyGoals: playerMatchStats.penaltyGoals,
+            assists: playerMatchStats.assists,
+            yellow: playerMatchStats.yellow,
+            red: playerMatchStats.red,
+            ownGoals: playerMatchStats.ownGoals,
+            penaltiesSaved: playerMatchStats.penaltiesSaved,
+            penaltiesMissed: playerMatchStats.penaltiesMissed,
+            goalsConceded: playerMatchStats.goalsConceded,
+            cleanSheet: playerMatchStats.cleanSheet,
+            isMotm: playerMatchStats.isMotm,
+          })
+          .from(playerMatchStats)
+          .where(
+            and(
+              inArray(playerMatchStats.playerId, playerIds),
+              inArray(playerMatchStats.matchId, matchIds),
+            ),
+          )
+      : [];
+
+  const coach =
+    er.coachId != null
+      ? (
+          await db
+            .select({
+              name: coaches.name,
+              countryId: coaches.countryId,
+              countryName: countries.name,
+              flagUrl: countries.flagUrl,
+            })
+            .from(coaches)
+            .innerJoin(countries, eq(coaches.countryId, countries.id))
+            .where(eq(coaches.id, er.coachId))
+            .limit(1)
+        )[0] ?? null
+      : null;
+
+  return buildRoundBreakdown({
+    captainPlayerId: er.captainPlayerId,
+    lineup: lineup.map((l) => ({ ...l, position: l.position as Position })),
+    stats,
+    matches: ms,
+    coach,
+  });
 }
 
 export async function getActiveProducts() {
