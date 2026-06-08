@@ -136,7 +136,7 @@ export default async function MiEquipoPage() {
                 formation={latestRound?.formation ?? "4-4-2"}
                 picks={picks}
                 captainId={latestRound?.captainPlayerId ?? null}
-                style={{ width: "min(92vw, 400px)" }}
+                style={{ width: "min(100%, 400px)" }}
               />
 
               {subs.length > 0 && (
