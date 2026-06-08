@@ -70,7 +70,7 @@ function FilterSelect({
   );
 }
 
-export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures: Record<number, FixtureInfo> }) {
+export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures: Record<number, FixtureInfo[]> }) {
   const [q, setQ]           = useState("");
   const [pos, setPos]       = useState<Position | "ALL">("ALL");
   const [country, setCountry] = useState<string>("ALL");
@@ -323,7 +323,7 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
 
       <PlayerDetailDialog
         player={selected}
-        fixture={selected ? fixtures[selected.countryId] : undefined}
+        fixtures={selected ? fixtures[selected.countryId] : undefined}
         onClose={() => setSelected(null)}
       />
     </div>

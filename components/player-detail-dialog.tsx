@@ -39,16 +39,23 @@ function formatKickoff(iso: string | null): string | null {
   }
 }
 
+/** "Fecha 1 — Grupos (J1)" -> "F1" */
+function shortRound(name: string | null): string {
+  if (!name) return "";
+  const m = name.match(/Fecha\s+(\d+)/i);
+  return m ? `F${m[1]}` : name;
+}
+
 export function PlayerDetailDialog({
   player,
-  fixture,
+  fixtures,
   onClose,
 }: {
   player: ExplorerPlayer | null;
-  fixture: FixtureInfo | undefined;
+  fixtures: FixtureInfo[] | undefined;
   onClose: () => void;
 }) {
-  const kickoff = fixture ? formatKickoff(fixture.kickoff) : null;
+  const firstKickoff = fixtures && fixtures[0] ? formatKickoff(fixtures[0].kickoff) : null;
 
   return (
     <Dialog
@@ -95,45 +102,41 @@ export function PlayerDetailDialog({
             </div>
             <DialogDescription className="sr-only">Información del Mundial para {player.name}</DialogDescription>
 
-            {/* Próximo partido */}
+            {/* Próximos partidos del equipo */}
             <div className="rounded-[8px] border border-border bg-canvas p-3">
-              <p className="eyebrow mb-2">Próximo partido</p>
-              {fixture && fixture.opponentName ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-semibold text-ink">{player.countryName}</span>
-                    <span className="text-ink-faint" title={fixture.isHome ? "De local" : "De visitante"}>
-                      {fixture.isHome ? "vs" : "@"}
-                    </span>
-                    {fixture.opponentFlag ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={fixture.opponentFlag} alt="" width={20} height={14} className="h-3.5 w-5 rounded-[2px] object-cover" />
-                    ) : null}
-                    <span className="font-semibold text-ink">{fixture.opponentName}</span>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
-                    {fixture.roundName ? <span>{fixture.roundName}</span> : null}
-                    {kickoff ? <span>· {kickoff}</span> : null}
-                    {fixture.venue ? <span>· {fixture.venue}</span> : null}
-                  </div>
-                  <div className="flex items-center gap-1.5 pt-0.5">
-                    <span className="text-xs text-ink-3">Dificultad del rival:</span>
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-semibold",
-                        DIFF[fixture.difficulty].cls,
-                      )}
-                    >
-                      <span className={cn("h-1.5 w-1.5 rounded-full", DIFF[fixture.difficulty].dot)} />
-                      {DIFF[fixture.difficulty].label}
-                    </span>
-                  </div>
+              <p className="eyebrow mb-2">Próximos partidos de {player.countryName}</p>
+              {fixtures && fixtures.length > 0 ? (
+                <div className="space-y-1.5">
+                  {fixtures.map((fx, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm">
+                      <span className="w-6 shrink-0 text-xs font-bold text-ink-3">{shortRound(fx.roundName)}</span>
+                      <span className="shrink-0 text-xs text-ink-faint" title={fx.isHome ? "De local" : "De visitante"}>
+                        {fx.isHome ? "vs" : "@"}
+                      </span>
+                      {fx.opponentFlag ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={fx.opponentFlag} alt="" width={18} height={13} className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                      ) : null}
+                      <span className="min-w-0 flex-1 truncate font-medium text-ink">{fx.opponentName}</span>
+                      <span
+                        className={cn(
+                          "inline-flex shrink-0 items-center gap-1 rounded-full border px-1.5 py-0.5 text-[11px] font-semibold",
+                          DIFF[fx.difficulty].cls,
+                        )}
+                        title={`Dificultad del rival: ${DIFF[fx.difficulty].label}`}
+                      >
+                        <span className={cn("h-1.5 w-1.5 rounded-full", DIFF[fx.difficulty].dot)} />
+                        {DIFF[fx.difficulty].label}
+                      </span>
+                    </div>
+                  ))}
+                  {firstKickoff ? <p className="pt-1 text-[11px] text-ink-faint">Arranca: {firstKickoff}</p> : null}
                 </div>
               ) : (
                 <p className="text-sm text-ink-faint">
                   {player.eliminatedRound != null
                     ? "Selección eliminada del torneo."
-                    : "Sin próximo partido programado."}
+                    : "Sin próximos partidos programados."}
                 </p>
               )}
             </div>

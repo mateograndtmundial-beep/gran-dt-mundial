@@ -8,7 +8,7 @@ export const revalidate = 60;
 
 export default async function JugadoresPage() {
   let players: PlayerRow[] = [];
-  let fixtures: Record<number, FixtureInfo> = {};
+  let fixtures: Record<number, FixtureInfo[]> = {};
   let error = false;
   try {
     [players, fixtures] = await Promise.all([getPlayersWithCountry(), getCountryFixtures()]);

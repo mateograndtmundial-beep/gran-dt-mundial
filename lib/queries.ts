@@ -59,9 +59,9 @@ export type FixtureInfo = {
  * Próximo partido + dificultad por selección, para el panel de /jugadores.
  * La dificultad es un proxy: la fuerza del rival = suma del valor de su plantel
  * (los precios que ya tenemos), rankeada en 3 tramos (top=alta, medio, bajo=baja).
- * Devuelve un objeto countryId -> info (el "próximo" = el partido no jugado más cercano).
+ * Devuelve countryId -> lista de próximos partidos (no jugados), del más cercano al más lejano (máx 3).
  */
-export async function getCountryFixtures(): Promise<Record<number, FixtureInfo>> {
+export async function getCountryFixtures(): Promise<Record<number, FixtureInfo[]>> {
   const vals = await db
     .select({ countryId: players.countryId, value: sql<number>`sum(${players.price})` })
     .from(players)
@@ -96,33 +96,34 @@ export async function getCountryFixtures(): Promise<Record<number, FixtureInfo>>
     .where(ne(matches.status, "finished"))
     .orderBy(asc(matches.kickoff));
 
-  const out: Record<number, FixtureInfo> = {};
+  const MAX = 3; // próximos N partidos (la fase de grupos son 3)
+  const out: Record<number, FixtureInfo[]> = {};
+  // ms viene ordenado por kickoff asc → las listas quedan cronológicas.
+  const add = (cid: number, info: FixtureInfo) => {
+    const arr = (out[cid] ??= []);
+    if (arr.length < MAX) arr.push(info);
+  };
   for (const m of ms) {
     if (m.homeCountryId == null || m.awayCountryId == null) continue;
     const kickoff = m.kickoff ? new Date(m.kickoff).toISOString() : null;
-    // Primera aparición de cada selección (ordenado por kickoff) = su próximo partido.
-    if (!(m.homeCountryId in out)) {
-      out[m.homeCountryId] = {
-        opponentName: m.awayName,
-        opponentFlag: m.awayFlag,
-        kickoff,
-        venue: m.venue,
-        roundName: m.roundName,
-        isHome: true,
-        difficulty: strengthTier.get(m.awayCountryId) ?? "medium",
-      };
-    }
-    if (!(m.awayCountryId in out)) {
-      out[m.awayCountryId] = {
-        opponentName: m.homeName,
-        opponentFlag: m.homeFlag,
-        kickoff,
-        venue: m.venue,
-        roundName: m.roundName,
-        isHome: false,
-        difficulty: strengthTier.get(m.homeCountryId) ?? "medium",
-      };
-    }
+    add(m.homeCountryId, {
+      opponentName: m.awayName,
+      opponentFlag: m.awayFlag,
+      kickoff,
+      venue: m.venue,
+      roundName: m.roundName,
+      isHome: true,
+      difficulty: strengthTier.get(m.awayCountryId) ?? "medium",
+    });
+    add(m.awayCountryId, {
+      opponentName: m.homeName,
+      opponentFlag: m.homeFlag,
+      kickoff,
+      venue: m.venue,
+      roundName: m.roundName,
+      isHome: false,
+      difficulty: strengthTier.get(m.homeCountryId) ?? "medium",
+    });
   }
   return out;
 }
