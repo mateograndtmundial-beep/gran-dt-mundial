@@ -4,7 +4,7 @@
  * Pitch — cancha SVG con atmósfera de estadio + figuritas estilo álbum del Mundial.
  * Se usa editable en el armador (FieldBuilder) y read-only en Mi Equipo.
  */
-import { X } from "lucide-react";
+import { X, GripVertical } from "lucide-react";
 import {
   POSITION_COLORS,
   POSITION_BG,
@@ -226,7 +226,7 @@ export function Figurita({
         {/* Bandera = protagonista (figurita) */}
         <span
           className={cn(
-            "block overflow-hidden rounded-[4px] bg-white card-shadow",
+            "relative block overflow-hidden rounded-[4px] bg-white card-shadow",
             isCaptain ? "ring-2 ring-gold" : "ring-1 ring-black/10",
           )}
           style={{ borderBottom: `3px solid ${color}` }}
@@ -240,6 +240,7 @@ export function Figurita({
               height={32}
               loading="lazy"
               decoding="async"
+              draggable={false}
               className="h-8 w-12 object-cover"
             />
           ) : (
@@ -252,9 +253,16 @@ export function Figurita({
           )}
         </span>
 
-        {/* Placa de nombre (legible sobre el pasto) */}
-        <span className="max-w-[72px] truncate rounded-[3px] bg-surface/95 px-1.5 py-px text-[11px] font-bold leading-tight text-ink card-shadow">
-          {lastName(player.name)}
+        {/* Placa de nombre (legible sobre el pasto) + affordance de drag&drop:
+            misma señal que tienen los suplentes (GripVertical), apenas al lado
+            del nombre, sutil y sin tapar nada. */}
+        <span className="flex max-w-[78px] items-center gap-1 rounded-[3px] bg-surface/95 px-1.5 py-px card-shadow">
+          <span className="truncate text-[11px] font-bold leading-tight text-ink">
+            {lastName(player.name)}
+          </span>
+          {editable && slot.isStarter && (
+            <GripVertical size={10} aria-hidden className="shrink-0 text-ink-faint" />
+          )}
         </span>
 
         {/* Precio */}

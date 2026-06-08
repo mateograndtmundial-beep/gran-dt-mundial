@@ -31,6 +31,44 @@ const PITCH_FIT = "min(100%, calc((100svh - 16.5rem) * 0.6977))";
    técnicos), con "Mostrar más" para el resto — evita cortar el listado en seco. */
 const MODAL_PAGE = 60;
 
+const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+/**
+ * Accesibilidad de bottom-sheet/modal: cierra con Esc y atrapa el foco adentro
+ * (Tab/Shift+Tab cicla entre los elementos enfocables, sin escaparse al fondo).
+ * `active` gatea el efecto para no engancharlo cuando el modal está cerrado.
+ */
+function useModalA11y(active: boolean, ref: React.RefObject<HTMLElement | null>, onClose: () => void) {
+  useEffect(() => {
+    if (!active) return;
+    const node = ref.current;
+    const focusables = () => Array.from(node?.querySelectorAll<HTMLElement>(FOCUSABLE) ?? []);
+    focusables()[0]?.focus();
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        e.stopPropagation();
+        onClose();
+        return;
+      }
+      if (e.key !== "Tab") return;
+      const els = focusables();
+      if (els.length === 0) return;
+      const first = els[0]!;
+      const last = els[els.length - 1]!;
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [active, ref, onClose]);
+}
+
 /* ─── FieldBuilder ─── */
 export type InitialLineup = {
   formation: string;
@@ -84,6 +122,8 @@ export function FieldBuilder({
   const [message, setMessage]       = useState<string | null>(null);
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
   const [draftConflict, setDraftConflict] = useState<LineupDraft | null>(null);
+  const [showChangesInfo, setShowChangesInfo] = useState(true);
+  const modalRef = useRef<HTMLDivElement>(null);
   const draftHandled = useRef(false);
   const autoSaveArmed = useRef(false);
 
@@ -402,6 +442,8 @@ export function FieldBuilder({
   const slotCurrent = modal?.type === "player" ? picks[modal.slot.id] : null;
   const freeForSlot = round1(budget - used + (slotCurrent?.price ?? 0));
 
+  useModalA11y(!!modal, modalRef, () => setModal(null));
+
   return (
     <div className="flex flex-col gap-3">
       {/* ─── Barra de control compacta ─── */}
@@ -485,6 +527,42 @@ export function FieldBuilder({
             quedan fijos al pie para que nunca se corten (a cualquier nivel de zoom). */}
         <div className="flex flex-col md:max-h-[calc(100svh-16.5rem)]">
         <div className="flex flex-col gap-3 md:overflow-y-auto md:pr-0.5">
+          {/* Leyenda de cambios — sólo la primera vez que se arma el equipo */}
+          {!nameLocked && showChangesInfo && (
+            <div className="relative rounded-[8px] border border-blue/25 bg-blue/5 p-3 pr-8">
+              <button
+                type="button"
+                onClick={() => setShowChangesInfo(false)}
+                aria-label="Cerrar"
+                className="absolute right-2 top-2 rounded-full p-1 text-blue/60 hover:bg-blue/10 hover:text-blue transition-colors"
+              >
+                <X size={14} />
+              </button>
+              <p className="text-[11px] leading-relaxed text-ink-2">
+                <span className="font-semibold text-blue">Hasta que arranque el Mundial</span> podés
+                editar tu equipo las veces que quieras, sin límite. Cuando empiece el primer
+                partido, el equipo queda <span className="font-semibold">fijo</span> y de ahí en
+                más vas a tener <span className="font-semibold">1 cambio gratis por fecha</span> (los
+                cambios extra se pagan con pines).
+              </p>
+            </div>
+          )}
+
+          {/* Qué falta para guardar — arriba de todo para que se vea de entrada
+              (Técnico quedaba "escondido" más abajo y el usuario no se enteraba). */}
+          {errors.length > 0 && (
+            <ValidationCallout type="warning">
+              <p className="mb-1.5">Para guardar, te falta:</p>
+              <ul className="space-y-0.5 font-normal">
+                {errors.map((e) => (
+                  <li key={e} className="flex items-start gap-1.5">
+                    <span aria-hidden>·</span> {e}
+                  </li>
+                ))}
+              </ul>
+            </ValidationCallout>
+          )}
+
           {/* Nombre del equipo (aparece en el ranking) — fijo una vez seteado */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
@@ -497,13 +575,9 @@ export function FieldBuilder({
               disabled={nameLocked}
               className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors disabled:cursor-not-allowed disabled:opacity-70"
             />
-            {nameLocked ? (
-              <p className="mt-1.5 text-[11px] text-ink-faint">
+            {nameLocked && (
+              <p className="mt-1.5 text-[11px] text-ink-3">
                 El nombre del equipo queda fijo una vez guardado.
-              </p>
-            ) : (
-              <p className="mt-1.5 text-[11px] text-gold-ink font-semibold">
-                Ojo: no vas a poder cambiarlo después de guardar por primera vez.
               </p>
             )}
           </div>
@@ -598,18 +672,7 @@ export function FieldBuilder({
 
           {/* Validación */}
           <div className="space-y-2">
-            {errors.length > 0 ? (
-              <ValidationCallout type="warning">
-                <p className="mb-1.5">Para guardar, te falta:</p>
-                <ul className="space-y-0.5 font-normal">
-                  {errors.map((e) => (
-                    <li key={e} className="flex items-start gap-1.5">
-                      <span aria-hidden>·</span> {e}
-                    </li>
-                  ))}
-                </ul>
-              </ValidationCallout>
-            ) : (
+            {errors.length === 0 && (
               <ValidationCallout type="success">
                 ¡Equipo válido! Listo para guardar.
               </ValidationCallout>
@@ -656,6 +719,7 @@ export function FieldBuilder({
           onClick={() => setModal(null)}
         >
           <div
+            ref={modalRef}
             className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-t-[12px] border border-border bg-surface card-shadow-lg md:rounded-[12px] animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
