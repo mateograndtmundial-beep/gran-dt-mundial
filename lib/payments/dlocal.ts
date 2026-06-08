@@ -35,42 +35,32 @@ export const dlocal: PaymentProvider = {
 
   async parseWebhook(req: Request): Promise<WebhookResult | null> {
     if (!KEY || !SECRET) return null;
-    // Integridad: no se confía en el payload. Más abajo se re-consulta el pago contra
-    // la API de dLocal (auth con KEY:SECRET) y el estado/order_id se toman de ESA
-    // respuesta, no del cuerpo del webhook. Un webhook forjado con un payment_id ajeno
-    // termina acreditando, a lo sumo, el order_id real de ese pago (su dueño legítimo).
+    // Integridad (fail-closed): el payload del webhook NUNCA decide el estado ni el
+    // order_id — solo nos sirve para extraer el payment_id a re-consultar. El estado y
+    // order_id finales salen EXCLUSIVAMENTE de la respuesta confirmada de la API de
+    // dLocal (auth con KEY:SECRET). Si no hay payment_id o la API no confirma con `ok`,
+    // el pago se trata como no pagado — un webhook forjado con `status: "PAID"` no
+    // acredita nada por sí solo.
     let paymentId: string | null = null;
-    let orderId: number | null = null;
-    let statusRaw: string | undefined;
 
     try {
-      const body = (await req.json()) as {
-        payment_id?: string;
-        id?: string;
-        order_id?: string;
-        status?: string;
-      };
+      const body = (await req.json()) as { payment_id?: string; id?: string };
       paymentId = body.payment_id ?? body.id ?? null;
-      orderId = body.order_id ? Number(body.order_id) : null;
-      statusRaw = body.status;
     } catch {
       const url = new URL(req.url);
       paymentId = url.searchParams.get("payment_id") ?? url.searchParams.get("id");
     }
 
-    // Confirmar contra la API (no confiar solo en el payload del webhook).
-    if (paymentId) {
-      const res = await fetch(`${API}/v1/payments/${paymentId}`, { headers: { Authorization: authHeader() } });
-      if (res.ok) {
-        const p = (await res.json()) as { status?: string; order_id?: string };
-        statusRaw = p.status ?? statusRaw;
-        if (p.order_id) orderId = Number(p.order_id);
-      }
-    }
+    if (!paymentId) return { orderId: null, status: "failed", providerRef: undefined };
 
-    const s = (statusRaw ?? "").toUpperCase();
+    const res = await fetch(`${API}/v1/payments/${paymentId}`, { headers: { Authorization: authHeader() } });
+    if (!res.ok) return { orderId: null, status: "failed", providerRef: paymentId };
+
+    const p = (await res.json()) as { status?: string; order_id?: string };
+    const orderId = p.order_id ? Number(p.order_id) : null;
+    const s = (p.status ?? "").toUpperCase();
     const status: WebhookResult["status"] =
       s === "PAID" ? "paid" : s === "PENDING" ? "pending" : s === "EXPIRED" ? "expired" : "failed";
-    return { orderId, status, providerRef: paymentId ?? undefined };
+    return { orderId, status, providerRef: paymentId };
   },
 };

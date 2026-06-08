@@ -94,12 +94,13 @@ puestos equipos y saldos reales.
 - **No mezclar credenciales test/prod de Mercado Pago** — da el error *"una de las partes es
   de prueba"*. Local usa MP sandbox; Vercel usa MP producción.
 - `auto_return` de MP solo funciona con URLs `https` (en localhost se omite, ya manejado).
-- **Riesgos de seguridad abiertos** (documentados en detalle en `docs/TODO.md` § Pagos —
-  son **hardening crítico antes de procesar volumen real**, no "nice to have"):
-  - `lib/payments/dlocal.ts`: si la reconfirmación contra la API de dLocal no responde
-    `res.ok`, el código cae al `status` que viene en el *body del webhook* → un atacante
-    podría forjar un webhook `PAID` y acreditarse pines sin pagar. Hay que ir a **fail-closed**
-    (nunca derivar `paid` del body, solo de la reconfirmación contra el proveedor).
+- ✅ **dLocal fail-open — resuelto.** `lib/payments/dlocal.ts` ya no deriva `status` ni
+  `orderId` del body del webhook: solo usa el `payment_id` del payload para re-consultar
+  contra la API, y si esa reconfirmación no responde `ok` (o no hay `payment_id`), devuelve
+  `status: "failed"` directo (fail-closed). Un webhook forjado con `status: "PAID"` ya no
+  acredita pines.
+- **Riesgo de seguridad abierto** (documentado en detalle en `docs/TODO.md` § Pagos — es
+  **hardening crítico antes de procesar volumen real**, no "nice to have"):
   - `lib/payments/mercadopago.ts`: `if (!secret) return true` dentro de `verifyWebhookSignature`
     deja pasar webhooks **sin validar la firma** si falta `MP_WEBHOOK_SECRET` en el entorno.
     Hay que **exigir el secreto en producción** (fail-closed) — hoy ese atajo solo es válido

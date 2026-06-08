@@ -325,7 +325,9 @@ export async function getEditableRound(now: Date = new Date()) {
     .orderBy(asc(rounds.order));
   for (const c of candidates) {
     const deadline = c.firstKickoff ? new Date(c.firstKickoff) : null;
-    if (!deadline || deadline > now) return { round: c.round, deadline };
+    // Sin fixtures todavía (deadline null) = NO editable: evita que una ronda
+    // sin fecha definida quede abierta indefinidamente.
+    if (deadline && deadline > now) return { round: c.round, deadline };
   }
   return null;
 }
