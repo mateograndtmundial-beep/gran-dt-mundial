@@ -84,7 +84,9 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];
   if (!entry) {
     entry = (await db.insert(entries).values({ userId: user.id, name: teamName }).returning())[0];
-  } else if (entry.name !== teamName) {
+  } else if (!entry.name && entry.name !== teamName) {
+    // El nombre se fija una sola vez (al crear el equipo): si ya tiene uno,
+    // ignoramos cambios entrantes para que quede consistente con el ranking.
     await db.update(entries).set({ name: teamName }).where(eq(entries.id, entry.id));
   }
   if (!entry) throw new Error("No se pudo crear el equipo");

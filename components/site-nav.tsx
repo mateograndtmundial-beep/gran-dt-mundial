@@ -54,7 +54,7 @@ export function SiteNav() {
   return (
     <>
       {/* ─── Header desktop ─── */}
-      <header className="sticky top-0 z-40 border-b border-border bg-canvas/90 backdrop-blur-sm">
+      <header className="sticky top-0 z-40 border-b border-border bg-canvas">
         <div className="mx-auto flex w-full max-w-5xl items-center justify-between px-4 py-3">
           {/* Logo + wordmark */}
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -112,7 +112,7 @@ export function SiteNav() {
         // translateZ(0)+backface-hidden: promueve la barra a su propia capa GPU
         // para evitar el glitch de iOS Safari (backdrop-filter sobre fixed se
         // "despega" durante el scroll por inercia). pb safe-area: home indicator.
-        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas/95 backdrop-blur-sm md:hidden pb-[env(safe-area-inset-bottom)] [transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]"
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-canvas md:hidden pb-[env(safe-area-inset-bottom)] [transform:translateZ(0)] [backface-visibility:hidden] [-webkit-backface-visibility:hidden]"
       >
         <div className="mx-auto grid max-w-5xl grid-cols-6">
           {links.map((l) => {

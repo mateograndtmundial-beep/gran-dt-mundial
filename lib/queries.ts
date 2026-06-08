@@ -235,6 +235,18 @@ export async function getAllRounds() {
   return db.select().from(rounds).orderBy(asc(rounds.order));
 }
 
+/**
+ * Los rankings (global y posición del usuario) muestran a todos en 0 pts hasta
+ * que se juegue y publique la Fecha 1 — hasta entonces no aportan nada y
+ * confunden. Se habilitan recién cuando esa fecha (order = 1) queda `published`.
+ */
+export async function isRankingsVisible(): Promise<boolean> {
+  const r = (
+    await db.select({ status: rounds.status }).from(rounds).where(eq(rounds.order, 1)).limit(1)
+  )[0];
+  return r?.status === "published";
+}
+
 export async function getGlobalLeaderboard(limit = 100, offset = 0) {
   return db
     .select({

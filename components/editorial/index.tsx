@@ -31,7 +31,7 @@ export function PositionChip({
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-[4px] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+        "inline-flex w-11 shrink-0 items-center justify-center rounded-[4px] py-0.5 text-[10px] font-bold uppercase tracking-wide",
         className,
       )}
       style={{

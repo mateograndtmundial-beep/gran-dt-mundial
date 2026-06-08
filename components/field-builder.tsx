@@ -27,6 +27,10 @@ import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } fro
    redimensiona. */
 const PITCH_FIT = "min(100%, calc((100svh - 16.5rem) * 0.6977))";
 
+/* Cuántos resultados mostramos de entrada en el modal de selección (jugadores/
+   técnicos), con "Mostrar más" para el resto — evita cortar el listado en seco. */
+const MODAL_PAGE = 60;
+
 /* ─── FieldBuilder ─── */
 export type InitialLineup = {
   formation: string;
@@ -67,12 +71,15 @@ export function FieldBuilder({
     return m;
   });
   const [teamName, setTeamName]     = useState(initialTeamName);
+  // El nombre se fija la primera vez que se guarda (no se puede editar después).
+  const nameLocked = initialTeamName.trim() !== "";
   const [captainId, setCaptainId]   = useState<number | null>(initial?.captainPlayerId ?? null);
   const [coachId, setCoachId]       = useState<number | null>(initial?.coachId ?? null);
   const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | null>(null);
   const [search, setSearch]         = useState("");
   const [modalCountry, setModalCountry] = useState<string>("ALL");
   const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc">("price-desc");
+  const [modalShown, setModalShown] = useState(MODAL_PAGE);
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
@@ -217,8 +224,8 @@ export function FieldBuilder({
   }
 
   const pickedIds    = new Set(chosen.map((p) => p.id));
-  const nq           = normalizeName(search); // búsqueda sin tildes ni mayúsculas
-  const modalPlayers = modal?.type === "player"
+  const nq               = normalizeName(search); // búsqueda sin tildes ni mayúsculas
+  const modalPlayersAll  = modal?.type === "player"
     ? players
         .filter(
           (p) =>
@@ -232,9 +239,8 @@ export function FieldBuilder({
           if (modalSort === "price-asc") return a.price - b.price || a.name.localeCompare(b.name);
           return b.price - a.price || a.name.localeCompare(b.name);
         })
-        .slice(0, 120)
     : [];
-  const modalCoaches = modal?.type === "coach"
+  const modalCoachesAll  = modal?.type === "coach"
     ? coaches
         .filter(
           (c) =>
@@ -242,8 +248,14 @@ export function FieldBuilder({
             normalizeName(c.name).includes(nq) ||
             normalizeName(c.countryName).includes(nq),
         )
-        .slice(0, 120)
     : [];
+  // Render incremental: mostramos de a tandas con "Mostrar más" en vez de
+  // truncar el listado en seco (antes cortaba a los primeros 120).
+  const modalPlayers = modalPlayersAll.slice(0, modalShown);
+  const modalCoaches = modalCoachesAll.slice(0, modalShown);
+  const modalHasMore = modal?.type === "coach"
+    ? modalCoachesAll.length > modalShown
+    : modalPlayersAll.length > modalShown;
 
   // Aplica un borrador (equipo armado sin loguearse) al estado del armador.
   function applyDraft(d: LineupDraft) {
@@ -372,6 +384,7 @@ export function FieldBuilder({
     setSearch("");
     setModalCountry("ALL");
     setModalSort("price-desc");
+    setModalShown(MODAL_PAGE);
     setModal({ type: "player", slot: s });
   }
 
@@ -463,17 +476,23 @@ export function FieldBuilder({
 
         {/* Rail derecho (scrollea solo, la cancha nunca se corta) */}
         <div className="flex flex-col gap-3 md:max-h-[calc(100svh-16.5rem)] md:overflow-y-auto md:pr-0.5">
-          {/* Nombre del equipo (aparece en el ranking) */}
+          {/* Nombre del equipo (aparece en el ranking) — fijo una vez seteado */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
             <input
               value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
+              onChange={(e) => !nameLocked && setTeamName(e.target.value)}
               maxLength={40}
               placeholder="Ej: Los Galácticos"
               aria-label="Nombre del equipo"
-              className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
+              disabled={nameLocked}
+              className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors disabled:cursor-not-allowed disabled:opacity-70"
             />
+            {nameLocked && (
+              <p className="mt-1.5 text-[11px] text-ink-faint">
+                El nombre del equipo queda fijo una vez guardado.
+              </p>
+            )}
           </div>
 
           {/* Suplentes */}
@@ -545,7 +564,7 @@ export function FieldBuilder({
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
             <Eyebrow className="mb-2">Técnico</Eyebrow>
             <button
-              onClick={() => { setSearch(""); setModal({ type: "coach" }); }}
+              onClick={() => { setSearch(""); setModalShown(MODAL_PAGE); setModal({ type: "coach" }); }}
               className="flex w-full items-center justify-between rounded-[6px] border border-dashed border-border px-3 py-2.5 text-left text-sm hover:border-blue transition-colors group"
             >
               {coach ? (
@@ -559,10 +578,7 @@ export function FieldBuilder({
                 </span>
               )}
               {coach ? (
-                <div className="text-right">
-                  <div className="jersey-numeral text-sm text-blue">{formatPrice(coach.price)}M</div>
-                  <div className="text-[10px] font-semibold text-success">+2 / −2 pts</div>
-                </div>
+                <span className="jersey-numeral text-sm text-blue">Gratis</span>
               ) : null}
             </button>
           </div>
@@ -637,9 +653,8 @@ export function FieldBuilder({
 
             <div className="p-4">
               <input
-                autoFocus
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { setSearch(e.target.value); setModalShown(MODAL_PAGE); }}
                 placeholder="Buscar…"
                 className="mb-2 w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
               />
@@ -647,7 +662,7 @@ export function FieldBuilder({
                 <div className="mb-3 flex gap-2">
                   <select
                     value={modalCountry}
-                    onChange={(e) => setModalCountry(e.target.value)}
+                    onChange={(e) => { setModalCountry(e.target.value); setModalShown(MODAL_PAGE); }}
                     aria-label="Filtrar por país"
                     className="min-w-0 flex-1 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
                   >
@@ -658,7 +673,7 @@ export function FieldBuilder({
                   </select>
                   <select
                     value={modalSort}
-                    onChange={(e) => setModalSort(e.target.value as typeof modalSort)}
+                    onChange={(e) => { setModalSort(e.target.value as typeof modalSort); setModalShown(MODAL_PAGE); }}
                     aria-label="Ordenar"
                     className="shrink-0 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
                   >
@@ -691,7 +706,7 @@ export function FieldBuilder({
                         maxPerCountry == null || countryNow < maxPerCountry;
                       const selectable = affordable && countryOk;
                       const reason = !affordable
-                        ? "no te alcanza"
+                        ? "presupuesto insuficiente"
                         : !countryOk
                           ? `máx ${maxPerCountry} de este país`
                           : null;
@@ -704,7 +719,7 @@ export function FieldBuilder({
                           selectable
                             ? undefined
                             : !affordable
-                              ? "No te alcanza el presupuesto"
+                              ? "Presupuesto insuficiente"
                               : `Máximo ${maxPerCountry} jugadores por selección`
                         }
                         className={cn(
@@ -738,7 +753,7 @@ export function FieldBuilder({
                         key={c.id}
                         onClick={() => { if (!affordable) return; setCoachId(c.id); setModal(null); }}
                         disabled={!affordable}
-                        title={affordable ? undefined : "No te alcanza el presupuesto"}
+                        title={affordable ? undefined : "Presupuesto insuficiente"}
                         className={cn(
                           "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
                           affordable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
@@ -756,13 +771,22 @@ export function FieldBuilder({
                           </span>
                           <span className="block truncate text-xs text-ink-3">
                             {c.countryName}
-                            {!affordable && <span className="text-danger"> · no te alcanza</span>}
+                            {!affordable && <span className="text-danger"> · presupuesto insuficiente</span>}
                           </span>
                         </span>
                         <span className={cn("jersey-numeral text-sm shrink-0", affordable ? "text-blue" : "text-danger")}>{formatPrice(c.price)}M</span>
                       </button>
                       );
                     })}
+                {modalHasMore && (
+                  <button
+                    type="button"
+                    onClick={() => setModalShown((n) => n + MODAL_PAGE)}
+                    className="mx-auto mt-1 block rounded-[6px] px-4 py-2 text-sm font-semibold text-blue hover:bg-blue-light transition-colors"
+                  >
+                    Mostrar más
+                  </button>
+                )}
               </div>
             </div>
           </div>
