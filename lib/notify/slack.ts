@@ -29,7 +29,7 @@ const ENABLED =
 // Prefijo que distingue pruebas (preview/local) de producción real.
 const ENV_TAG = VERCEL_ENV === "production" ? "" : `\`[${VERCEL_ENV ?? "local"}]\` `;
 
-type ChannelKey = "pagos" | "users" | "errores" | "scoring";
+type ChannelKey = "pagos" | "users" | "errores" | "scoring" | "stats";
 
 /** Resuelve el canal de un tipo de evento; cae a SLACK_CHANNEL_DEFAULT. */
 function channelFor(key: ChannelKey): string | null {
@@ -38,6 +38,7 @@ function channelFor(key: ChannelKey): string | null {
     users: process.env.SLACK_CHANNEL_USERS,
     errores: process.env.SLACK_CHANNEL_ERRORES,
     scoring: process.env.SLACK_CHANNEL_SCORING,
+    stats: process.env.SLACK_CHANNEL_STATS,
   };
   return map[key] ?? process.env.SLACK_CHANNEL_DEFAULT ?? null;
 }
@@ -298,6 +299,17 @@ export function notifyRoundPublished(input: {
         ),
       ],
     });
+  });
+}
+
+// ──────────────────────────────────────────────────────────────
+// Stats (digest diario)
+// ──────────────────────────────────────────────────────────────
+
+/** Digest diario de stats armado por `lib/reports/stats-digest.ts` (cron 8am ARG). */
+export function notifyStatsDigest(input: { text: string; blocks: Block[] }): void {
+  fire(async () => {
+    await post("stats", { text: input.text, color: COLOR.blue, blocks: input.blocks });
   });
 }
 
