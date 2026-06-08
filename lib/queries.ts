@@ -1,4 +1,5 @@
-import { asc, desc, eq, gt, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import {
   players,
@@ -6,6 +7,7 @@ import {
   coaches,
   rounds,
   matches,
+  playerMatchStats,
   entries,
   entryRounds,
   entryRoundPlayers,
@@ -37,6 +39,150 @@ export async function getPlayersWithCountry() {
     .from(players)
     .innerJoin(countries, eq(players.countryId, countries.id))
     .orderBy(desc(players.price));
+}
+
+// ---------- Editor de scoring (admin) ----------
+
+/** Una fecha con sus partidos (nombres/banderas + cuántos jugadores tienen stats). */
+export async function getRoundWithMatches(roundId: number) {
+  const round = (await db.select().from(rounds).where(eq(rounds.id, roundId)).limit(1))[0];
+  if (!round) return null;
+
+  const home = alias(countries, "home_c");
+  const away = alias(countries, "away_c");
+  const ms = await db
+    .select({
+      id: matches.id,
+      kickoff: matches.kickoff,
+      venue: matches.venue,
+      status: matches.status,
+      homeScore: matches.homeScore,
+      awayScore: matches.awayScore,
+      homePenalties: matches.homePenalties,
+      awayPenalties: matches.awayPenalties,
+      motmPlayerId: matches.motmPlayerId,
+      homeCountryId: matches.homeCountryId,
+      awayCountryId: matches.awayCountryId,
+      homeName: home.name,
+      homeFlag: home.flagUrl,
+      awayName: away.name,
+      awayFlag: away.flagUrl,
+    })
+    .from(matches)
+    .leftJoin(home, eq(matches.homeCountryId, home.id))
+    .leftJoin(away, eq(matches.awayCountryId, away.id))
+    .where(eq(matches.roundId, roundId))
+    .orderBy(asc(matches.kickoff));
+
+  const ids = ms.map((m) => m.id);
+  const counts = ids.length
+    ? await db
+        .select({ matchId: playerMatchStats.matchId, n: sql<number>`count(*)::int` })
+        .from(playerMatchStats)
+        .where(inArray(playerMatchStats.matchId, ids))
+        .groupBy(playerMatchStats.matchId)
+    : [];
+  const countByMatch = new Map(counts.map((c) => [c.matchId, Number(c.n)]));
+
+  return {
+    round,
+    matches: ms.map((m) => ({ ...m, statsCount: countByMatch.get(m.id) ?? 0 })),
+  };
+}
+
+/** Un partido + ambos planteles (con sus stats si ya existen) para editar a mano. */
+export async function getMatchEditor(matchId: number) {
+  const home = alias(countries, "home_c");
+  const away = alias(countries, "away_c");
+  const m = (
+    await db
+      .select({
+        id: matches.id,
+        roundId: matches.roundId,
+        homeCountryId: matches.homeCountryId,
+        awayCountryId: matches.awayCountryId,
+        homeName: home.name,
+        homeFlag: home.flagUrl,
+        awayName: away.name,
+        awayFlag: away.flagUrl,
+        homeScore: matches.homeScore,
+        awayScore: matches.awayScore,
+        homePenalties: matches.homePenalties,
+        awayPenalties: matches.awayPenalties,
+        status: matches.status,
+        motmPlayerId: matches.motmPlayerId,
+        roundName: rounds.name,
+        roundType: rounds.type,
+        roundStatus: rounds.status,
+      })
+      .from(matches)
+      .leftJoin(home, eq(matches.homeCountryId, home.id))
+      .leftJoin(away, eq(matches.awayCountryId, away.id))
+      .leftJoin(rounds, eq(matches.roundId, rounds.id))
+      .where(eq(matches.id, matchId))
+      .limit(1)
+  )[0];
+  if (!m) return null;
+  if (m.homeCountryId == null || m.awayCountryId == null) return { match: m, players: [] };
+
+  const rows = await db
+    .select({
+      playerId: players.id,
+      name: players.name,
+      position: players.position,
+      countryId: players.countryId,
+      jerseyNumber: players.jerseyNumber,
+      minutes: playerMatchStats.minutes,
+      rating: playerMatchStats.rating,
+      goals: playerMatchStats.goals,
+      penaltyGoals: playerMatchStats.penaltyGoals,
+      assists: playerMatchStats.assists,
+      yellow: playerMatchStats.yellow,
+      red: playerMatchStats.red,
+      ownGoals: playerMatchStats.ownGoals,
+      penaltiesSaved: playerMatchStats.penaltiesSaved,
+      penaltiesMissed: playerMatchStats.penaltiesMissed,
+      cleanSheet: playerMatchStats.cleanSheet,
+      isMotm: playerMatchStats.isMotm,
+      fantasyPoints: playerMatchStats.fantasyPoints,
+      manualEdit: playerMatchStats.manualEdit,
+      hasStat: sql<boolean>`${playerMatchStats.id} is not null`,
+    })
+    .from(players)
+    .leftJoin(
+      playerMatchStats,
+      and(eq(playerMatchStats.playerId, players.id), eq(playerMatchStats.matchId, matchId)),
+    )
+    .where(inArray(players.countryId, [m.homeCountryId, m.awayCountryId]))
+    .orderBy(asc(players.countryId), asc(players.position), desc(playerMatchStats.minutes), asc(players.name));
+
+  return { match: m, players: rows };
+}
+
+/**
+ * Fechas que conviene sincronizar ahora: no publicadas, ya empezadas (primer
+ * partido <= now) y con algún partido dentro de la ventana reciente (para no
+ * golpear la API por fechas viejas sin publicar). La usa el cron.
+ */
+export async function getRoundsToSync(now: Date = new Date(), windowHours = 72): Promise<number[]> {
+  const rows = await db
+    .select({
+      id: rounds.id,
+      firstKickoff: sql<string | null>`min(${matches.kickoff})`,
+      lastKickoff: sql<string | null>`max(${matches.kickoff})`,
+    })
+    .from(rounds)
+    .leftJoin(matches, eq(matches.roundId, rounds.id))
+    .where(ne(rounds.status, "published"))
+    .groupBy(rounds.id)
+    .orderBy(asc(rounds.order));
+
+  const nowMs = now.getTime();
+  const cutoff = nowMs - windowHours * 3_600_000;
+  return rows
+    .filter((r) => r.firstKickoff != null && new Date(r.firstKickoff).getTime() <= nowMs)
+    .filter((r) => r.lastKickoff != null && new Date(r.lastKickoff).getTime() >= cutoff)
+    .map((r) => r.id);
 }
 
 export async function getCoaches() {

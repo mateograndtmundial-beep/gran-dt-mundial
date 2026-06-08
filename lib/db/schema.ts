@@ -76,6 +76,10 @@ export const matches = pgTable(
     venue: text('venue'),
     homeScore: integer('home_score'),
     awayScore: integer('away_score'),
+    // Resultado de la tanda de penales (solo eliminatorias definidas por penales).
+    // Null si no hubo tanda. Define el ganador cuando homeScore === awayScore.
+    homePenalties: integer('home_penalties'),
+    awayPenalties: integer('away_penalties'),
     status: matchStatusEnum('status').notNull().default('scheduled'),
     motmPlayerId: integer('motm_player_id'),
     apiFootballFixtureId: integer('api_football_fixture_id').unique(),
@@ -103,6 +107,8 @@ export const playerMatchStats = pgTable(
     rating: doublePrecision('rating'),
     isMotm: boolean('is_motm').notNull().default(false),
     fantasyPoints: doublePrecision('fantasy_points').notNull().default(0),
+    // El admin editó esta fila a mano: el sync (incl. el cron) no la pisa.
+    manualEdit: boolean('manual_edit').notNull().default(false),
   },
   (t) => [
     uniqueIndex('pms_player_match').on(t.playerId, t.matchId),

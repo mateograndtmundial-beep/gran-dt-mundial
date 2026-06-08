@@ -50,6 +50,13 @@
       "when": 1780860725543,
       "tag": "0006_dry_warbound",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780875168905,
+      "tag": "0007_legal_psynapse",
+      "breakpoints": true
     }
   ]
 }

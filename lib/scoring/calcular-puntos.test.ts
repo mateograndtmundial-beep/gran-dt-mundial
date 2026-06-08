@@ -67,6 +67,28 @@ describe("calcularPuntos", () => {
     const r = calcularPuntos({ ...base, rating: 7.25, isCaptain: true });
     expect(r.total).toBe(Math.round(r.total * 10) / 10);
   });
+
+  it("penal errado resta (cualquier posición)", () => {
+    expect(calcularPuntos({ ...base, rating: 6, penaltiesMissed: 1 }).penaltyMissed).toBe(SCORING.penaltyMissed);
+  });
+
+  it("autogol resta (cualquier posición)", () => {
+    expect(calcularPuntos({ ...base, rating: 6, ownGoals: 1 }).ownGoals).toBe(SCORING.ownGoal);
+  });
+
+  it("penal atajado suma al arquero", () => {
+    expect(calcularPuntos({ ...base, position: "GK", rating: 6, penaltiesSaved: 1 }).penaltySaved).toBe(SCORING.penaltySaved);
+  });
+
+  it("gol recibido resta solo al arquero", () => {
+    expect(calcularPuntos({ ...base, position: "GK", rating: 6, goalsConceded: 2 }).goalsConceded).toBe(2 * SCORING.goalConcededGK);
+    expect(calcularPuntos({ ...base, position: "DEF", rating: 6, goalsConceded: 2 }).goalsConceded).toBe(0);
+  });
+
+  it("asistencia y figura suman", () => {
+    expect(calcularPuntos({ ...base, rating: 6, assists: 1 }).assists).toBe(SCORING.assist);
+    expect(calcularPuntos({ ...base, rating: 6, isMotm: true }).motm).toBe(SCORING.motm);
+  });
 });
 
 describe("calcularPuntosTecnico", () => {

@@ -18,7 +18,9 @@
     "make-admin": "tsx scripts/make-admin.ts",
     "prices:fetch": "tsx scripts/fetch-market-values.ts",
     "prices:apply": "tsx scripts/price-players.ts",
-    "test:slack": "tsx scripts/test-slack.ts"
+    "test:slack": "tsx scripts/test-slack.ts",
+    "check:coverage": "tsx scripts/check-coverage.ts",
+    "probe:ratings": "tsx scripts/probe-ratings.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

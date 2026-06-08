@@ -12,6 +12,7 @@ import {
   countries,
 } from "@/lib/db/schema";
 import { computeEntryTotal, sumRoundPoints, type ScoringContext } from "@/lib/scoring/puntos-equipo";
+import { resolveMatchOutcome } from "@/lib/scoring/resultado-partido";
 import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
 import { SCORING } from "@/lib/game/config";
 
@@ -65,16 +66,21 @@ export async function publishRound(roundId: number) {
   // Resultado de cada selección en la fecha (para el técnico).
   const countryResult = new Map<number, "win" | "loss" | "draw">();
   for (const m of ms) {
-    if (m.homeScore == null || m.awayScore == null || m.homeCountryId == null || m.awayCountryId == null) continue;
-    if (m.homeScore === m.awayScore) {
+    const outcome = resolveMatchOutcome(m);
+    if (outcome.decided) {
+      // Incluye la definición por penales: el ganador de la tanda suma "win".
+      countryResult.set(outcome.winnerId, "win");
+      countryResult.set(outcome.loserId, "loss");
+    } else if (
+      m.homeScore != null &&
+      m.awayScore != null &&
+      m.homeCountryId != null &&
+      m.awayCountryId != null &&
+      m.homeScore === m.awayScore
+    ) {
+      // Empate real (grupos, sin tanda): ambos suman empate para el técnico.
       countryResult.set(m.homeCountryId, "draw");
       countryResult.set(m.awayCountryId, "draw");
-    } else if (m.homeScore > m.awayScore) {
-      countryResult.set(m.homeCountryId, "win");
-      countryResult.set(m.awayCountryId, "loss");
-    } else {
-      countryResult.set(m.homeCountryId, "loss");
-      countryResult.set(m.awayCountryId, "win");
     }
   }
 
@@ -136,10 +142,13 @@ export async function publishRound(roundId: number) {
   if (round.type === "knockout") {
     const eliminations: BatchOp[] = [];
     for (const m of ms) {
-      if (m.homeScore == null || m.awayScore == null || m.homeCountryId == null || m.awayCountryId == null) continue;
-      if (m.homeScore === m.awayScore) continue; // definición por penales no modelada acá
-      const loserId = m.homeScore > m.awayScore ? m.awayCountryId : m.homeCountryId;
-      eliminations.push(db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, loserId)));
+      // Marca eliminado al perdedor, incluida la definición por penales.
+      const outcome = resolveMatchOutcome(m);
+      if (outcome.decided) {
+        eliminations.push(
+          db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, outcome.loserId)),
+        );
+      }
     }
     await runChunked(eliminations);
   }

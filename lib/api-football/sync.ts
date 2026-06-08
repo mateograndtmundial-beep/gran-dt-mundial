@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, players, playerMatchStats } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
@@ -47,17 +47,32 @@ export async function syncRound(roundId: number) {
   const syncMatch = async (m: (typeof ms)[number]): Promise<boolean> => {
     if (!m.apiFootballFixtureId) return false;
 
-    // Las dos llamadas del partido van en paralelo.
-    const [fx, data] = (await Promise.all([
+    // Las tres llamadas del partido van en paralelo. Los eventos traen los autogoles
+    // (no están en /fixtures/players).
+    const [fx, data, events] = (await Promise.all([
       apiFootball.fixtureById(m.apiFootballFixtureId),
       apiFootball.fixturePlayers(m.apiFootballFixtureId),
-    ])) as [any[], any[]];
+      apiFootball.fixtureEvents(m.apiFootballFixtureId),
+    ])) as [any[], any[], any[]];
     const f = fx?.[0];
     const homeScore: number | null = f?.goals?.home ?? null;
     const awayScore: number | null = f?.goals?.away ?? null;
+    // Penales de la tanda (eliminatorias definidas por penales). Null si no hubo.
+    const homePenalties: number | null = f?.score?.penalty?.home ?? null;
+    const awayPenalties: number | null = f?.score?.penalty?.away ?? null;
     const statusShort: string | undefined = f?.fixture?.status?.short;
     const finished = ["FT", "AET", "PEN"].includes(statusShort ?? "");
     const homeTeamApi = f?.teams?.home?.id;
+
+    // Autogoles por jugador (apiId). El `player` del evento es quien lo hizo en
+    // contra. Se excluye la tanda de penales (ahí no hay autogoles, pero por las dudas).
+    const ownGoalByApiId = new Map<number, number>();
+    for (const e of events ?? []) {
+      if (e?.type === "Goal" && e?.detail === "Own Goal" && e?.comments !== "Penalty Shootout") {
+        const pid = e?.player?.id;
+        if (pid != null) ownGoalByApiId.set(pid, (ownGoalByApiId.get(pid) ?? 0) + 1);
+      }
+    }
 
     type Raw = {
       our: NonNullable<ReturnType<typeof byApi.get>>;
@@ -69,6 +84,8 @@ export async function syncRound(roundId: number) {
       yellow: number;
       red: number;
       saves: number;
+      penaltiesMissed: number;
+      ownGoals: number;
       isHome: boolean;
     };
     const raws: Raw[] = [];
@@ -89,6 +106,9 @@ export async function syncRound(roundId: number) {
           yellow: st.cards?.yellow ?? 0,
           red: st.cards?.red ?? 0,
           saves: st.penalty?.saved ?? 0,
+          // penalty.missed ya excluye los penales de tanda (se confirmó contra la API).
+          penaltiesMissed: st.penalty?.missed ?? 0,
+          ownGoals: ownGoalByApiId.get(pl?.player?.id) ?? 0,
           isHome,
         });
       }
@@ -104,11 +124,21 @@ export async function syncRound(roundId: number) {
       }
     }
 
+    // Si el admin ya editó alguna fila de este partido, respetamos SU figura (no la
+    // recalculamos): de lo contrario, tras un re-sync, la fila manual conservaría su
+    // +4 (está protegida) y el algoritmo le daría otro +4 a otro → dos figuras.
+    const manualRow = await db
+      .select({ id: playerMatchStats.id })
+      .from(playerMatchStats)
+      .where(and(eq(playerMatchStats.matchId, m.id), eq(playerMatchStats.manualEdit, true)))
+      .limit(1);
+    const effectiveMotm = manualRow.length > 0 ? m.motmPlayerId : motmPlayerId;
+
     const ops: BatchOp[] = [];
     for (const r of raws) {
       const concededTeam = r.isHome ? awayScore ?? 0 : homeScore ?? 0;
       const cleanSheet = finished ? concededTeam === 0 : false;
-      const isMotm = r.our.id === motmPlayerId;
+      const isMotm = r.our.id === effectiveMotm;
       const bd = calcularPuntos({
         position: r.our.position,
         minutes: r.minutes,
@@ -118,9 +148,9 @@ export async function syncRound(roundId: number) {
         assists: r.assists,
         yellow: r.yellow,
         red: r.red,
-        ownGoals: 0,
+        ownGoals: r.ownGoals,
         penaltiesSaved: r.saves,
-        penaltiesMissed: 0,
+        penaltiesMissed: r.penaltiesMissed,
         goalsConceded: concededTeam,
         cleanSheet,
         isMotm,
@@ -136,9 +166,9 @@ export async function syncRound(roundId: number) {
         assists: r.assists,
         yellow: r.yellow,
         red: r.red,
-        ownGoals: 0,
+        ownGoals: r.ownGoals,
         penaltiesSaved: r.saves,
-        penaltiesMissed: 0,
+        penaltiesMissed: r.penaltiesMissed,
         goalsConceded: r.our.position === "GK" ? concededTeam : 0,
         cleanSheet,
         rating: r.rating,
@@ -152,6 +182,8 @@ export async function syncRound(roundId: number) {
           .onConflictDoUpdate({
             target: [playerMatchStats.playerId, playerMatchStats.matchId],
             set: values,
+            // No pisar filas editadas a mano por el admin (el cron respeta las correcciones).
+            setWhere: ne(playerMatchStats.manualEdit, true),
           }),
       );
     }
@@ -162,8 +194,10 @@ export async function syncRound(roundId: number) {
         .set({
           homeScore,
           awayScore,
+          homePenalties,
+          awayPenalties,
           status: finished ? "finished" : "scheduled",
-          motmPlayerId,
+          motmPlayerId: effectiveMotm,
         })
         .where(eq(matches.id, m.id)),
     );

@@ -239,6 +239,32 @@ export function notifyPaymentFailed(input: { orderId: number; status: string }):
 // Scoring / admin
 // ──────────────────────────────────────────────────────────────
 
+/** Sync de una fecha terminado: lista para revisar/publicar (NO publica sola). */
+export function notifyRoundSynced(input: {
+  roundId: number;
+  matches: number;
+  source: "cron" | "admin";
+}): void {
+  fire(async () => {
+    const round = (
+      await db.select({ name: rounds.name }).from(rounds).where(eq(rounds.id, input.roundId)).limit(1)
+    )[0];
+    const name = round?.name ?? `Fecha #${input.roundId}`;
+    const src = input.source === "cron" ? "automático (cron)" : "manual";
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+    const link = appUrl ? `\n<${appUrl}/admin|Revisar y publicar →>` : "";
+    await post("scoring", {
+      text: `Sync listo: ${name}`,
+      color: COLOR.blue,
+      blocks: [
+        section(
+          `${ENV_TAG}:arrows_counterclockwise: *Sync ${src} listo:* ${esc(name)}\n${input.matches} partidos sincronizados · revisá las stats y publicá la fecha${link}`,
+        ),
+      ],
+    });
+  });
+}
+
 /** Fecha publicada: puntos aplicados a todos los equipos. */
 export function notifyRoundPublished(input: {
   roundId: number;

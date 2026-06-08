@@ -46,6 +46,9 @@ export const apiFootball = {
   fixtureById: (id: number) => apiGet('fixtures', { id }),
   fixtureRounds: () => apiGet<string>('fixtures/rounds', { league: LEAGUE_ID, season: SEASON }),
   fixturePlayers: (fixtureId: number) => apiGet('fixtures/players', { fixture: fixtureId }),
+  // Eventos del partido (goles, tarjetas, sustituciones). Lo usamos para los
+  // autogoles, que NO vienen en las stats por jugador (/fixtures/players).
+  fixtureEvents: (fixtureId: number) => apiGet('fixtures/events', { fixture: fixtureId }),
   standings: () => apiGet('standings', { league: LEAGUE_ID, season: SEASON }),
   coverage: () => apiGet('leagues', { id: LEAGUE_ID, season: SEASON }),
 };
