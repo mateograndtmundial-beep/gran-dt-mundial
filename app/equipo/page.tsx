@@ -1,7 +1,7 @@
-import { Lock } from "lucide-react";
 import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
+import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, type PlayerRow, type CoachRow } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { BUDGET, MAX_PER_COUNTRY } from "@/lib/game/config";
@@ -61,14 +61,8 @@ export default async function EquipoPage() {
         />
       ) : (
         <div className="space-y-3">
-          {/* Aviso: cada fecha se cierra al arrancar su primer partido */}
-          <div className="flex items-start gap-2.5 rounded-r-[6px] border-l-4 border-danger bg-danger-bg px-3.5 py-2.5">
-            <Lock size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-danger" aria-hidden />
-            <p className="text-[13px] font-semibold leading-snug text-danger">
-              Cuando arranca cada fecha, tu equipo de esa fecha queda cerrado. Guardá tus cambios
-              antes de que empiece el primer partido.
-            </p>
-          </div>
+          {/* Aviso: cada fecha se cierra al arrancar su primer partido (cerrable, se recuerda en localStorage) */}
+          <LineupLockNotice variant="compact" />
           <FieldBuilder
             players={players}
             coaches={coaches}
