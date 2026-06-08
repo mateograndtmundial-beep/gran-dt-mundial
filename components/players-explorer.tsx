@@ -291,7 +291,7 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
               type="button"
               onClick={() => setSelected(p)}
               aria-label={`Ver info de ${p.name}`}
-              className={cn("block w-full text-left animate-fade-in", `stagger-${(i % 6) + 1}`)}
+              className={cn("block w-full cursor-pointer text-left animate-fade-in", `stagger-${(i % 6) + 1}`)}
             >
               <PlayerCard
                 name={p.name}
