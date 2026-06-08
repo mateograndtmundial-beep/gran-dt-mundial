@@ -6,6 +6,7 @@ import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
 import { LeagueJoinCTA } from "@/components/league-join-cta";
+import { LeagueLeaveButton } from "@/components/league-leave-button";
 import { getLeagueRanking, getLeagueMembersForManagement, isLeagueMember } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -115,6 +116,10 @@ export default async function LeaguePage({
           ownerId={data.league.ownerId}
           members={await getLeagueMembersForManagement(data.league.id)}
         />
+      )}
+
+      {user && isMember && user.id !== data.league.ownerId && (
+        <LeagueLeaveButton leagueId={data.league.id} leagueName={data.league.name} />
       )}
     </div>
   );

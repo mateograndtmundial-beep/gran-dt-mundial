@@ -279,3 +279,18 @@ export async function removeMember(leagueId: number, userIdToRemove: number) {
   revalidatePath(`/ligas/${league.code}`);
   return { ok: true as const };
 }
+
+/** Cualquier miembro puede salir de una liga, salvo el dueño (debería eliminarla en su lugar). */
+export async function leaveLeague(leagueId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false as const, error: "auth" as const };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league) return { ok: false as const, error: "not-found" as const };
+  if (league.ownerId === user.id) return { ok: false as const, error: "owner" as const };
+  await db
+    .delete(leagueMembers)
+    .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, user.id)));
+  revalidatePath(`/ligas/${league.code}`);
+  revalidatePath("/ligas");
+  return { ok: true as const };
+}
