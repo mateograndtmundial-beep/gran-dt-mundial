@@ -273,9 +273,13 @@ export default function ComoFuncionaPage() {
             </Link>
             .
           </RuleItem>
+          <ValidationCallout type="warning">
+            Cada fecha se cierra cuando arranca su primer partido. A partir de ahí, tu equipo de esa
+            fecha queda bloqueado: no podés hacer cambios hasta que se publiquen los puntos.
+          </ValidationCallout>
           <p className="text-sm leading-relaxed text-ink-3">
-            Cada fecha tiene una hora de cierre (deadline): a partir de ahí tu equipo queda
-            bloqueado para esa fecha. Los puntajes se publican una vez que termina la fecha.
+            Cuando empieza una fecha nueva volvés a poder editar tu equipo. Los puntajes se publican
+            una vez que termina cada fecha.
           </p>
         </Card>
       </section>
@@ -338,6 +342,30 @@ export default function ComoFuncionaPage() {
                 <p className="text-ink-2">
                   Creás o te sumás a una liga con un código y compiten por el acumulado de las 8
                   fechas. También hay un ranking general con todos los DTs.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="deadline">
+              <AccordionTrigger>¿Hasta cuándo puedo cambiar mi equipo?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  Cada fecha se cierra cuando arranca su primer partido. Antes de ese momento podés
+                  hacer cambios (1 gratis por fecha, los extra con pines). Después, el equipo de esa
+                  fecha queda bloqueado hasta que se publiquen los puntos; cuando empieza la fecha
+                  siguiente, volvés a poder editar.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="extra-penales">
+              <AccordionTrigger>¿Cómo se cuentan el tiempo extra y los penales?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  Lo que pasa en el tiempo suplementario cuenta normal (goles, asistencias,
+                  tarjetas), porque es parte del partido. En cambio, los goles de la tanda de penales
+                  (la definición) no suman como gol a tus jugadores, y la valla invicta se mira por
+                  los goles en juego —90 minutos más tiempo extra—, no por la tanda. Para el técnico,
+                  la selección que avanza por penales cuenta como que ganó (+2) y la que queda
+                  afuera, como que perdió (−2).
                 </p>
               </AccordionContent>
             </AccordionItem>

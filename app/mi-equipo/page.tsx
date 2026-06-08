@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Lock } from "lucide-react";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/components/editorial";
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
@@ -96,6 +97,15 @@ export default async function MiEquipoPage() {
 
   return (
     <div className="space-y-5">
+      {/* Aviso: cada fecha se cierra al arrancar su primer partido */}
+      <div className="flex items-start gap-2.5 rounded-r-[6px] border-l-4 border-danger bg-danger-bg px-4 py-3">
+        <Lock size={18} strokeWidth={2} className="mt-0.5 shrink-0 text-danger" aria-hidden />
+        <p className="text-sm font-semibold leading-relaxed text-danger">
+          Cuando arranca cada fecha, tu equipo de esa fecha queda cerrado: no vas a poder cambiarlo
+          hasta que se publiquen los puntos. Hacé tus cambios antes de que empiece el primer partido.
+        </p>
+      </div>
+
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">

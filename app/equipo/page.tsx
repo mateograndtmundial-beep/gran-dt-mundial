@@ -1,3 +1,4 @@
+import { Lock } from "lucide-react";
 import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
@@ -59,16 +60,26 @@ export default async function EquipoPage() {
           hint="Vas a poder volver a editar cuando se publiquen los puntos de esta fecha."
         />
       ) : (
-        <FieldBuilder
-          players={players}
-          coaches={coaches}
-          budget={BUDGET}
-          maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
-          initial={initial}
-          initialTeamName={initial?.teamName ?? ""}
-          deadlineLabel={deadlineLabel}
-          isAuthed={isAuthed}
-        />
+        <div className="space-y-3">
+          {/* Aviso: cada fecha se cierra al arrancar su primer partido */}
+          <div className="flex items-start gap-2.5 rounded-r-[6px] border-l-4 border-danger bg-danger-bg px-3.5 py-2.5">
+            <Lock size={16} strokeWidth={2} className="mt-0.5 shrink-0 text-danger" aria-hidden />
+            <p className="text-[13px] font-semibold leading-snug text-danger">
+              Cuando arranca cada fecha, tu equipo de esa fecha queda cerrado. Guardá tus cambios
+              antes de que empiece el primer partido.
+            </p>
+          </div>
+          <FieldBuilder
+            players={players}
+            coaches={coaches}
+            budget={BUDGET}
+            maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
+            initial={initial}
+            initialTeamName={initial?.teamName ?? ""}
+            deadlineLabel={deadlineLabel}
+            isAuthed={isAuthed}
+          />
+        </div>
       )}
     </div>
   );
