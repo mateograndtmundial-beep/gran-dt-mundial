@@ -6,6 +6,7 @@ import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
 import { PostHogProvider } from "./providers";
 import { PostHogIdentify } from "@/components/posthog-identify";
+import { SITE } from "@/lib/site";
 
 /* ─── Fuentes (next/font/google → CSS variables) ─── */
 const bebasNeue = Bebas_Neue({
@@ -41,14 +42,14 @@ export const viewport: Viewport = {
 
 /* ─── Metadatos ─── */
 export const metadata: Metadata = {
-  metadataBase: new URL("https://los11desampa.vercel.app"),
+  metadataBase: new URL(SITE.url),
   title: "Los 11 de Sampa — El juego de los DT del Mundial 2026",
   description:
     "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 con 15 jugadores, elegí capitán y DT, y competí con amigos por el primer puesto.",
   openGraph: {
     title: "Los 11 de Sampa",
     description: "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 y competí con amigos.",
-    images: [{ url: "/images/logo/logo-square-512.png", width: 512, height: 512 }],
+    // La imagen sale de app/opengraph-image.tsx (1200×630, generada con ImageResponse).
   },
   icons: {
     icon: [

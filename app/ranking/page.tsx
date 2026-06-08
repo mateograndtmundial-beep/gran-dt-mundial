@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { getGlobalLeaderboard, isRankingsVisible } from "@/lib/queries";
@@ -5,6 +6,15 @@ import { getGlobalLeaderboard, isRankingsVisible } from "@/lib/queries";
 // ISR: ranking global no dependiente del usuario. Se revalida cada 60s y on-demand
 // (publishRound hace revalidatePath("/ranking")).
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Ranking — Los 11 de Sampa",
+  description: "Mirá la tabla global del Mundial 2026: quién va primero y cuántos puntos lleva cada DT.",
+  openGraph: {
+    title: "Ranking del Mundial 2026 — Los 11 de Sampa",
+    description: "La tabla global de Los 11 de Sampa: quién va primero y cuántos puntos lleva cada DT.",
+  },
+};
 
 export default async function RankingPage() {
   let rows: Awaited<ReturnType<typeof getGlobalLeaderboard>> = [];

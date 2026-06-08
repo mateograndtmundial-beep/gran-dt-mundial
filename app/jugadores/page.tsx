@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { PlayersExplorer } from "@/components/players-explorer";
 import { getPlayersWithCountry, getCountryFixtures, type PlayerRow, type FixtureInfo } from "@/lib/queries";
@@ -5,6 +6,16 @@ import { getPlayersWithCountry, getCountryFixtures, type PlayerRow, type Fixture
 // ISR: contenido no dependiente del usuario. Se revalida cada 60s y on-demand
 // (updatePlayerPrice hace revalidatePath("/jugadores")).
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Jugadores — Los 11 de Sampa",
+  description:
+    "Explorá los 1248 jugadores del Mundial 2026: precios, posiciones, próximos rivales y dificultad de cada partido.",
+  openGraph: {
+    title: "Jugadores del Mundial 2026 — Los 11 de Sampa",
+    description: "Explorá precios, posiciones y próximos partidos de cada jugador del Mundial 2026.",
+  },
+};
 
 export default async function JugadoresPage() {
   let players: PlayerRow[] = [];
