@@ -21,19 +21,22 @@ export function LeagueShare({ code, leagueName }: { code: string; leagueName: st
     setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
   }, []);
   const link = `${SITE.url}/ligas/${code}`;
-  const shareText = `Unite a mi liga "${leagueName}" en Los 11 de Sampa con el código ${code}: ${link}`;
+  // El mensaje NO incluye el link: el link va aparte en `url`. Si va en los dos,
+  // WhatsApp (y otras apps) lo pegan al texto y el link aparece DUPLICADO.
+  const message = `Unite a mi liga "${leagueName}" en Los 11 de Sampa con el código ${code}`;
 
   async function handleShare() {
     if (canShare) {
       try {
-        await navigator.share({ title: "Los 11 de Sampa", text: shareText, url: link });
+        await navigator.share({ title: "Los 11 de Sampa", text: message, url: link });
         return;
       } catch {
         // El usuario canceló el share nativo o no está disponible — caemos al copiado.
       }
     }
     try {
-      await navigator.clipboard.writeText(shareText);
+      // En el clipboard va el link completo (no hay campo `url` aparte).
+      await navigator.clipboard.writeText(`${message}: ${link}`);
       setCopied(true);
       setTimeout(() => setCopied(false), 1800);
     } catch {

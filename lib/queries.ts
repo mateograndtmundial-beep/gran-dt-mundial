@@ -135,6 +135,16 @@ export const getCountryFixtures = unstable_cache(
   { tags: ["country-fixtures"], revalidate: 3600 },
 );
 
+/** ¿El usuario ya es miembro de la liga? (para mostrar/ocultar el CTA de unirse) */
+export async function isLeagueMember(leagueId: number, userId: number): Promise<boolean> {
+  const r = await db
+    .select({ userId: leagueMembers.userId })
+    .from(leagueMembers)
+    .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, userId)))
+    .limit(1);
+  return r.length > 0;
+}
+
 // ---------- Editor de scoring (admin) ----------
 
 /** Una fecha con sus partidos (nombres/banderas + cuántos jugadores tienen stats). */

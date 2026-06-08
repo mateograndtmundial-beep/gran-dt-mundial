@@ -5,7 +5,8 @@ import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
-import { getLeagueRanking, getLeagueMembersForManagement } from "@/lib/queries";
+import { LeagueJoinCTA } from "@/components/league-join-cta";
+import { getLeagueRanking, getLeagueMembersForManagement, isLeagueMember } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,8 @@ export default async function LeaguePage({
     );
   }
 
+  const isMember = user ? await isLeagueMember(data.league.id, user.id) : false;
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -60,6 +63,13 @@ export default async function LeaguePage({
           <LeagueShare code={data.league.code} leagueName={data.league.name} />
         </div>
       </div>
+
+      <LeagueJoinCTA
+        code={data.league.code}
+        leagueName={data.league.name}
+        isMember={isMember}
+        isAuthed={!!user}
+      />
 
       <LeagueRanking
         startRank={(data.page - 1) * data.pageSize + 1}
