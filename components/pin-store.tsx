@@ -129,7 +129,7 @@ export function PinStore({
       )}
 
       {msg && <p className="text-sm font-semibold text-danger">{msg}</p>}
-      <p className="text-xs text-ink-faint">
+      <p className="text-xs text-ink-3">
         Pagos con Mercado Pago (Argentina). El saldo se acredita al confirmarse el pago.
       </p>
     </div>

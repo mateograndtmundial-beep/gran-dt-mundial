@@ -99,7 +99,7 @@ export function SectionHeader({
       <div className="flex items-baseline gap-2">
         <span className="eyebrow">{title}</span>
         {count !== undefined && (
-          <span className="text-[11px] text-ink-faint">({count})</span>
+          <span className="text-[11px] text-ink-3">({count})</span>
         )}
       </div>
       {action}

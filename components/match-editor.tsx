@@ -192,7 +192,7 @@ function SquadTable({
                   <tr key={p.playerId} className={cn("border-t border-border", p.manualEdit && "bg-gold/5")}>
                     <td className="px-2 py-1 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <span className="w-5 text-right text-xs text-ink-faint tabular-nums">{p.jerseyNumber ?? ""}</span>
+                        <span className="w-5 text-right text-xs text-ink-3 tabular-nums">{p.jerseyNumber ?? ""}</span>
                         <PositionChip position={p.position} />
                         <span className="font-medium text-ink">{p.name}</span>
                       </div>
@@ -362,7 +362,7 @@ export function MatchEditor({ match, players }: { match: Match; players: PlayerR
         </div>
         {isKnockout && (
           <div className="flex items-end gap-2">
-            <span className="pb-1.5 text-xs text-ink-faint">Penales (tanda):</span>
+            <span className="pb-1.5 text-xs text-ink-3">Penales (tanda):</span>
             <input value={homePens} onChange={(e) => setHomePens(e.target.value)} inputMode="numeric" placeholder="–" className={scoreInput} />
             <span className="pb-1.5 text-ink-faint">–</span>
             <input value={awayPens} onChange={(e) => setAwayPens(e.target.value)} inputMode="numeric" placeholder="–" className={scoreInput} />
@@ -395,7 +395,7 @@ export function MatchEditor({ match, players }: { match: Match; players: PlayerR
           <input type="checkbox" checked={showExtra} onChange={(e) => setShowExtra(e.target.checked)} className="accent-blue" />
           Stats avanzadas (penales, autogol)
         </label>
-        <p className="basis-full text-xs text-ink-faint">
+        <p className="basis-full text-xs text-ink-3">
           <strong>Minutos</strong> jugados (≥20 para puntuar) · <strong>Nota</strong> 0–10 (base) · <strong>Goles</strong> y{" "}
           <strong>Asist</strong> con − 0 + ·{" "}
           <CardChip color={YELLOW} /> amarilla · <CardChip color={RED} /> roja (un clic) ·{" "}

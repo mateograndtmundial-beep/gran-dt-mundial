@@ -264,7 +264,7 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
           {filtered.length} {filtered.length === 1 ? "jugador" : "jugadores"}
         </p>
         {!hasPriceRange && players.length > 0 && (
-          <p className="text-[11px] text-ink-faint">
+          <p className="text-[11px] text-ink-3">
             Todos valen {formatPrice(minPrice)}M por ahora
           </p>
         )}

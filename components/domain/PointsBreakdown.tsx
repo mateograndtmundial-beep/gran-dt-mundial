@@ -49,7 +49,7 @@ function PlayerRow({ line, muted }: { line: BreakdownLine; muted?: boolean }) {
             </span>
           )}
         </div>
-        {line.note && <p className="mt-0.5 text-[11px] text-ink-faint">{line.note}</p>}
+        {line.note && <p className="mt-0.5 text-[11px] text-ink-3">{line.note}</p>}
         {line.chips.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
             {line.chips.map((c, i) => (
@@ -89,7 +89,7 @@ function Detail({ data }: { data: Extract<RoundBreakdown, { published: true }> }
             <Flag url={data.coach.flagUrl} alt={data.coach.countryName} />
             <div className="min-w-0 flex-1">
               <span className="truncate text-sm font-semibold text-ink">{data.coach.name}</span>
-              <p className="text-[11px] text-ink-faint">
+              <p className="text-[11px] text-ink-3">
                 {coachLabel}
                 {data.coach.result ? ` · ${data.coach.countryName}` : ""}
               </p>
@@ -170,13 +170,13 @@ export function PointsBreakdown({ rounds }: { rounds: RoundPoints[] }) {
             {isOpen && (
               <div className="animate-fade-in pb-3 pl-8 pr-1">
                 {data === undefined || data === "loading" ? (
-                  <p className="flex items-center gap-2 py-2 text-xs italic text-ink-faint">
+                  <p className="flex items-center gap-2 py-2 text-xs italic text-ink-3">
                     <Loader2 size={13} className="animate-spin" aria-hidden /> Cargando detalle…
                   </p>
                 ) : data === "error" ? (
-                  <p className="py-2 text-xs italic text-ink-faint">No se pudo cargar el detalle.</p>
+                  <p className="py-2 text-xs italic text-ink-3">No se pudo cargar el detalle.</p>
                 ) : data.published === false ? (
-                  <p className="py-2 text-xs italic text-ink-faint">
+                  <p className="py-2 text-xs italic text-ink-3">
                     El detalle por jugador aparece cuando se publican los puntajes de la fecha.
                   </p>
                 ) : (

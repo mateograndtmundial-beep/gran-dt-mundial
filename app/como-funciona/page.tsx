@@ -71,7 +71,7 @@ function ScoringTable({ rows }: { rows: Row[] }) {
       {/* La tabla mide 420px de ancho mínimo (5 columnas) y en mobile no entra
           completa: agregamos una pista de que se puede deslizar + un degradé
           sobre el borde derecho para que no parezca que el contenido corta ahí. */}
-      <p className="mb-1.5 text-[11px] text-ink-faint sm:hidden">Deslizá para ver todas las posiciones →</p>
+      <p className="mb-1.5 text-[11px] text-ink-3 sm:hidden">Deslizá para ver todas las posiciones →</p>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[420px] border-collapse text-sm">
         <thead>
@@ -99,7 +99,7 @@ function ScoringTable({ rows }: { rows: Row[] }) {
               <td className="py-2.5 pr-3">
                 <span className="font-semibold text-ink">{r.concept}</span>
                 {r.note && (
-                  <span className="block text-[11px] font-normal text-ink-faint">{r.note}</span>
+                  <span className="block text-[11px] font-normal text-ink-3">{r.note}</span>
                 )}
               </td>
               <td className="px-2 text-center font-display text-base text-ink tabular-nums">{r.gk}</td>

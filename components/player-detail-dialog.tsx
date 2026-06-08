@@ -119,7 +119,7 @@ export function PlayerDetailDialog({
                   {fixtures.map((fx, i) => (
                     <div key={i} className="flex items-center gap-2 text-sm">
                       <span className="w-6 shrink-0 text-xs font-bold text-ink-3">{shortRound(fx.roundName)}</span>
-                      <span className="shrink-0 text-xs text-ink-faint" title={fx.isHome ? "De local" : "De visitante"}>
+                      <span className="shrink-0 text-xs text-ink-3" title={fx.isHome ? "De local" : "De visitante"}>
                         {fx.isHome ? "vs" : "@"}
                       </span>
                       {fx.opponentFlag ? (
@@ -139,8 +139,8 @@ export function PlayerDetailDialog({
                       </span>
                     </div>
                   ))}
-                  {firstKickoff ? <p className="pt-1 text-[11px] text-ink-faint">Arranca: {firstKickoff}</p> : null}
-                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border pt-2 text-[11px] text-ink-faint">
+                  {firstKickoff ? <p className="pt-1 text-[11px] text-ink-3">Arranca: {firstKickoff}</p> : null}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border pt-2 text-[11px] text-ink-3">
                     <span className="font-semibold text-ink-3">Dificultad del partido:</span>
                     <span className="inline-flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-success" />Fácil
@@ -163,7 +163,7 @@ export function PlayerDetailDialog({
               )}
             </div>
 
-            <p className="text-[11px] text-ink-faint">
+            <p className="text-[11px] text-ink-3">
               Cuando arranque el Mundial sumamos acá su forma (puntos por fecha) y qué % de los equipos lo tiene.
             </p>
         </div>

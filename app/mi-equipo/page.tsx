@@ -114,7 +114,7 @@ export default async function MiEquipoPage() {
             ) : null}
           </p>
           {!rankingsVisible && (
-            <p className="text-xs text-ink-faint">
+            <p className="text-xs text-ink-3">
               El ranking global se habilita cuando se publique la Fecha 1 del Mundial.
             </p>
           )}
@@ -127,7 +127,7 @@ export default async function MiEquipoPage() {
         <Card className="p-4 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
             <Eyebrow>Tu equipo</Eyebrow>
-            {latestRound && <span className="text-[11px] text-ink-faint">{latestRound.formation}</span>}
+            {latestRound && <span className="text-[11px] text-ink-3">{latestRound.formation}</span>}
           </div>
 
           {hasLineup ? (
