@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  images: {
+    // Banderas y fotos de jugadores vienen de la CDN de API-Football (seed.ts:
+    // `team.flag`/`team.photo`/`p.photo`). Las dejamos remotas (la mayoría son
+    // SVG, que Next no optimiza sin `dangerouslyAllowSVG` — riesgo de XSS que no
+    // vale la pena para banderitas de 28×20). Esto solo habilita el proxy/caché
+    // de Vercel si en algún momento se migra a next/image.
+    remotePatterns: [{ protocol: "https", hostname: "media.api-sports.io" }],
+  },
 };
 
 export default nextConfig;
