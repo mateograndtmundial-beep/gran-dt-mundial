@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, GripVertical } from "lucide-react";
+import { X, GripVertical, ArrowDownUp } from "lucide-react";
 import {
   FORMATIONS,
   DEFAULT_FORMATION,
@@ -628,9 +628,11 @@ export function FieldBuilder({
                           onClick={() => setModal({ type: "swap", sub: s })}
                           aria-label={`Hacer entrar a ${p.name}`}
                           title="Tocá para hacerlo entrar (o arrastralo a un titular)"
-                          className="shrink-0 cursor-pointer touch-none p-1 -m-1 text-ink-faint hover:text-blue active:cursor-grabbing"
+                          className="shrink-0 cursor-pointer touch-none p-1 -m-1 text-ink-faint hover:text-blue md:cursor-grab md:active:cursor-grabbing"
                         >
-                          <GripVertical size={14} />
+                          {/* Mobile: ícono de acción (tap = sustituir). Desktop: handle de arrastre. */}
+                          <ArrowDownUp size={15} className="text-blue md:hidden" />
+                          <GripVertical size={14} className="hidden md:inline-block" />
                         </button>
                         {p.flagUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
