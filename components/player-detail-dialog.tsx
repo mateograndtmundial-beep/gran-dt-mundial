@@ -1,6 +1,6 @@
 "use client";
 
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { X } from "lucide-react";
 import { PositionChip } from "@/components/editorial";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Position } from "@/lib/game/config";
@@ -57,18 +57,23 @@ export function PlayerDetailDialog({
 }) {
   const firstKickoff = fixtures && fixtures[0] ? formatKickoff(fixtures[0].kickoff) : null;
 
+  if (!player) return null;
+
   return (
-    <Dialog
-      open={!!player}
-      onOpenChange={(open) => {
-        if (!open) onClose();
-      }}
+    <div
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 md:items-center md:p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Información de ${player.name}`}
+      onClick={onClose}
     >
-      <DialogContent className="bg-surface text-ink sm:max-w-md">
-        {player && (
-          <div className="space-y-4">
+      <div
+        className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-[12px] border border-border bg-surface card-shadow-lg md:rounded-[12px] animate-slide-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="space-y-4 p-4">
             {/* Header */}
-            <div className="flex items-center gap-3 pr-7">
+            <div className="flex items-center gap-3">
               {player.flagUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
@@ -82,9 +87,7 @@ export function PlayerDetailDialog({
                 <div className="h-7 w-10 shrink-0 rounded-sm bg-surface-2" />
               )}
               <div className="min-w-0 flex-1">
-                <DialogTitle className="truncate font-display text-xl leading-tight text-ink">
-                  {player.name}
-                </DialogTitle>
+                <h3 className="truncate font-display text-xl leading-tight text-ink">{player.name}</h3>
                 <div className="mt-0.5 flex items-center gap-1.5">
                   <PositionChip position={player.position} />
                   <span className="truncate text-xs text-ink-3">
@@ -99,8 +102,14 @@ export function PlayerDetailDialog({
                   <span className="ml-0.5 text-[10px] font-normal text-ink-3">M</span>
                 </div>
               </div>
+              <button
+                onClick={onClose}
+                className="rounded-full p-1.5 text-ink-3 hover:bg-surface-2 transition-colors"
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
             </div>
-            <DialogDescription className="sr-only">Información del Mundial para {player.name}</DialogDescription>
 
             {/* Próximos partidos del equipo */}
             <div className="rounded-[8px] border border-border bg-canvas p-3">
@@ -157,9 +166,8 @@ export function PlayerDetailDialog({
             <p className="text-[11px] text-ink-faint">
               Cuando arranque el Mundial sumamos acá su forma (puntos por fecha) y qué % de los equipos lo tiene.
             </p>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }

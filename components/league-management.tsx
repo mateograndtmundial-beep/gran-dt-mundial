@@ -23,6 +23,7 @@ export function LeagueManagement({
   const [name, setName] = useState(leagueName);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [toRemove, setToRemove] = useState<{ userId: number; label: string } | null>(null);
 
   async function onRename() {
     setBusy(true);
@@ -35,8 +36,10 @@ export function LeagueManagement({
     router.refresh();
   }
 
-  async function onRemove(userId: number, label: string) {
-    if (!confirm(`¿Expulsar a ${label} de la liga?`)) return;
+  async function confirmRemove() {
+    if (!toRemove) return;
+    const { userId } = toRemove;
+    setToRemove(null);
     setMsg(null);
     const r = await removeMember(leagueId, userId);
     if (!r.ok && r.error === "auth") return router.push("/sign-in");
@@ -74,7 +77,7 @@ export function LeagueManagement({
                 </span>
                 {!isOwner && (
                   <button
-                    onClick={() => onRemove(m.userId, label)}
+                    onClick={() => setToRemove({ userId: m.userId, label })}
                     className="shrink-0 text-xs font-semibold text-danger hover:underline"
                   >
                     Expulsar
@@ -87,6 +90,40 @@ export function LeagueManagement({
       </div>
 
       {msg && <p className="text-xs font-semibold text-ink-2">{msg}</p>}
+
+      {toRemove && (
+        <div
+          className="fixed inset-0 z-[55] flex items-end justify-center bg-black/40 p-0 md:items-center md:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmar expulsión"
+          onClick={() => setToRemove(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-t-[12px] border border-border bg-surface card-shadow-lg p-5 md:rounded-[12px] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-xl text-ink">¿Expulsar a {toRemove.label}?</h3>
+            <p className="mt-2 text-sm text-ink-2">
+              Va a salir de la liga y dejar de aparecer en este ranking. Puede volver a unirse con el código.
+            </p>
+            <div className="mt-5 flex flex-col gap-2">
+              <button
+                onClick={confirmRemove}
+                className="rounded-[6px] bg-danger px-4 py-2.5 text-sm font-display text-white hover:opacity-90 transition-opacity"
+              >
+                Expulsar
+              </button>
+              <button
+                onClick={() => setToRemove(null)}
+                className="rounded-[6px] border border-border px-4 py-2.5 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </Card>
   );
 }
