@@ -40,7 +40,10 @@ async function seedCountries(): Promise<Map<number, number>> {
     const groups = standings?.[0]?.league?.standings ?? [];
     for (const g of groups) {
       for (const row of g) {
-        if (row?.team?.id && row?.group) groupByTeamId.set(row.team.id, String(row.group));
+        // Solo grupos reales (A–L). Se saltea el "Ranking of third-placed teams",
+        // un pseudo-grupo que API-Football devuelve último y pisaba el grupo correcto.
+        const gname = row?.group ? String(row.group) : '';
+        if (row?.team?.id && gname.startsWith('Group ')) groupByTeamId.set(row.team.id, gname);
       }
     }
   } catch (e) {
