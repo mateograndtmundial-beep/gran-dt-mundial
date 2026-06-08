@@ -129,7 +129,7 @@ export function FieldBuilder({
   const nameLocked = initialTeamName.trim() !== "";
   const [captainId, setCaptainId]   = useState<number | null>(initial?.captainPlayerId ?? null);
   const [coachId, setCoachId]       = useState<number | null>(initial?.coachId ?? null);
-  const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | null>(null);
+  const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | { type: "swap"; sub: Slot } | null>(null);
   const [search, setSearch]         = useState("");
   const [modalCountry, setModalCountry] = useState<string>("ALL");
   const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc">("price-desc");
@@ -312,6 +312,9 @@ export function FieldBuilder({
   const modalHasMore = modal?.type === "coach"
     ? modalCoachesAll.length > modalShown
     : modalPlayersAll.length > modalShown;
+
+  // Suplente que se está haciendo entrar (tap-to-swap mobile). Null si no hay swap abierto.
+  const swapSub = modal?.type === "swap" ? modal.sub : null;
 
   // Aplica un borrador (equipo armado sin loguearse) al estado del armador.
   function applyDraft(d: LineupDraft) {
@@ -621,10 +624,11 @@ export function FieldBuilder({
                       <>
                         <button
                           type="button"
-                          onPointerDown={(e) => startDrag(e, s.id, s.position, p)}
-                          aria-label={`Arrastrar ${p.name} hacia un titular`}
-                          title="Arrastrá hacia un titular para intercambiarlos"
-                          className="shrink-0 cursor-grab touch-none text-ink-faint hover:text-ink-2 active:cursor-grabbing"
+                          onPointerDown={(e) => startDrag(e, s.id, s.position, p, true)}
+                          onClick={() => setModal({ type: "swap", sub: s })}
+                          aria-label={`Hacer entrar a ${p.name}`}
+                          title="Tocá para hacerlo entrar (o arrastralo a un titular)"
+                          className="shrink-0 cursor-pointer touch-none p-1 -m-1 text-ink-faint hover:text-blue active:cursor-grabbing"
                         >
                           <GripVertical size={14} />
                         </button>
@@ -726,7 +730,7 @@ export function FieldBuilder({
       </div>
 
       {/* ─── Modal de selección ─── */}
-      {modal && (
+      {modal && modal.type !== "swap" && (
         <div
           className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 md:items-center md:p-4"
           role="dialog"
@@ -885,6 +889,71 @@ export function FieldBuilder({
                   </button>
                 )}
               </div>
+          </div>
+        </div>
+      )}
+
+      {/* Hacer entrar un suplente: tap en el banco → elegir el titular de esa posición */}
+      {swapSub && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 md:items-center md:p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Hacer entrar suplente"
+          onClick={() => setModal(null)}
+        >
+          <div
+            ref={modalRef}
+            className="w-full max-w-sm rounded-t-[12px] border border-border bg-surface card-shadow-lg md:rounded-[12px] animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-border px-4 py-3">
+              <h3 className="min-w-0 truncate font-display text-lg text-ink">
+                HACER ENTRAR A {(picks[swapSub.id]?.name ?? "SUPLENTE").toUpperCase()}
+              </h3>
+              <button
+                onClick={() => setModal(null)}
+                className="shrink-0 rounded-full p-1.5 text-ink-3 hover:bg-surface-2 transition-colors"
+                aria-label="Cerrar"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <div className="p-3">
+              <p className="mb-2 px-1 text-xs text-ink-3">
+                ¿Por quién entra? Tocá un titular ({POSITION_LABELS[swapSub.position]}) y se intercambian.
+              </p>
+              <div className="space-y-1">
+                {starterSlots
+                  .filter((st) => st.position === swapSub.position)
+                  .map((st) => {
+                    const sp = picks[st.id];
+                    return (
+                      <button
+                        key={st.id}
+                        type="button"
+                        onClick={() => { swapSlots(swapSub.id, st.id); setModal(null); }}
+                        className="flex w-full items-center gap-2 rounded-[6px] px-2 py-2.5 text-left hover:bg-surface-2 transition-colors"
+                      >
+                        {sp ? (
+                          <>
+                            {sp.flagUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={sp.flagUrl} alt={sp.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                            ) : (
+                              <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
+                            )}
+                            <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink">{sp.name}</span>
+                            <span className="jersey-numeral shrink-0 text-xs text-gold-ink">{formatPrice(sp.price)}M</span>
+                          </>
+                        ) : (
+                          <span className="flex-1 text-sm text-ink-faint">Lugar libre</span>
+                        )}
+                      </button>
+                    );
+                  })}
+              </div>
+            </div>
           </div>
         </div>
       )}
