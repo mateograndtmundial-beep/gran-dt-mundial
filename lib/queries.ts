@@ -43,6 +43,90 @@ export async function getPlayersWithCountry() {
     .orderBy(desc(players.price));
 }
 
+// ---------- Info de Mundial para /jugadores ----------
+
+export type FixtureInfo = {
+  opponentName: string | null;
+  opponentFlag: string | null;
+  kickoff: string | null; // ISO
+  venue: string | null;
+  roundName: string | null;
+  isHome: boolean;
+  difficulty: "easy" | "medium" | "hard";
+};
+
+/**
+ * Próximo partido + dificultad por selección, para el panel de /jugadores.
+ * La dificultad es un proxy: la fuerza del rival = suma del valor de su plantel
+ * (los precios que ya tenemos), rankeada en 3 tramos (top=alta, medio, bajo=baja).
+ * Devuelve un objeto countryId -> info (el "próximo" = el partido no jugado más cercano).
+ */
+export async function getCountryFixtures(): Promise<Record<number, FixtureInfo>> {
+  const vals = await db
+    .select({ countryId: players.countryId, value: sql<number>`sum(${players.price})` })
+    .from(players)
+    .groupBy(players.countryId);
+  const sorted = vals
+    .map((v) => ({ id: v.countryId, value: Number(v.value) }))
+    .sort((a, b) => b.value - a.value);
+  const n = sorted.length || 1;
+  const strengthTier = new Map<number, "hard" | "medium" | "easy">();
+  sorted.forEach((c, i) => {
+    strengthTier.set(c.id, i < n / 3 ? "hard" : i < (2 * n) / 3 ? "medium" : "easy");
+  });
+
+  const home = alias(countries, "fx_home");
+  const away = alias(countries, "fx_away");
+  const ms = await db
+    .select({
+      homeCountryId: matches.homeCountryId,
+      awayCountryId: matches.awayCountryId,
+      homeName: home.name,
+      homeFlag: home.flagUrl,
+      awayName: away.name,
+      awayFlag: away.flagUrl,
+      kickoff: matches.kickoff,
+      venue: matches.venue,
+      roundName: rounds.name,
+    })
+    .from(matches)
+    .leftJoin(home, eq(matches.homeCountryId, home.id))
+    .leftJoin(away, eq(matches.awayCountryId, away.id))
+    .leftJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(ne(matches.status, "finished"))
+    .orderBy(asc(matches.kickoff));
+
+  const out: Record<number, FixtureInfo> = {};
+  for (const m of ms) {
+    if (m.homeCountryId == null || m.awayCountryId == null) continue;
+    const kickoff = m.kickoff ? new Date(m.kickoff).toISOString() : null;
+    // Primera aparición de cada selección (ordenado por kickoff) = su próximo partido.
+    if (!(m.homeCountryId in out)) {
+      out[m.homeCountryId] = {
+        opponentName: m.awayName,
+        opponentFlag: m.awayFlag,
+        kickoff,
+        venue: m.venue,
+        roundName: m.roundName,
+        isHome: true,
+        difficulty: strengthTier.get(m.awayCountryId) ?? "medium",
+      };
+    }
+    if (!(m.awayCountryId in out)) {
+      out[m.awayCountryId] = {
+        opponentName: m.homeName,
+        opponentFlag: m.homeFlag,
+        kickoff,
+        venue: m.venue,
+        roundName: m.roundName,
+        isHome: false,
+        difficulty: strengthTier.get(m.homeCountryId) ?? "medium",
+      };
+    }
+  }
+  return out;
+}
+
 // ---------- Editor de scoring (admin) ----------
 
 /** Una fecha con sus partidos (nombres/banderas + cuántos jugadores tienen stats). */

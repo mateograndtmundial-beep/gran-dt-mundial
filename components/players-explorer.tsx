@@ -4,8 +4,10 @@ import { useMemo, useState } from "react";
 import { Search, ChevronDown, X } from "lucide-react";
 import { POSITIONS, POSITION_ABBR, type Position } from "@/lib/game/config";
 import { PlayerCard } from "@/components/player-card";
+import { PlayerDetailDialog } from "@/components/player-detail-dialog";
 import { cn, formatPrice } from "@/lib/utils";
 import { normalizeName } from "@/lib/pricing/normalize";
+import type { FixtureInfo } from "@/lib/queries";
 
 type P = {
   id: number;
@@ -13,6 +15,7 @@ type P = {
   position: Position;
   price: number;
   club: string | null;
+  countryId: number;
   countryName: string;
   flagUrl: string | null;
   eliminatedRound: number | null;
@@ -67,12 +70,13 @@ function FilterSelect({
   );
 }
 
-export function PlayersExplorer({ players }: { players: P[] }) {
+export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures: Record<number, FixtureInfo> }) {
   const [q, setQ]           = useState("");
   const [pos, setPos]       = useState<Position | "ALL">("ALL");
   const [country, setCountry] = useState<string>("ALL");
   const [sort, setSort]     = useState<SortKey>("price-desc");
   const [hideElim, setHideElim] = useState(false);
+  const [selected, setSelected] = useState<P | null>(null);
 
   /* Bounds de precio derivados de la data */
   const [minPrice, maxPrice] = useMemo(() => {
@@ -282,20 +286,23 @@ export function PlayersExplorer({ players }: { players: P[] }) {
       ) : (
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {visible.map((p, i) => (
-            <PlayerCard
+            <button
               key={p.id}
-              name={p.name}
-              position={p.position}
-              price={p.price}
-              club={p.club}
-              countryName={p.countryName}
-              flagUrl={p.flagUrl}
-              eliminated={p.eliminatedRound != null}
-              className={cn(
-                "animate-fade-in",
-                `stagger-${(i % 6) + 1}` as string,
-              )}
-            />
+              type="button"
+              onClick={() => setSelected(p)}
+              aria-label={`Ver info de ${p.name}`}
+              className={cn("block w-full text-left animate-fade-in", `stagger-${(i % 6) + 1}`)}
+            >
+              <PlayerCard
+                name={p.name}
+                position={p.position}
+                price={p.price}
+                club={p.club}
+                countryName={p.countryName}
+                flagUrl={p.flagUrl}
+                eliminated={p.eliminatedRound != null}
+              />
+            </button>
           ))}
         </div>
       )}
@@ -313,6 +320,12 @@ export function PlayersExplorer({ players }: { players: P[] }) {
           </p>
         </div>
       )}
+
+      <PlayerDetailDialog
+        player={selected}
+        fixture={selected ? fixtures[selected.countryId] : undefined}
+        onClose={() => setSelected(null)}
+      />
     </div>
   );
 }

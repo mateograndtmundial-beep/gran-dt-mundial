@@ -1,6 +1,6 @@
 import { PageTitle, EmptyState } from "@/components/ui";
 import { PlayersExplorer } from "@/components/players-explorer";
-import { getPlayersWithCountry, type PlayerRow } from "@/lib/queries";
+import { getPlayersWithCountry, getCountryFixtures, type PlayerRow, type FixtureInfo } from "@/lib/queries";
 
 // ISR: contenido no dependiente del usuario. Se revalida cada 60s y on-demand
 // (updatePlayerPrice hace revalidatePath("/jugadores")).
@@ -8,9 +8,10 @@ export const revalidate = 60;
 
 export default async function JugadoresPage() {
   let players: PlayerRow[] = [];
+  let fixtures: Record<number, FixtureInfo> = {};
   let error = false;
   try {
-    players = await getPlayersWithCountry();
+    [players, fixtures] = await Promise.all([getPlayersWithCountry(), getCountryFixtures()]);
   } catch {
     error = true;
   }
@@ -26,7 +27,7 @@ export default async function JugadoresPage() {
       ) : players.length === 0 ? (
         <EmptyState title="Todavía no hay jugadores cargados." hint="Corré: npm run seed" />
       ) : (
-        <PlayersExplorer players={players} />
+        <PlayersExplorer players={players} fixtures={fixtures} />
       )}
     </div>
   );
