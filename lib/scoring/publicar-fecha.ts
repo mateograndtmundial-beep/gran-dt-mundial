@@ -1,4 +1,5 @@
 import { eq, inArray, sql } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import {
   matches,
@@ -168,5 +169,10 @@ export async function publishRound(roundId: number) {
   }
 
   await db.update(rounds).set({ status: "published" }).where(eq(rounds.id, roundId));
+
+  // Los totales cambiaron → invalidamos el caché del rank global
+  // (getUserGlobalRank) para que /mi-equipo refleje las nuevas posiciones.
+  revalidateTag("global-rank", "max");
+
   return { entries: affectedEntryIds.size, players: pts.size };
 }

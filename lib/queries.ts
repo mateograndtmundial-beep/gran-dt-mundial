@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { and, asc, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
@@ -61,7 +62,8 @@ export type FixtureInfo = {
  * (los precios que ya tenemos), rankeada en 3 tramos (top=alta, medio, bajo=baja).
  * Devuelve countryId -> lista de próximos partidos (no jugados), del más cercano al más lejano (máx 3).
  */
-export async function getCountryFixtures(): Promise<Record<number, FixtureInfo[]>> {
+export const getCountryFixtures = unstable_cache(
+  async (): Promise<Record<number, FixtureInfo[]>> => {
   const vals = await db
     .select({ countryId: players.countryId, value: sql<number>`sum(${players.price})` })
     .from(players)
@@ -126,7 +128,12 @@ export async function getCountryFixtures(): Promise<Record<number, FixtureInfo[]
     });
   }
   return out;
-}
+  },
+  ["country-fixtures"],
+  // Los fixtures casi no cambian (solo al sincronizar partidos): TTL largo +
+  // invalidación on-demand desde syncRound vía revalidateTag.
+  { tags: ["country-fixtures"], revalidate: 3600 },
+);
 
 // ---------- Editor de scoring (admin) ----------
 
@@ -349,17 +356,29 @@ export async function getGlobalLeaderboard(limit = 100, offset = 0) {
     .offset(Math.max(0, offset));
 }
 
-/** Posición global de un entry: 1 + cantidad de entries con más puntos. */
-export async function getUserGlobalRank(entryId: number): Promise<number | null> {
-  const me = (
-    await db.select({ pts: entries.totalPoints }).from(entries).where(eq(entries.id, entryId)).limit(1)
-  )[0];
-  if (!me) return null;
-  const r = (
-    await db.select({ c: sql<number>`count(*)` }).from(entries).where(gt(entries.totalPoints, me.pts))
-  )[0];
-  return Number(r?.c ?? 0) + 1;
-}
+/**
+ * Posición global de un entry: 1 + cantidad de entries con más puntos.
+ *
+ * Cacheada con el Data Cache de Next (tag `global-rank`): los puntos solo
+ * cambian cuando se publica una fecha (`publishRound` invalida el tag), así
+ * que sin esto cada carga de /mi-equipo (force-dynamic) disparaba un
+ * `COUNT(*)` contra Neon — con miles de usuarios refrescando tras publicar,
+ * eran miles de scans concurrentes en el camino caliente.
+ */
+export const getUserGlobalRank = unstable_cache(
+  async (entryId: number): Promise<number | null> => {
+    const me = (
+      await db.select({ pts: entries.totalPoints }).from(entries).where(eq(entries.id, entryId)).limit(1)
+    )[0];
+    if (!me) return null;
+    const r = (
+      await db.select({ c: sql<number>`count(*)` }).from(entries).where(gt(entries.totalPoints, me.pts))
+    )[0];
+    return Number(r?.c ?? 0) + 1;
+  },
+  ["user-global-rank"],
+  { tags: ["global-rank"] },
+);
 
 export async function getMyTeam(userId: number) {
   const entry = (await db.select().from(entries).where(eq(entries.userId, userId)).limit(1))[0];

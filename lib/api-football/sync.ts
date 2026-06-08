@@ -1,4 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import { matches, players, playerMatchStats } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
@@ -206,5 +207,11 @@ export async function syncRound(roundId: number) {
   };
 
   const results = await mapLimit(ms, SYNC_CONCURRENCY, syncMatch);
+
+  // Los partidos sincronizados pueden cambiar el próximo rival/dificultad de
+  // cada selección (estado, kickoff reprogramado): invalidamos el caché de
+  // getCountryFixtures (TTL de 1h) para que /jugadores refleje el cambio ya.
+  revalidateTag("country-fixtures", "max");
+
   return { matches: results.filter(Boolean).length };
 }
