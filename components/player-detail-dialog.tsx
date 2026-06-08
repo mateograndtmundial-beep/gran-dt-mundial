@@ -19,9 +19,9 @@ export type ExplorerPlayer = {
 };
 
 const DIFF = {
-  easy: { label: "Baja", cls: "text-success border-success/30 bg-success/10", dot: "bg-success" },
+  easy: { label: "Fácil", cls: "text-success border-success/30 bg-success/10", dot: "bg-success" },
   medium: { label: "Media", cls: "text-warning border-warning/40 bg-warning/10", dot: "bg-warning" },
-  hard: { label: "Alta", cls: "text-danger border-danger/30 bg-danger/10", dot: "bg-danger" },
+  hard: { label: "Difícil", cls: "text-danger border-danger/30 bg-danger/10", dot: "bg-danger" },
 } as const;
 
 function formatKickoff(iso: string | null): string | null {
@@ -131,6 +131,19 @@ export function PlayerDetailDialog({
                     </div>
                   ))}
                   {firstKickoff ? <p className="pt-1 text-[11px] text-ink-faint">Arranca: {firstKickoff}</p> : null}
+                  <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 border-t border-border pt-2 text-[11px] text-ink-faint">
+                    <span className="font-semibold text-ink-3">Dificultad del partido:</span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" />Fácil
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-warning" />Media
+                    </span>
+                    <span className="inline-flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-danger" />Difícil
+                    </span>
+                    <span>· según qué tan fuerte es el rival</span>
+                  </div>
                 </div>
               ) : (
                 <p className="text-sm text-ink-faint">
