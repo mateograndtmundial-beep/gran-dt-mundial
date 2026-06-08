@@ -52,15 +52,15 @@ export const POSITION_BG: Record<Position, string> = {
 
 export type FormationShape = { GK: number; DEF: number; MID: number; FWD: number };
 
-// Solo formaciones a tres líneas (DEF-MED-DEL). Las notaciones de cuatro líneas
-// (p. ej. 4-2-3-1) colapsan a una de estas, así que no se incluyen.
+// Solo formaciones a tres líneas (DEF-MED-DEL) con máximo 4 jugadores por línea:
+// con 5 en una línea, la cancha (mobile) corta la última figurita. Las notaciones
+// de cuatro líneas (p. ej. 4-2-3-1) colapsan a una de estas, así que no se incluyen.
 export const FORMATIONS: Record<string, FormationShape> = {
   '4-4-2': { GK: 1, DEF: 4, MID: 4, FWD: 2 },
   '4-3-3': { GK: 1, DEF: 4, MID: 3, FWD: 3 },
   '3-4-3': { GK: 1, DEF: 3, MID: 4, FWD: 3 },
-  '3-5-2': { GK: 1, DEF: 3, MID: 5, FWD: 2 },
-  '5-3-2': { GK: 1, DEF: 5, MID: 3, FWD: 2 },
-  '4-5-1': { GK: 1, DEF: 4, MID: 5, FWD: 1 },
+  '3-3-4': { GK: 1, DEF: 3, MID: 3, FWD: 4 },
+  '4-2-4': { GK: 1, DEF: 4, MID: 2, FWD: 4 },
 };
 
 export const DEFAULT_FORMATION = '4-4-2';
