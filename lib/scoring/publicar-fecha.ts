@@ -34,6 +34,20 @@ export async function publishRound(roundId: number) {
   const ms = await db.select().from(matches).where(eq(matches.roundId, roundId));
   const matchIds = ms.map((m) => m.id);
 
+  // Guarda: no publicar una fecha con partidos sin terminar/sincronizar.
+  // publishRound corre una sola vez por fecha y es la fuente del ranking
+  // oficial — si un partido quedó "scheduled"/"live" (p.ej. el sync falló a
+  // mitad de camino), publicar ahora dejaría puntajes incompletos e
+  // irreversibles. El admin debe re-sincronizar antes de publicar.
+  const unfinished = ms.filter((m) => m.status !== "finished");
+  if (unfinished.length) {
+    throw new Error(
+      `No se puede publicar: ${unfinished.length} partido(s) de la fecha ${roundId} ` +
+        `no está(n) "finished" (estado actual: ${[...new Set(unfinished.map((m) => m.status))].join(", ")}). ` +
+        `Sincronizá la fecha antes de publicar.`,
+    );
+  }
+
   const stats = matchIds.length
     ? await db.select().from(playerMatchStats).where(inArray(playerMatchStats.matchId, matchIds))
     : [];
