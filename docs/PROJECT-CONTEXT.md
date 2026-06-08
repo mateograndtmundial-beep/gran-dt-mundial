@@ -28,6 +28,7 @@ Se desarrolla **entre dos**: el dueño (Mateo) + un compañero que trabaja sobre
 6. **Neon es HTTP (sin transacciones clásicas).** Para atomicidad usá **`db.batch([...])`** (corre todo en 1 transacción del server). `saveLineup` ya lo hace.
 7. **Validá la plata/puntos siempre server-side**, nunca confíes en el cliente (presupuesto, máx por país, pines, pagos se recalculan en el server / se confirman contra el proveedor).
 8. **DB local = la misma Neon de producción** (comparten `DATABASE_URL`). Ojo al correr seeds/scripts.
+9. **UI = 100% responsive, SIEMPRE (OBLIGATORIO).** Todo lo que toques de UI tiene que verse bien en **mobile Y desktop** (≈320px → 1920px+), **sin scroll horizontal**. La mayoría de los usuarios juega desde el **celular** → **probá el render en mobile antes de dar por terminado un cambio de UI** (no lo asumas). Patrones: tablas anchas → scroll interno en un contenedor o layout que reacomoda columnas; modales/diálogos → considerá **bottom-sheet / ancho completo** en mobile; áreas táctiles cómodas. Ver `docs/ui/UI-DIRECTION.md`.
 
 ### Comandos
 ```
