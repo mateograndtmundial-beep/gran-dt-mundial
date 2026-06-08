@@ -4,7 +4,7 @@ import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/compone
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getUserGlobalRank } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { formatPoints, formatPrice } from "@/lib/utils";
 
@@ -58,8 +58,10 @@ export default async function MiEquipoPage() {
   }
 
   let ranking: number | null = null;
+  let rankingsVisible = false;
   try {
-    ranking = await getUserGlobalRank(team.entry.id);
+    rankingsVisible = await isRankingsVisible();
+    if (rankingsVisible) ranking = await getUserGlobalRank(team.entry.id);
   } catch {
     ranking = null;
   }
@@ -103,10 +105,15 @@ export default async function MiEquipoPage() {
           </h1>
           <p className="text-sm text-ink-3">
             <span className="jersey-numeral text-base text-ink">{formatPoints(team.entry.totalPoints)}</span> pts
-            {ranking ? (
+            {rankingsVisible && ranking ? (
               <> · <span className="font-semibold text-ink-2">#{ranking}</span> en el ranking global</>
             ) : null}
           </p>
+          {!rankingsVisible && (
+            <p className="text-xs text-ink-faint">
+              El ranking global se habilita cuando se publique la Fecha 1 del Mundial.
+            </p>
+          )}
         </div>
         <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
       </section>

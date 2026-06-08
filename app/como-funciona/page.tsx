@@ -160,9 +160,9 @@ export default function ComoFuncionaPage() {
           <div className="grid gap-5 sm:grid-cols-2">
             <RuleItem
               icon={<Calculator size={22} strokeWidth={1.5} />}
-              title="Presupuesto: 600M"
+              title="Presupuesto: 700M"
             >
-              Tenés 600M de presupuesto para repartir entre tus 15 jugadores y el técnico. Cada
+              Tenés 700M de presupuesto para repartir entre tus 15 jugadores y el técnico. Cada
               jugador tiene un precio según su valor de mercado.
             </RuleItem>
             <RuleItem icon={<Shirt size={22} strokeWidth={1.5} />} title="15 jugadores">
