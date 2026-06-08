@@ -6,27 +6,32 @@ import { joinLeague } from "@/lib/actions";
 import { Card } from "@/components/ui";
 import { PrimaryButton } from "@/components/editorial";
 
-// Recordamos la intención de unirse mientras el invitado se registra/loguea, así
-// al volver lo unimos solo (el middleware preserva el path pero no el query).
+// Recordamos la intención de unirse mientras el invitado se registra y elige su
+// nombre de DT, así al volver lo unimos solo.
 const PENDING_KEY = "pendingLeague";
 
 /**
  * CTA para unirse a una liga desde el link de invitación (/ligas/[code]).
- * - Logueado y NO miembro → se une al toque y muestra el siguiente paso (armar equipo).
- * - Sin loguear → guarda la intención, lo manda a registrarse y vuelve a esta liga,
- *   donde se une automáticamente.
- * - Ya miembro (incluye al dueño) → no muestra nada.
+ *
+ * Ojo con el onboarding: un usuario logueado pero SIN nombre de DT (username null)
+ * tiene bloqueadas las acciones por el gate del middleware — si intenta unirse ahí,
+ * el join choca con el gate y falla. Por eso el flujo es:
+ *   sin cuenta        → registrarse → (vuelve) → elegir nombre → (vuelve) → se une solo
+ *   con cuenta sin DT  → elegir nombre (/bienvenida) → (vuelve) → se une solo
+ *   con cuenta + DT    → se une al toque
  */
 export function LeagueJoinCTA({
   code,
   leagueName,
   isMember,
   isAuthed,
+  isOnboarded,
 }: {
   code: string;
   leagueName: string;
   isMember: boolean;
   isAuthed: boolean;
+  isOnboarded: boolean;
 }) {
   const router = useRouter();
   const [joined, setJoined] = useState(false);
@@ -34,20 +39,21 @@ export function LeagueJoinCTA({
   const [err, setErr] = useState<string | null>(null);
   const autoTried = useRef(false);
 
-  async function doJoin() {
+  const leaguePath = `/ligas/${code}`;
+  const remember = () => {
+    try {
+      localStorage.setItem(PENDING_KEY, code);
+    } catch {}
+  };
+
+  // Sólo se llama con el usuario logueado Y con nombre de DT (si no, el gate bloquea el join).
+  async function join() {
     setBusy(true);
     setErr(null);
     try {
       const r = await joinLeague(code);
       if (!r.ok) {
-        if (r.error === "auth") {
-          try {
-            localStorage.setItem(PENDING_KEY, code);
-          } catch {}
-          router.push(`/sign-up?redirect_url=${encodeURIComponent(`/ligas/${code}`)}`);
-          return;
-        }
-        setErr("No pudimos unirte a la liga. Probá de nuevo.");
+        setErr("No pudimos unirte a la liga. Probá de nuevo en un momento.");
         return;
       }
       try {
@@ -62,7 +68,22 @@ export function LeagueJoinCTA({
     }
   }
 
-  // Al volver del registro: si veníamos con intención de unirnos a ESTA liga, lo hacemos solo.
+  // Rutea según el estado de la sesión. Recién une cuando hay cuenta + nombre de DT.
+  function onJoinClick() {
+    if (!isAuthed) {
+      remember();
+      router.push(`/sign-up?redirect_url=${encodeURIComponent(leaguePath)}`);
+      return;
+    }
+    if (!isOnboarded) {
+      remember();
+      router.push(`/bienvenida?next=${encodeURIComponent(leaguePath)}`);
+      return;
+    }
+    void join();
+  }
+
+  // Al volver con intención pendiente: completar onboarding si falta, o unirse solo.
   useEffect(() => {
     if (autoTried.current) return;
     autoTried.current = true;
@@ -71,8 +92,13 @@ export function LeagueJoinCTA({
     try {
       pending = localStorage.getItem(PENDING_KEY) === code;
     } catch {}
+    if (!pending) return;
+    if (!isOnboarded) {
+      router.push(`/bienvenida?next=${encodeURIComponent(leaguePath)}`);
+      return;
+    }
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (pending) void doJoin();
+    void join();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -95,7 +121,7 @@ export function LeagueJoinCTA({
       <p className="font-display text-lg text-ink">¿Te invitaron a {leagueName}?</p>
       <p className="mt-1 text-sm text-ink-3">Unite para competir con tu equipo en esta liga.</p>
       <div className="mt-3">
-        <PrimaryButton onClick={doJoin} disabled={busy}>
+        <PrimaryButton onClick={onJoinClick} disabled={busy}>
           {busy ? "Uniéndote…" : "UNIRME A ESTA LIGA →"}
         </PrimaryButton>
       </div>

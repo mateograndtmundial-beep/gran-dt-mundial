@@ -69,6 +69,7 @@ export default async function LeaguePage({
         leagueName={data.league.name}
         isMember={isMember}
         isAuthed={!!user}
+        isOnboarded={!!user?.username}
       />
 
       <LeagueRanking
