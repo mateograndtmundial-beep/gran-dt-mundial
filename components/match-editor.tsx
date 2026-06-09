@@ -69,7 +69,7 @@ type Col = { key: (typeof STAT_KEYS)[number]; type: ColType; label?: string; col
 
 const CORE_COLS: Col[] = [
   { key: "minutes", type: "minutes", label: "Minutos", help: "Minutos jugados (necesita ≥20 para puntuar)" },
-  { key: "rating", type: "rating", label: "Nota", help: "Calificación 0–10 (base del puntaje; el capitán la duplica)" },
+  { key: "rating", type: "rating", label: "Nota", help: "Calificación 0–10 entera (base del puntaje; el capitán la duplica)" },
   { key: "goals", type: "stepper", label: "Goles", help: "Goles (total)" },
   { key: "assists", type: "stepper", label: "Asist", help: "Asistencias" },
   { key: "yellow", type: "card", color: YELLOW, help: "Tarjeta amarilla" },
@@ -87,10 +87,11 @@ const toInt = (s: string | undefined) => {
   const v = parseInt(s ?? "", 10);
   return Number.isFinite(v) && v > 0 ? v : 0;
 };
+// La calificación es ENTERA (0-10): si tipean un decimal se redondea.
 const toRating = (s: string | undefined): number | null => {
   if (!s || s.trim() === "") return null;
   const v = Number(s.replace(",", "."));
-  return Number.isFinite(v) ? Math.max(0, Math.min(10, v)) : null;
+  return Number.isFinite(v) ? Math.round(Math.max(0, Math.min(10, v))) : null;
 };
 
 function initDraft(p: PlayerRow): Draft {
@@ -210,7 +211,7 @@ function SquadTable({
                           <Stepper value={d?.[c.key]} onChange={(v) => onField(p.playerId, c.key, v)} />
                         ) : (
                           <input
-                            inputMode={c.type === "rating" ? "decimal" : "numeric"}
+                            inputMode="numeric"
                             value={d?.[c.key] ?? ""}
                             onChange={(e) => onField(p.playerId, c.key, e.target.value)}
                             placeholder={c.type === "rating" ? "–" : ""}

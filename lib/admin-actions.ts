@@ -147,10 +147,11 @@ export async function saveMatchStats(input: SaveMatchInput) {
     const concededTeam = isHome ? awayScore ?? 0 : homeScore ?? 0;
     const cleanSheet = finished ? concededTeam === 0 : false;
     const isMotm = input.motmPlayerId === r.playerId;
+    // El rating se procesa como ENTERO en todo el juego (clamp 0-10 + redondeo).
     const rating =
       r.rating == null || !Number.isFinite(Number(r.rating))
         ? null
-        : Math.max(0, Math.min(10, Number(r.rating)));
+        : Math.round(Math.max(0, Math.min(10, Number(r.rating))));
 
     const stat = {
       minutes: int(r.minutes),
