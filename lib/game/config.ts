@@ -87,11 +87,13 @@ export const ROUNDS = [
   { order: 1, name: 'Fecha 1 — Grupos (J1)', type: 'group' as const },
   { order: 2, name: 'Fecha 2 — Grupos (J2)', type: 'group' as const },
   { order: 3, name: 'Fecha 3 — Grupos (J3)', type: 'group' as const },
-  { order: 4, name: 'Fecha 4 — 16avos', type: 'knockout' as const },
-  { order: 5, name: 'Fecha 5 — Octavos', type: 'knockout' as const },
-  { order: 6, name: 'Fecha 6 — Cuartos', type: 'knockout' as const },
-  { order: 7, name: 'Fecha 7 — Semifinales', type: 'knockout' as const },
-  { order: 8, name: 'Fecha 8 — Final y 3° puesto', type: 'knockout' as const },
+  // Post fase de grupos, las fechas se llaman por su instancia (no "Fecha N").
+  // La 8 incluye también el partido por el 3er puesto.
+  { order: 4, name: '16vos de Final', type: 'knockout' as const },
+  { order: 5, name: '8vos de Final', type: 'knockout' as const },
+  { order: 6, name: '4tos de Final', type: 'knockout' as const },
+  { order: 7, name: 'Semifinales', type: 'knockout' as const },
+  { order: 8, name: 'Final', type: 'knockout' as const },
 ];
 
 export const TOURNAMENT_START = process.env.NEXT_PUBLIC_TOURNAMENT_START ?? '2026-06-11T19:00:00Z';
