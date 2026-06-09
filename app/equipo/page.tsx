@@ -28,15 +28,21 @@ export default async function EquipoPage() {
     error = true;
   }
 
-  // Label del deadline (kickoff del primer partido de la fecha editable).
+  // Label del deadline: QUÉ fecha estás editando + cuándo cierra (kickoff del
+  // primer partido de esa fecha). La ventana de cambios va desde que arranca una
+  // fecha hasta el primer partido de la siguiente.
   const deadlineLabel = editable?.deadline
-    ? `CERRÁ TU EQUIPO · ${editable.deadline.toLocaleString("es-AR", {
-        day: "2-digit",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        timeZone: "America/Argentina/Buenos_Aires",
-      }).toUpperCase()}`
+    ? `${editable.round.name.split("—")[0]!.trim().toUpperCase()} · CERRÁ TU EQUIPO ANTES DEL ${editable.deadline
+        .toLocaleString("es-AR", {
+          weekday: "short",
+          day: "2-digit",
+          month: "short",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+          timeZone: "America/Argentina/Buenos_Aires",
+        })
+        .toUpperCase()}`
     : "EDITÁ LIBRE HASTA QUE ARRANQUE EL MUNDIAL";
   const locked = !error && players.length > 0 && !editable;
 

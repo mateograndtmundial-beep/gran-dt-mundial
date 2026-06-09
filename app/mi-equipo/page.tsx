@@ -91,6 +91,12 @@ export default async function MiEquipoPage() {
     };
   }
   const hasLineup = Object.keys(picks).length > 0;
+
+  // Si la primera alineación del usuario es de una fecha posterior a la 1, llegó
+  // con el torneo ya empezado: su equipo recién suma desde esa fecha.
+  const firstRound = team.rounds.length ? team.rounds[0]! : null;
+  const lateStartName =
+    firstRound && firstRound.order > 1 ? firstRound.roundName.split("—")[0]!.trim() : null;
   const subs = lineup
     .filter((p) => !p.isStarter && p.slot)
     .sort((a, b) => POSITIONS.indexOf(a.position as Position) - POSITIONS.indexOf(b.position as Position));
@@ -116,6 +122,12 @@ export default async function MiEquipoPage() {
           {!rankingsVisible && (
             <p className="text-xs text-ink-3">
               El ranking global se habilita cuando se publique la Fecha 1 del Mundial.
+            </p>
+          )}
+          {lateStartName && (
+            <p className="text-xs text-ink-3">
+              Armaste tu equipo con el torneo ya empezado: tu primera fecha puntuable es{" "}
+              <strong className="text-ink-2">{lateStartName}</strong>.
             </p>
           )}
         </div>
@@ -183,6 +195,9 @@ export default async function MiEquipoPage() {
               ¿Cómo se calculan?
             </Link>
           </div>
+          <p className="mb-3 text-xs text-ink-faint">
+            Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos.
+          </p>
           <PointsBreakdown rounds={team.rounds} />
         </Card>
       </div>
