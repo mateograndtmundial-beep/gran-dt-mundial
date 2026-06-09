@@ -194,6 +194,34 @@ export async function getRoundWithMatches(roundId: number) {
   };
 }
 
+/**
+ * Puntos fantasy acumulados por jugador en una fecha, leyendo player_match_stats
+ * directo (sin esperar publishRound). Es la vista "en vivo" del ADMIN: los
+ * usuarios recién ven puntajes cuando la fecha se publica (getRoundBreakdown
+ * exige status published) — esta query solo debe usarse detrás del guard isAdmin.
+ */
+export async function getRoundLivePoints(roundId: number) {
+  return db
+    .select({
+      playerId: players.id,
+      name: players.name,
+      position: players.position,
+      countryName: countries.name,
+      flagUrl: countries.flagUrl,
+      minutes: sql<number>`sum(${playerMatchStats.minutes})::int`,
+      rating: sql<number | null>`max(${playerMatchStats.rating})`,
+      isMotm: sql<boolean>`bool_or(${playerMatchStats.isMotm})`,
+      points: sql<number>`sum(${playerMatchStats.fantasyPoints})`,
+    })
+    .from(playerMatchStats)
+    .innerJoin(matches, eq(playerMatchStats.matchId, matches.id))
+    .innerJoin(players, eq(playerMatchStats.playerId, players.id))
+    .innerJoin(countries, eq(players.countryId, countries.id))
+    .where(eq(matches.roundId, roundId))
+    .groupBy(players.id, players.name, players.position, countries.name, countries.flagUrl)
+    .orderBy(sql`sum(${playerMatchStats.fantasyPoints}) desc`, asc(players.name));
+}
+
 /** Un partido + ambos planteles (con sus stats si ya existen) para editar a mano. */
 export async function getMatchEditor(matchId: number) {
   const home = alias(countries, "home_c");
