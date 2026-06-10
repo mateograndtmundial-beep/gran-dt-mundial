@@ -1,4 +1,4 @@
-import { eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, ne, sql } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import {
@@ -49,6 +49,95 @@ export async function publishRound(roundId: number) {
     );
   }
 
+  // Guarda: una fecha sin partidos no se publica (publicaría un ranking vacío y,
+  // con el carry-over, materializaría alineaciones para una fecha que no se jugó).
+  if (!ms.length) {
+    throw new Error(`No se puede publicar: la fecha ${roundId} no tiene partidos cargados.`);
+  }
+
+  // Guarda: publicar EN ORDEN. El carry-over copia de la fecha anterior, y los
+  // rankings/eliminados asumen la secuencia — publicar la 2 con la 1 pendiente
+  // dejaría todo inconsistente.
+  const prevUnpublished = await db
+    .select({ name: rounds.name })
+    .from(rounds)
+    .where(and(lt(rounds.order, round.order), ne(rounds.status, "published")));
+  if (prevUnpublished.length) {
+    throw new Error(
+      `No se puede publicar: primero hay que publicar ${prevUnpublished.map((r) => `"${r.name}"`).join(", ")}.`,
+    );
+  }
+
+  // Guarda: la fecha tiene que haber CERRADO en la realidad — todos los partidos
+  // con kickoff pasado y el último ya terminado por reloj (kickoff + duración
+  // máxima razonable). Es independiente del estado "finished": protege contra un
+  // sync/edición manual que marque terminado un partido que todavía no se jugó.
+  const MATCH_MAX_MS = 150 * 60 * 1000; // 90' + entretiempo/agregado (con margen para 120')
+  const kickoffs = ms.map((m) => (m.kickoff ? new Date(m.kickoff).getTime() : null));
+  if (kickoffs.some((k) => k == null)) {
+    throw new Error(`No se puede publicar: hay partidos de la fecha ${roundId} sin horario (kickoff) definido.`);
+  }
+  const lastEnd = Math.max(...(kickoffs as number[])) + MATCH_MAX_MS;
+  if (Date.now() < lastEnd) {
+    throw new Error(
+      `No se puede publicar: la fecha todavía no cerró (el último partido arranca/terminó ` +
+        `recién el ${new Date(lastEnd).toLocaleString("es-AR", { timeZone: "America/Argentina/Buenos_Aires" })} hora Argentina).`,
+    );
+  }
+
+  // Guarda: TODOS los partidos deben tener stats de jugadores cargadas. Un partido
+  // "finished" con 0 filas en player_match_stats (sync a medias, carga manual solo
+  // del marcador) publicaría la fecha con jugadores en 0 de forma irreversible.
+  const statRows = await db
+    .select({ matchId: playerMatchStats.matchId, n: sql<number>`count(*)::int` })
+    .from(playerMatchStats)
+    .where(inArray(playerMatchStats.matchId, matchIds))
+    .groupBy(playerMatchStats.matchId);
+  const withStats = new Set(statRows.map((r) => r.matchId));
+  const withoutStats = ms.filter((m) => !withStats.has(m.id));
+  if (withoutStats.length) {
+    throw new Error(
+      `No se puede publicar: ${withoutStats.length} partido(s) sin datos de jugadores cargados. ` +
+        `Sincronizá la fecha (o cargá las stats a mano) antes de publicar.`,
+    );
+  }
+
+  // Carry-over: quien no guardó alineación para esta fecha sigue sumando con la
+  // última que tenga de una fecha anterior ("si no hacés cambios, tu equipo se
+  // mantiene"). Se materializa una copia (pins_spent=0, changes_made=0) antes de
+  // computar, en dos INSERT...SELECT set-based e idempotentes (NOT EXISTS): si el
+  // publish se reintenta, no duplica nada. Como las fechas se publican en orden,
+  // los saltos múltiples se resuelven en cadena (la fecha N copia de la N-1).
+  await db.execute(sql`
+    insert into entry_rounds (entry_id, round_id, formation, captain_player_id, coach_id, budget_used, pins_spent, changes_made)
+    select distinct on (er.entry_id)
+      er.entry_id, ${roundId}, er.formation, er.captain_player_id, er.coach_id, er.budget_used, 0, 0
+    from entry_rounds er
+    join rounds r on r.id = er.round_id
+    where r.sort_order < ${round.order}
+      and not exists (
+        select 1 from entry_rounds cur
+        where cur.entry_id = er.entry_id and cur.round_id = ${roundId}
+      )
+    order by er.entry_id, r.sort_order desc
+  `);
+  await db.execute(sql`
+    insert into entry_round_players (entry_round_id, player_id, is_starter, slot)
+    select cur.id, erp.player_id, erp.is_starter, erp.slot
+    from entry_rounds cur
+    join lateral (
+      select er.id
+      from entry_rounds er
+      join rounds r on r.id = er.round_id
+      where er.entry_id = cur.entry_id and r.sort_order < ${round.order}
+      order by r.sort_order desc
+      limit 1
+    ) src on true
+    join entry_round_players erp on erp.entry_round_id = src.id
+    where cur.round_id = ${roundId}
+      and not exists (select 1 from entry_round_players x where x.entry_round_id = cur.id)
+  `);
+
   const stats = matchIds.length
     ? await db.select().from(playerMatchStats).where(inArray(playerMatchStats.matchId, matchIds))
     : [];
@@ -60,7 +149,8 @@ export async function publishRound(roundId: number) {
     pts.set(s.playerId, (pts.get(s.playerId) ?? 0) + s.fantasyPoints);
     minutesByPlayer.set(s.playerId, (minutesByPlayer.get(s.playerId) ?? 0) + s.minutes);
     if (s.minutes >= SCORING.minMinutes && s.rating != null) {
-      base.set(s.playerId, (base.get(s.playerId) ?? 0) + s.rating);
+      // Redondeo defensivo: el rating ya se guarda entero desde la ingestión.
+      base.set(s.playerId, (base.get(s.playerId) ?? 0) + Math.round(s.rating));
     }
   }
   const played = (pid: number) => (minutesByPlayer.get(pid) ?? 0) >= SCORING.minMinutes;

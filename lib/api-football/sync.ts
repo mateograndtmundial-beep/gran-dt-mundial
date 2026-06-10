@@ -79,6 +79,9 @@ export async function syncRound(roundId: number) {
       our: NonNullable<ReturnType<typeof byApi.get>>;
       minutes: number;
       rating: number | null;
+      // Rating decimal crudo de API-Football: solo para elegir la figura (menos
+      // empates que con el entero). El puntaje usa `rating` ya redondeado.
+      ratingRaw: number | null;
       goals: number;
       penaltyGoals: number;
       assists: number;
@@ -97,10 +100,13 @@ export async function syncRound(roundId: number) {
         const st = pl?.statistics?.[0];
         const our = byApi.get(pl?.player?.id);
         if (!our || !st) continue;
+        const ratingRaw = st.games?.rating ? parseFloat(st.games.rating) : null;
         raws.push({
           our,
           minutes: st.games?.minutes ?? 0,
-          rating: st.games?.rating ? parseFloat(st.games.rating) : null,
+          // El rating se procesa como ENTERO en todo el juego (se redondea al entrar).
+          rating: ratingRaw != null ? Math.round(ratingRaw) : null,
+          ratingRaw,
           goals: st.goals?.total ?? 0,
           penaltyGoals: st.penalty?.scored ?? 0,
           assists: st.goals?.assists ?? 0,
@@ -115,12 +121,14 @@ export async function syncRound(roundId: number) {
       }
     }
 
-    // Figura: mayor rating con >= minMinutes. (Empates: se queda el primero; el admin puede ajustar.)
+    // Figura: mayor rating con >= minMinutes, comparando el decimal crudo (el
+    // entero redondeado empataría seguido). (Empates: se queda el primero; el
+    // admin puede ajustar.)
     let motmPlayerId: number | null = null;
     let best = -1;
     for (const r of raws) {
-      if (r.minutes >= SCORING.minMinutes && r.rating != null && r.rating > best) {
-        best = r.rating;
+      if (r.minutes >= SCORING.minMinutes && r.ratingRaw != null && r.ratingRaw > best) {
+        best = r.ratingRaw;
         motmPlayerId = r.our.id;
       }
     }

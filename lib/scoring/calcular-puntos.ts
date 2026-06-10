@@ -63,7 +63,9 @@ export function calcularPuntos(s: StatsInput): PointsBreakdown {
     };
   }
 
-  const base = s.rating != null ? Number(s.rating) : 0;
+  // El rating ya llega entero desde la ingestión; el redondeo acá es defensivo
+  // (todas las calificaciones del juego se procesan como ENTEROS).
+  const base = s.rating != null ? Math.round(Number(s.rating)) : 0;
   const captainBonus = s.isCaptain ? base : 0; // duplica solo la calificación base
 
   const openPlayGoals = Math.max(0, s.goals - s.penaltyGoals);
@@ -105,7 +107,8 @@ export function calcularPuntos(s: StatsInput): PointsBreakdown {
     cards,
     ownGoals,
     penaltyMissed,
-    total: Math.round(total * 10) / 10,
+    // Con el rating entero, todos los componentes son enteros → el total también.
+    total: Math.round(total),
   };
 }
 

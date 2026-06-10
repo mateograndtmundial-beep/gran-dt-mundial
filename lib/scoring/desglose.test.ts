@@ -33,7 +33,7 @@ const stats: BdStatRow[] = [
   S(2, { rating: 6.0, cleanSheet: true }),
   // 3 no tiene stat row (no jugó)
   S(4, { rating: 8.0, goals: 1, assists: 1, isMotm: true }),
-  S(5, { rating: 6.5, yellow: 1 }),
+  S(5, { rating: 7.0, yellow: 1 }),
   S(7, { rating: 6.0, cleanSheet: true }),
 ];
 const matches = [
@@ -64,7 +64,7 @@ describe("buildRoundBreakdown", () => {
       countryResult: new Map([[100, "win"], [200, "loss"]]),
     };
     const expected = computeEntryTotal({ captainPlayerId: 4, coachId: 500, lineup }, ctx);
-    expect(expected).toBe(60.5);
+    expect(expected).toBe(61);
     expect(result.published).toBe(true);
     if (result.published) expect(result.total).toBe(expected);
   });
@@ -99,7 +99,7 @@ describe("buildRoundBreakdown", () => {
   it("amarilla resta y arma chip rojo", () => {
     if (!result.published) throw new Error("publicado");
     const fwd = result.starters.find((l) => l.playerId === 5)!;
-    expect(fwd.total).toBe(4.5); // 6.5 − 2
+    expect(fwd.total).toBe(5); // 7 − 2
     expect(fwd.chips.some((c) => c.kind === "neg" && c.label.toLowerCase().includes("amarilla"))).toBe(true);
   });
 
@@ -130,7 +130,7 @@ const statsCapOut: BdStatRow[] = [
   S(2, { rating: 6.0, cleanSheet: true }),
   S(3, { rating: 6.0, cleanSheet: true }),
   // 4 (capitán) no tiene stat row → no jugó
-  S(5, { rating: 6.5 }),
+  S(5, { rating: 7.0 }),
   S(8, { rating: 8.0, goals: 1 }), // el suplente rinde mejor que cualquier titular
 ];
 const resultCapOut = buildRoundBreakdown({
@@ -178,7 +178,7 @@ describe("buildRoundBreakdown — capitán que no jugó (sin transferencia de bo
   it("el suplente que entró NO recibe el ×2 sobre su propio rating", () => {
     if (!resultCapOut.published) throw new Error("publicado");
     const subRow = resultCapOut.starters.find((l) => l.playerId === 8)!;
-    // Sin ×2: rating 8.0 + gol de MID (6) = 14, redondeado a .1
+    // Sin ×2: rating 8 + gol de MID (6) = 14
     expect(subRow.total).toBe(14);
   });
 });

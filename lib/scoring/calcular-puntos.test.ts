@@ -63,9 +63,17 @@ describe("calcularPuntos", () => {
   });
 
   it("el capitán duplica solo el rating base", () => {
+    const r = calcularPuntos({ ...base, rating: 7, isCaptain: true });
+    expect(r.captainBonus).toBe(7);
+    expect(r.total).toBe(14);
+  });
+
+  it("redondea un rating decimal a entero antes de puntuar (y el capitán duplica el entero)", () => {
     const r = calcularPuntos({ ...base, rating: 7.5, isCaptain: true });
-    expect(r.captainBonus).toBe(7.5);
-    expect(r.total).toBe(15);
+    expect(r.base).toBe(8);
+    expect(r.captainBonus).toBe(8);
+    expect(r.total).toBe(16);
+    expect(calcularPuntos({ ...base, rating: 7.4 }).base).toBe(7);
   });
 
   it("puntúa goles según la posición", () => {
@@ -90,9 +98,9 @@ describe("calcularPuntos", () => {
     expect(calcularPuntos({ ...base, position: "FWD", rating: 6, cleanSheet: true }).cleanSheet).toBe(0);
   });
 
-  it("redondea el total a un decimal", () => {
+  it("el total siempre es entero", () => {
     const r = calcularPuntos({ ...base, rating: 7.25, isCaptain: true });
-    expect(r.total).toBe(Math.round(r.total * 10) / 10);
+    expect(Number.isInteger(r.total)).toBe(true);
   });
 
   it("penal errado resta (cualquier posición)", () => {

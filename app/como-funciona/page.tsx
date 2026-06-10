@@ -218,7 +218,7 @@ export default function ComoFuncionaPage() {
           <div className="space-y-3 text-[15px] leading-relaxed text-ink-2">
             <p>
               La base del puntaje de cada jugador es su{" "}
-              <strong>rating del partido (0 a 10)</strong>, siempre que haya jugado al menos{" "}
+              <strong>rating del partido (0 a 10, redondeado al entero más cercano)</strong>, siempre que haya jugado al menos{" "}
               <strong>20 minutos</strong> de tiempo reglamentario (90' o 120' si hay tiempo extra;
               el agregado no cuenta). Si jugó menos de 20', <strong>no suma absolutamente nada</strong>{" "}
               —ni el rating, ni goles, asistencias, tarjetas ni nada de lo que hizo en la cancha—:
@@ -282,12 +282,14 @@ export default function ComoFuncionaPage() {
             los cambios extra.
           </RuleItem>
           <ValidationCallout type="warning">
-            Cada fecha se cierra cuando arranca su primer partido. A partir de ahí, tu equipo de esa
-            fecha queda bloqueado: no podés hacer cambios hasta que se publiquen los puntos.
+            Cada fecha se cierra cuando arranca su primer partido: el equipo que tenés en ese
+            momento es el que suma los puntos de esa fecha. La ventana para los cambios de la
+            fecha siguiente va <strong>desde que arranca una fecha hasta el primer partido de la
+            siguiente</strong> — fijate el horario exacto en el armador.
           </ValidationCallout>
           <p className="text-sm leading-relaxed text-ink-3">
-            Cuando empieza una fecha nueva volvés a poder editar tu equipo. Los puntajes se publican
-            una vez que termina cada fecha.
+            Si no hacés cambios, no perdés nada: tu equipo se mantiene tal cual y sigue sumando
+            fecha tras fecha. Los puntajes se publican una vez que termina cada fecha.
           </p>
         </Card>
       </section>
@@ -364,10 +366,32 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Hasta cuándo puedo cambiar mi equipo?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Cada fecha se cierra cuando arranca su primer partido. Antes de ese momento podés
-                  hacer cambios (1 gratis por fecha, los extra con pines). Después, el equipo de esa
-                  fecha queda bloqueado hasta que se publiquen los puntos; cuando empieza la fecha
-                  siguiente, volvés a poder editar.
+                  Cada fecha se cierra cuando arranca su primer partido: el equipo que tenés en ese
+                  momento es el que suma los puntos de esa fecha. Apenas arranca, ya podés hacer los
+                  cambios para la fecha siguiente (1 gratis, los extra con pines), y tenés tiempo
+                  hasta el primer partido de esa fecha siguiente. El horario exacto del cierre lo
+                  ves siempre en el armador.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="sin-cambios">
+              <AccordionTrigger>¿Qué pasa si no hago cambios entre fechas?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  Nada malo: tu equipo se mantiene tal cual y sigue sumando puntos fecha tras
+                  fecha. No hace falta volver a guardarlo. Eso sí, conviene revisarlo entre fecha y
+                  fecha: si una selección quedó eliminada, sus jugadores ya no suman.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="llegue-tarde">
+              <AccordionTrigger>Me sumo con el Mundial ya empezado, ¿desde cuándo sumo puntos?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  Si armás tu equipo cuando una fecha ya está en juego, empezás a sumar desde la{" "}
+                  <strong>fecha siguiente</strong> (la primera que todavía no arrancó). Por ejemplo,
+                  si te registrás con la Fecha 1 ya iniciada, tu equipo compite desde la Fecha 2 en
+                  adelante. El ranking es por puntos acumulados, así que cuanto antes entres, mejor.
                 </p>
               </AccordionContent>
             </AccordionItem>

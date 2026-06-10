@@ -6,8 +6,11 @@ import { WelcomeBanner } from "@/components/welcome-banner";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
+import { getEditableRound } from "@/lib/queries";
 import { SITE } from "@/lib/site";
 import { InstagramIcon } from "@/components/icons";
+
+export const dynamic = "force-dynamic";
 
 function Feature({
   icon,
@@ -27,7 +30,28 @@ function Feature({
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  // Fecha editable: define el aviso y el countdown del hero. Antes del Mundial
+  // cuenta para el arranque; con el torneo en juego, para el cierre de cambios
+  // (el kickoff del primer partido de la fecha editable, leído de la DB).
+  let editable: Awaited<ReturnType<typeof getEditableRound>> = null;
+  try {
+    editable = await getEditableRound();
+  } catch {
+    // sin DB: el hero cae al countdown estático del arranque del Mundial
+  }
+  const started = editable != null && editable.round.order > 1;
+  const roundShortName = editable?.round.name.split("—")[0]!.trim();
+  const deadlineLabel = editable?.deadline.toLocaleString("es-AR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "America/Argentina/Buenos_Aires",
+  });
+
   return (
     <div className="space-y-12">
       <WelcomeBanner />
@@ -47,11 +71,30 @@ export default function Home() {
             capitán y DT, y competí con tus amigos durante las 8 fechas.
           </p>
 
-          {/* Countdown */}
+          {/* Countdown: al arranque del Mundial, o al cierre de cambios de la fecha editable */}
           <div>
-            <Eyebrow className="mb-3">EL MUNDIAL ARRANCA EN</Eyebrow>
-            <Countdown target={TOURNAMENT_START} />
+            <Eyebrow className="mb-3">
+              {started ? `CIERRE DE CAMBIOS · ${roundShortName!.toUpperCase()}` : "EL MUNDIAL ARRANCA EN"}
+            </Eyebrow>
+            <Countdown target={started ? editable!.deadline.toISOString() : TOURNAMENT_START} />
           </div>
+
+          {editable && (
+            <p className="max-w-[420px] text-sm leading-relaxed text-ink-2">
+              {started ? (
+                <>
+                  El Mundial ya está en juego: armá tu equipo ahora y sumás desde{" "}
+                  <strong>{roundShortName}</strong>. Tenés tiempo hasta el{" "}
+                  <strong>{deadlineLabel}</strong> (hora Argentina).
+                </>
+              ) : (
+                <>
+                  Armá tu equipo antes del <strong>{deadlineLabel}</strong> (hora Argentina) para
+                  sumar puntos desde la Fecha 1.
+                </>
+              )}
+            </p>
+          )}
 
           <div className="flex flex-wrap items-center gap-4">
             <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
