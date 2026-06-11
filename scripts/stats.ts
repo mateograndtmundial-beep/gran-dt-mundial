@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { sql } from "drizzle-orm";
 import { BUDGET, SQUAD } from "../lib/game/config";
+import { countryEs } from "../lib/i18n/countries";
 import { buildStatsDigest } from "../lib/reports/stats-digest";
 import { query, section, kv, pct, nf, table } from "./lib/report";
 
@@ -62,7 +63,7 @@ async function jugadoresMasUsados() {
       rank = 0;
     }
     rank++;
-    if (rank <= 10) top.push(r);
+    if (rank <= 10) top.push({ ...r, country: countryEs(r.country) });
   }
   for (const pos of ["GK", "DEF", "MID", "FWD"]) {
     console.log(`\n  ── ${pos} ──`);
@@ -90,7 +91,7 @@ async function capitanesMasElegidos() {
     limit 10
   `);
   section("Capitanes más elegidos (top 10)");
-  table(rows, [
+  table(rows.map((r) => ({ ...r, country: countryEs(r.country) })), [
     { key: "name", label: "Jugador", width: 26 },
     { key: "country", label: "Selección", width: 16 },
     { key: "veces", label: "Veces", align: "right" },
@@ -112,7 +113,7 @@ async function seleccionesMasUsadas() {
     limit 10
   `);
   section("Selecciones más representadas en los planteles (top 10)");
-  table(rows, [
+  table(rows.map((r) => ({ ...r, country: countryEs(r.country) })), [
     { key: "country", label: "Selección", width: 18 },
     { key: "equipos", label: "Equipos con ≥1", align: "right", width: 15 },
     { key: "cupos", label: "Cupos totales", align: "right", width: 14 },
@@ -149,7 +150,7 @@ async function formacionesYTecnicos() {
     limit 10
   `);
   section("Técnicos más usados (top 10)");
-  table(tecnicos, [
+  table(tecnicos.map((r) => ({ ...r, country: countryEs(r.country) })), [
     { key: "name", label: "Técnico", width: 26 },
     { key: "country", label: "Selección", width: 16 },
     { key: "veces", label: "Equipos", align: "right" },

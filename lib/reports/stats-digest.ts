@@ -1,6 +1,7 @@
 import { sql, type SQL } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { BUDGET, SQUAD } from "@/lib/game/config";
+import { countryEs } from "@/lib/i18n/countries";
 
 /**
  * Arma el digest diario de stats (Block Kit de Slack) a partir de queries
@@ -187,12 +188,12 @@ export async function buildStatsDigest(): Promise<{ text: string; blocks: Block[
     md(
       `*:soccer: Equipos* _(equipo actual de cada usuario)_\n` +
         topJugador
-          .map((r) => `• ${r.position}: *${esc(r.name)}* (${esc(r.country)}) — ${r.veces} equipos`)
+          .map((r) => `• ${r.position}: *${esc(r.name)}* (${esc(countryEs(r.country))}) — ${r.veces} equipos`)
           .join("\n") +
-        `\n• Capitán más elegido: *${esc(topCapitan[0]?.name ?? "—")}* (${esc(topCapitan[0]?.country ?? "")}) — ${topCapitan[0]?.veces ?? 0} equipos\n` +
-        `• Selección más usada: *${esc(topSeleccion[0]?.country ?? "—")}* — ${topSeleccion[0]?.cupos ?? 0} cupos en planteles\n` +
+        `\n• Capitán más elegido: *${esc(topCapitan[0]?.name ?? "—")}* (${esc(countryEs(topCapitan[0]?.country ?? ""))}) — ${topCapitan[0]?.veces ?? 0} equipos\n` +
+        `• Selección más usada: *${esc(countryEs(topSeleccion[0]?.country ?? "—"))}* — ${topSeleccion[0]?.cupos ?? 0} cupos en planteles\n` +
         `• Formación más usada: *${esc(topFormacion[0]?.formation ?? "—")}* (${pct(Number(topFormacion[0]?.veces ?? 0), Number(topFormacion[0]?.total ?? 1))})\n` +
-        `• Técnico más usado: *${esc(topTecnico[0]?.name ?? "—")}* (${esc(topTecnico[0]?.country ?? "")}) — ${topTecnico[0]?.veces ?? 0} equipos\n` +
+        `• Técnico más usado: *${esc(topTecnico[0]?.name ?? "—")}* (${esc(countryEs(topTecnico[0]?.country ?? ""))}) — ${topTecnico[0]?.veces ?? 0} equipos\n` +
         `• Presupuesto: promedio *${Number(presupuesto[0]?.promedio ?? 0).toFixed(1)}*, mediana *${Number(presupuesto[0]?.mediana ?? 0).toFixed(1)}* (de ${BUDGET})`,
     ),
     divider(),

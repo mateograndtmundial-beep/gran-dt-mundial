@@ -4,7 +4,9 @@ import { resolve } from "node:path";
 import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
 import { players } from "../lib/db/schema";
-import { getPlayersWithCountry } from "../lib/queries";
+// Raw (countryName en inglés): el matching contra Transfermarkt depende de los
+// nombres tal como están en la DB; la variante traducida es solo para la UI.
+import { getPlayersWithCountryRaw } from "../lib/queries";
 import { normalizeName, normalizeCountry, normalizeClub } from "../lib/pricing/normalize";
 import { computePrice, percentile, round1 } from "../lib/pricing/map";
 import { PRICING, BUDGET, SQUAD } from "../lib/game/config";
@@ -145,7 +147,7 @@ async function main() {
     return null;
   }
 
-  const dbPlayers = await getPlayersWithCountry();
+  const dbPlayers = await getPlayersWithCountryRaw();
   console.log(`→ ${dbPlayers.length} jugadores en DB.`);
 
   // 1ª pasada: matchear y juntar valores de mercado para calcular mvRef.

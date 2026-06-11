@@ -19,11 +19,18 @@ import {
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
+import { countryEs } from "@/lib/i18n/countries";
 
 export type PlayerRow = Awaited<ReturnType<typeof getPlayersWithCountry>>[number];
 export type CoachRow = Awaited<ReturnType<typeof getCoaches>>[number];
 
-export async function getPlayersWithCountry() {
+/**
+ * Variante SIN traducir: countryName en inglés tal como está en la DB.
+ * La usa el pipeline de precios (scripts/price-players.ts), cuyo matching
+ * contra Transfermarkt depende de los nombres en inglés. La UI usa
+ * getPlayersWithCountry (en español).
+ */
+export async function getPlayersWithCountryRaw() {
   return db
     .select({
       id: players.id,
@@ -42,6 +49,11 @@ export async function getPlayersWithCountry() {
     .from(players)
     .innerJoin(countries, eq(players.countryId, countries.id))
     .orderBy(desc(players.price));
+}
+
+export async function getPlayersWithCountry() {
+  const rows = await getPlayersWithCountryRaw();
+  return rows.map((p) => ({ ...p, countryName: countryEs(p.countryName) }));
 }
 
 // ---------- Info de Mundial para /jugadores ----------
@@ -109,7 +121,7 @@ export const getCountryFixtures = unstable_cache(
     if (m.homeCountryId == null || m.awayCountryId == null) continue;
     const kickoff = m.kickoff ? new Date(m.kickoff).toISOString() : null;
     add(m.homeCountryId, {
-      opponentName: m.awayName,
+      opponentName: countryEs(m.awayName),
       opponentFlag: m.awayFlag,
       kickoff,
       venue: m.venue,
@@ -118,7 +130,7 @@ export const getCountryFixtures = unstable_cache(
       difficulty: strengthTier.get(m.awayCountryId) ?? "medium",
     });
     add(m.awayCountryId, {
-      opponentName: m.homeName,
+      opponentName: countryEs(m.homeName),
       opponentFlag: m.homeFlag,
       kickoff,
       venue: m.venue,
@@ -190,7 +202,12 @@ export async function getRoundWithMatches(roundId: number) {
 
   return {
     round,
-    matches: ms.map((m) => ({ ...m, statsCount: countByMatch.get(m.id) ?? 0 })),
+    matches: ms.map((m) => ({
+      ...m,
+      homeName: countryEs(m.homeName),
+      awayName: countryEs(m.awayName),
+      statsCount: countByMatch.get(m.id) ?? 0,
+    })),
   };
 }
 
@@ -201,7 +218,7 @@ export async function getRoundWithMatches(roundId: number) {
  * exige status published) — esta query solo debe usarse detrás del guard isAdmin.
  */
 export async function getRoundLivePoints(roundId: number) {
-  return db
+  const rows = await db
     .select({
       playerId: players.id,
       name: players.name,
@@ -220,6 +237,7 @@ export async function getRoundLivePoints(roundId: number) {
     .where(eq(matches.roundId, roundId))
     .groupBy(players.id, players.name, players.position, countries.name, countries.flagUrl)
     .orderBy(sql`sum(${playerMatchStats.fantasyPoints}) desc`, asc(players.name));
+  return rows.map((r) => ({ ...r, countryName: countryEs(r.countryName) }));
 }
 
 /** Un partido + ambos planteles (con sus stats si ya existen) para editar a mano. */
@@ -255,6 +273,8 @@ export async function getMatchEditor(matchId: number) {
       .limit(1)
   )[0];
   if (!m) return null;
+  m.homeName = countryEs(m.homeName);
+  m.awayName = countryEs(m.awayName);
   if (m.homeCountryId == null || m.awayCountryId == null) return { match: m, players: [] };
 
   const rows = await db
@@ -318,7 +338,7 @@ export async function getRoundsToSync(now: Date = new Date(), windowHours = 72):
 }
 
 export async function getCoaches() {
-  return db
+  const rows = await db
     .select({
       id: coaches.id,
       name: coaches.name,
@@ -330,6 +350,7 @@ export async function getCoaches() {
     })
     .from(coaches)
     .innerJoin(countries, eq(coaches.countryId, countries.id));
+  return rows.map((c) => ({ ...c, countryName: countryEs(c.countryName) }));
 }
 
 /**
@@ -534,7 +555,7 @@ export async function getLeagueMembersForManagement(leagueId: number) {
 }
 
 export async function getLineupPlayers(entryRoundId: number) {
-  return db
+  const rows = await db
     .select({
       id: players.id,
       name: players.name,
@@ -550,6 +571,7 @@ export async function getLineupPlayers(entryRoundId: number) {
     .innerJoin(players, eq(entryRoundPlayers.playerId, players.id))
     .innerJoin(countries, eq(players.countryId, countries.id))
     .where(eq(entryRoundPlayers.entryRoundId, entryRoundId));
+  return rows.map((p) => ({ ...p, countryName: countryEs(p.countryName) }));
 }
 
 /**
@@ -658,10 +680,10 @@ export async function getRoundBreakdown(
 
   return buildRoundBreakdown({
     captainPlayerId: er.captainPlayerId,
-    lineup: lineup.map((l) => ({ ...l, position: l.position as Position })),
+    lineup: lineup.map((l) => ({ ...l, position: l.position as Position, countryName: countryEs(l.countryName) })),
     stats,
     matches: ms,
-    coach,
+    coach: coach ? { ...coach, countryName: countryEs(coach.countryName) } : null,
   });
 }
 
