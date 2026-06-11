@@ -7,4 +7,8 @@ export const SITE = {
     url: "https://www.instagram.com/los11desampa/",
     handle: "@los11desampa",
   },
+  twitter: {
+    url: "https://x.com/los11desampa",
+    handle: "@los11desampa",
+  },
 } as const;

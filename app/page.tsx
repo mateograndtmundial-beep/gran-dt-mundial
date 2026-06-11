@@ -8,9 +8,43 @@ import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
 import { getEditableRound } from "@/lib/queries";
 import { SITE } from "@/lib/site";
-import { InstagramIcon } from "@/components/icons";
+import { InstagramIcon, XIcon } from "@/components/icons";
 
 export const dynamic = "force-dynamic";
+
+function SocialCard({
+  href,
+  icon,
+  title,
+  text,
+  handle,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  title: string;
+  text: string;
+  handle: string;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="group flex items-center justify-between gap-4 rounded-[8px] border border-border bg-surface px-5 py-4 card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:card-shadow-md"
+    >
+      <div className="flex items-center gap-3.5">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue text-white">
+          {icon}
+        </span>
+        <div>
+          <p className="text-base font-semibold text-ink">{title}</p>
+          <p className="text-sm text-ink-3">{text}</p>
+        </div>
+      </div>
+      <span className="shrink-0 font-display text-base text-blue">{handle} →</span>
+    </a>
+  );
+}
 
 function Feature({
   icon,
@@ -159,27 +193,22 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* ─── Instagram ─── */}
-      <section>
-        <a
+      {/* ─── Redes ─── */}
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <SocialCard
           href={SITE.instagram.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group flex items-center justify-between gap-4 rounded-[8px] border border-border bg-surface px-5 py-4 card-shadow transition-all duration-150 hover:-translate-y-0.5 hover:card-shadow-md"
-        >
-          <div className="flex items-center gap-3.5">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-blue text-white">
-              <InstagramIcon size={22} />
-            </span>
-            <div>
-              <p className="text-base font-semibold text-ink">Seguinos en Instagram</p>
-              <p className="text-sm text-ink-3">
-                Para enterarte de todo: novedades, tips y el día a día del Mundial.
-              </p>
-            </div>
-          </div>
-          <span className="shrink-0 font-display text-base text-blue">{SITE.instagram.handle} →</span>
-        </a>
+          icon={<InstagramIcon size={22} />}
+          title="Seguinos en Instagram"
+          text="Para enterarte de todo: novedades, tips y el día a día del Mundial."
+          handle={SITE.instagram.handle}
+        />
+        <SocialCard
+          href={SITE.twitter.url}
+          icon={<XIcon size={20} />}
+          title="Seguinos en X"
+          text="Resultados, puntajes y novedades en tiempo real."
+          handle={SITE.twitter.handle}
+        />
       </section>
     </div>
   );
