@@ -151,7 +151,6 @@ export function FieldBuilder({
   const [message, setMessage]       = useState<string | null>(null);
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
   const [draftConflict, setDraftConflict] = useState<LineupDraft | null>(null);
-  const [showChangesInfo, setShowChangesInfo] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const draftHandled = useRef(false);
@@ -572,27 +571,6 @@ export function FieldBuilder({
             quedan fijos al pie para que nunca se corten (a cualquier nivel de zoom). */}
         <div className="flex flex-col md:max-h-[calc(100svh-16.5rem)]">
         <div className="flex flex-col gap-3 md:overflow-y-auto md:pr-0.5">
-          {/* Leyenda de cambios — sólo la primera vez que se arma el equipo */}
-          {!nameLocked && showChangesInfo && (
-            <div className="relative rounded-[8px] border border-blue/25 bg-blue/5 p-3 pr-8">
-              <button
-                type="button"
-                onClick={() => setShowChangesInfo(false)}
-                aria-label="Cerrar"
-                className="absolute right-2 top-2 rounded-full p-1 text-blue/60 hover:bg-blue/10 hover:text-blue transition-colors"
-              >
-                <X size={14} />
-              </button>
-              <p className="text-[11px] leading-relaxed text-ink-2">
-                <span className="font-semibold text-blue">Hasta que arranque el Mundial</span> podés
-                editar tu equipo las veces que quieras, sin límite. Cuando empiece el primer
-                partido, el equipo queda <span className="font-semibold">fijo</span> y de ahí en
-                más vas a tener <span className="font-semibold">1 cambio gratis por fecha</span> (los
-                cambios extra se pagan con pines).
-              </p>
-            </div>
-          )}
-
           {/* Qué falta para guardar — arriba de todo para que se vea de entrada
               (Técnico quedaba "escondido" más abajo y el usuario no se enteraba). */}
           {errors.length > 0 && (
