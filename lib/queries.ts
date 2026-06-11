@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, gt, inArray, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import {
@@ -486,6 +486,52 @@ export async function getEditableLineup(userId: number) {
   const slots: Record<string, number> = {};
   for (const r of lp) if (r.slot) slots[r.slot] = r.playerId;
   return { teamName: entry.name, formation: er.formation, captainPlayerId: er.captainPlayerId, coachId: er.coachId, slots };
+}
+
+/**
+ * Contexto para el contador de cambios y el cartel de confirmación del armador.
+ * - `baselinePlayerIds`: los 15 de la alineación de la fecha ANTERIOR más reciente
+ *   del usuario — el MISMO baseline contra el que `saveLineup` cuenta cambios
+ *   (entryRound con `order < fecha editable`). `null` = el usuario no tiene fecha
+ *   previa (primer equipo, o estamos en la fecha 1) → armado/edición libre, sin costo.
+ * - `alreadySpentThisRound`: pines ya gastados en la fecha editable (si ya guardó
+ *   una alineación para ella), para no re-cobrar al re-editar.
+ */
+export async function getEditContext(userId: number, editableRoundId: number, editableRoundOrder: number) {
+  const entry = (await db.select({ id: entries.id }).from(entries).where(eq(entries.userId, userId)).limit(1))[0];
+  if (!entry) return { baselinePlayerIds: null as number[] | null, alreadySpentThisRound: 0 };
+
+  // Baseline = entryRound más reciente con order < fecha editable (idéntico al
+  // `prevEr` de saveLineup). Sus jugadores son los 15 contra los que se cuentan cambios.
+  const prevEr = (
+    await db
+      .select({ id: entryRounds.id })
+      .from(entryRounds)
+      .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+      .where(and(eq(entryRounds.entryId, entry.id), lt(rounds.order, editableRoundOrder)))
+      .orderBy(desc(rounds.order))
+      .limit(1)
+  )[0];
+
+  let baselinePlayerIds: number[] | null = null;
+  if (prevEr) {
+    const rows = await db
+      .select({ playerId: entryRoundPlayers.playerId })
+      .from(entryRoundPlayers)
+      .where(eq(entryRoundPlayers.entryRoundId, prevEr.id));
+    baselinePlayerIds = rows.map((r) => r.playerId);
+  }
+
+  // Pines ya gastados en la fecha editable (si ya hay alineación guardada para ella).
+  const curEr = (
+    await db
+      .select({ pinsSpent: entryRounds.pinsSpent })
+      .from(entryRounds)
+      .where(and(eq(entryRounds.entryId, entry.id), eq(entryRounds.roundId, editableRoundId)))
+      .limit(1)
+  )[0];
+
+  return { baselinePlayerIds, alreadySpentThisRound: curEr?.pinsSpent ?? 0 };
 }
 
 export async function getMyLeagues(userId: number) {

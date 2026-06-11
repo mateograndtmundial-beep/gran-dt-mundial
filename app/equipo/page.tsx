@@ -2,9 +2,10 @@ import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
-import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, type PlayerRow, type CoachRow } from "@/lib/queries";
+import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, type PlayerRow, type CoachRow } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
-import { BUDGET, MAX_PER_COUNTRY } from "@/lib/game/config";
+import { getPinBalance } from "@/lib/pins";
+import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +14,9 @@ export default async function EquipoPage() {
   let coaches: CoachRow[] = [];
   let initial: Awaited<ReturnType<typeof getEditableLineup>> = null;
   let editable: Awaited<ReturnType<typeof getEditableRound>> = null;
+  let editContext: Awaited<ReturnType<typeof getEditContext>> | null = null;
+  let pinBalance = 0;
+  let isPremium = false;
   let isAuthed = false;
   let error = false;
   try {
@@ -23,10 +27,35 @@ export default async function EquipoPage() {
     ]);
     const user = await getCurrentUser();
     isAuthed = !!user;
-    if (user) initial = await getEditableLineup(user.id);
+    if (user) {
+      isPremium = user.isPremium;
+      initial = await getEditableLineup(user.id);
+      // Contexto de cambios solo si hay fecha editable (si no, no hay nada que contar/cobrar).
+      if (editable) {
+        [editContext, pinBalance] = await Promise.all([
+          getEditContext(user.id, editable.round.id, editable.round.order),
+          getPinBalance(user.id),
+        ]);
+      }
+    }
   } catch {
     error = true;
   }
+
+  // Contexto para el contador de cambios + cartel de confirmación del armador.
+  // null = edición libre (sin fecha previa: primer equipo o fecha 1) → sin límite.
+  const changeContext =
+    editable && editContext
+      ? {
+          baselinePlayerIds: editContext.baselinePlayerIds,
+          alreadySpent: editContext.alreadySpentThisRound,
+          pinBalance,
+          isPremium,
+          freeChanges: FREE_CHANGES_PER_ROUND,
+          roundName: editable.round.name.split("—")[0]!.trim(),
+          roundStarted: editable.round.order > 1,
+        }
+      : null;
 
   // Label del deadline: QUÉ fecha estás editando + cuándo cierra (kickoff del
   // primer partido de esa fecha). La ventana de cambios va desde que arranca una
@@ -78,6 +107,7 @@ export default async function EquipoPage() {
             initialTeamName={initial?.teamName ?? ""}
             deadlineLabel={deadlineLabel}
             isAuthed={isAuthed}
+            changeContext={changeContext}
           />
         </div>
       )}

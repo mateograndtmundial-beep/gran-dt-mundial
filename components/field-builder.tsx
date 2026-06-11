@@ -17,6 +17,7 @@ import type { PlayerRow, CoachRow } from "@/lib/queries";
 import { cn, formatPrice } from "@/lib/utils";
 import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
+import { countPlayerChanges, pinsForChanges, freeChangesLeft, pinsDueNow } from "@/lib/game/changes";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } from "@/lib/lineup-draft";
@@ -93,6 +94,16 @@ export type InitialLineup = {
   slots: Record<string, number>; // slotId -> playerId
 };
 
+export type ChangeContext = {
+  baselinePlayerIds: number[] | null; // 15 de la fecha anterior; null = edición libre (sin fecha previa)
+  alreadySpent: number;               // pines ya gastados en la fecha editable (reconciliación)
+  pinBalance: number;
+  isPremium: boolean;
+  freeChanges: number;                // cambios gratis por fecha (FREE_CHANGES_PER_ROUND)
+  roundName: string;                  // nombre corto de la fecha editable (ej "Fecha 2")
+  roundStarted: boolean;              // order > 1 → el Mundial ya está en juego
+};
+
 export function FieldBuilder({
   players,
   coaches,
@@ -102,6 +113,7 @@ export function FieldBuilder({
   initialTeamName = "",
   deadlineLabel = "CERRÁ TU EQUIPO",
   isAuthed = false,
+  changeContext = null,
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
@@ -111,6 +123,7 @@ export function FieldBuilder({
   initialTeamName?: string;
   deadlineLabel?: string;
   isAuthed?: boolean;
+  changeContext?: ChangeContext | null;
 }) {
   const router = useRouter();
   const [formation, setFormation]   = useState(initial?.formation ?? DEFAULT_FORMATION);
@@ -139,6 +152,7 @@ export function FieldBuilder({
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
   const [draftConflict, setDraftConflict] = useState<LineupDraft | null>(null);
   const [showChangesInfo, setShowChangesInfo] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const draftHandled = useRef(false);
   const autoSaveArmed = useRef(false);
@@ -156,6 +170,18 @@ export function FieldBuilder({
   const countByCountry = new Map<number, number>();
   for (const p of chosen) countByCountry.set(p.countryId, (countByCountry.get(p.countryId) ?? 0) + 1);
   const maxCountry = countByCountry.size ? Math.max(...countByCountry.values()) : 0;
+
+  // ── Cambios de la fecha: contador + costo en pines (misma fórmula que el
+  // server, lib/game/changes.ts → no se desincronizan). `limited` = hay una fecha
+  // anterior contra la cual contar; si no (primer equipo / fecha 1) la edición es
+  // libre y no mostramos contador ni cobramos.
+  const cc = changeContext;
+  const limited = cc != null && cc.baselinePlayerIds != null;
+  const changesMade = limited ? countPlayerChanges(chosen.map((p) => p.id), cc!.baselinePlayerIds) : 0;
+  const pinsTotal = limited ? pinsForChanges(changesMade, { freeChanges: cc!.freeChanges, isPremium: cc!.isPremium }) : 0;
+  const pinsDue = limited ? pinsDueNow(pinsTotal, cc!.alreadySpent) : 0;
+  const freeLeft = limited ? freeChangesLeft(changesMade, cc!.freeChanges) : 0;
+  const notEnoughPins = limited && !cc!.isPremium && pinsDue > cc!.pinBalance;
 
   const starterSlots   = slots.filter((s) => s.isStarter);
   const subSlots       = slots.filter((s) => !s.isStarter);
@@ -713,8 +739,51 @@ export function FieldBuilder({
 
         {/* Guardar — fuera del área que scrollea, siempre visible al pie del rail */}
         <div className="shrink-0 space-y-2 pt-3">
+          {/* Contador de cambios de la fecha — solo cuando hay fecha anterior (edición limitada) */}
+          {limited && (
+            <div className="rounded-[8px] border border-border bg-surface-2/50 px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
+                  Cambios · {cc!.roundName}
+                </span>
+                <span className="jersey-numeral text-base leading-none text-ink">
+                  {cc!.isPremium ? "∞" : freeLeft}{" "}
+                  <span className="text-[11px] font-normal text-ink-3">
+                    {cc!.isPremium ? "ilimitados" : freeLeft === 1 ? "disponible" : "disponibles"}
+                  </span>
+                </span>
+              </div>
+              {changesMade > 0 && !cc!.isPremium && (
+                <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
+                  Hiciste <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"}
+                  {pinsDue > 0 && (
+                    <> · usás <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc!.pinBalance})</>
+                  )}
+                </p>
+              )}
+              {!cc!.isPremium && freeLeft === 0 && (
+                <Link
+                  href="/pines"
+                  className="mt-1 inline-block text-[11px] font-display text-gold-ink hover:text-gold transition-colors"
+                >
+                  ¿Querés más cambios? Comprá pines →
+                </Link>
+              )}
+            </div>
+          )}
+          {/* Caso borde: te sumás con el Mundial ya en juego → armado inicial gratis para la próxima fecha */}
+          {cc && !limited && cc.roundStarted && (
+            <div className="rounded-[8px] border border-blue/25 bg-blue/5 px-3 py-2 text-[11px] leading-relaxed text-ink-2">
+              Te sumás con el Mundial en juego: armás tu equipo para la{" "}
+              <strong className="text-blue">{cc.roundName}</strong> y sumás desde ahí. El armado inicial es gratis.
+            </div>
+          )}
           <PrimaryButton
-            onClick={onSave}
+            onClick={() => {
+              if (!valid || saving) return;
+              if (limited) setConfirmOpen(true); // pedimos confirmación del cambio
+              else void onSave(); // edición libre → guardamos directo
+            }}
             disabled={!valid || saving}
             className="w-full justify-center py-3.5 text-lg"
           >
@@ -1042,6 +1111,83 @@ export function FieldBuilder({
           </div>
         );
       })()}
+
+      {/* Confirmación antes de guardar — avisa el cambio gratis / costo en pines de la fecha.
+          Solo aparece en edición limitada (hay fecha anterior); el armado libre guarda directo. */}
+      {confirmOpen && cc && (
+        <div
+          className="fixed inset-0 z-[55] flex items-center justify-center bg-black/40 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Confirmar equipo"
+          onClick={() => setConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-[12px] border border-border bg-surface card-shadow-lg p-5 animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-xl text-ink">Confirmá tu equipo · {cc.roundName}</h3>
+
+            {cc.roundStarted && (
+              <p className="mt-2 text-sm text-ink-2">
+                El Mundial ya está en juego: vas a fijar tu equipo para la <strong>{cc.roundName}</strong>.
+              </p>
+            )}
+
+            {changesMade === 0 ? (
+              <p className="mt-2 text-sm text-ink-2">
+                No hiciste cambios: seguís con el mismo equipo y sigue sumando.
+              </p>
+            ) : cc.isPremium ? (
+              <p className="mt-2 text-sm text-ink-2">
+                Estás haciendo <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"}. Tenés cambios{" "}
+                <strong>ilimitados</strong> (premium).
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-ink-2">
+                Estás haciendo <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"} en esta fecha.{" "}
+                {changesMade <= cc.freeChanges ? (
+                  <>Usás tu <strong>cambio gratis</strong>.</>
+                ) : pinsDue > 0 ? (
+                  <>{cc.freeChanges} gratis y el resto cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}).</>
+                ) : (
+                  <>Sin costo extra (ya estaban pagos).</>
+                )}
+              </p>
+            )}
+
+            {notEnoughPins && (
+              <div className="mt-3 rounded-[8px] border border-gold-border bg-gold-bg px-3 py-2 text-xs text-gold-ink">
+                No te alcanzan los pines (necesitás {pinsDue}, tenés {cc.pinBalance}).{" "}
+                <Link href="/pines" className="font-display underline">Comprar pines →</Link>
+              </div>
+            )}
+
+            {!cc.isPremium && changesMade > cc.freeChanges && !notEnoughPins && (
+              <p className="mt-2 text-[11px] text-ink-3">
+                ¿Querés hacer más cambios?{" "}
+                <Link href="/pines" className="font-semibold text-gold-ink hover:text-gold">Comprá pines</Link>.
+              </p>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                className="rounded-[6px] border border-border px-4 py-2 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={() => { setConfirmOpen(false); void onSave(); }}
+                disabled={notEnoughPins || saving}
+                className="rounded-[6px] bg-blue px-4 py-2 text-sm font-display text-white hover:bg-blue-ink transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Confirmar equipo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Fantasma que sigue al puntero mientras se arrastra un suplente */}
       {drag && (

@@ -11,6 +11,7 @@ import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND, type Position } from "
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
 import { round1 } from "@/lib/pricing/map";
+import { countPlayerChanges, pinsForChanges } from "@/lib/game/changes";
 
 type BatchOp = Parameters<typeof db.batch>[0][number];
 
@@ -116,13 +117,16 @@ export async function saveLineup(rawInput: SaveLineupInput) {
       .select({ playerId: entryRoundPlayers.playerId })
       .from(entryRoundPlayers)
       .where(eq(entryRoundPlayers.entryRoundId, prevEr.id));
-    const prevIds = new Set(prev.map((p) => p.playerId));
-    changes = input.players.filter((p) => !prevIds.has(p.playerId)).length;
+    changes = countPlayerChanges(
+      input.players.map((p) => p.playerId),
+      prev.map((p) => p.playerId),
+    );
   }
 
   // 1er cambio gratis por fecha; los extra cuestan pines. Reconcilia re-ediciones.
   // Los usuarios premium (compraron el pack "ilimitado") no pagan cambios extra.
-  const pinsNeeded = user.isPremium ? 0 : Math.max(0, changes - FREE_CHANGES_PER_ROUND);
+  // Fórmula en lib/game/changes.ts (compartida con el contador del armador).
+  const pinsNeeded = pinsForChanges(changes, { freeChanges: FREE_CHANGES_PER_ROUND, isPremium: user.isPremium });
   const alreadySpent = er0?.pinsSpent ?? 0;
   const delta = pinsNeeded - alreadySpent;
 
