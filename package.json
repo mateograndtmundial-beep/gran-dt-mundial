@@ -21,7 +21,8 @@
     "test:slack": "tsx scripts/test-slack.ts",
     "stats": "tsx scripts/stats.ts",
     "check:coverage": "tsx scripts/check-coverage.ts",
-    "probe:ratings": "tsx scripts/probe-ratings.ts"
+    "probe:ratings": "tsx scripts/probe-ratings.ts",
+    "get:user-teams": "tsx scripts/get-user-teams.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
