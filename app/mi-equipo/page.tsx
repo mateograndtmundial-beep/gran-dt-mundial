@@ -4,7 +4,7 @@ import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/compone
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
-import { ChangesStatusCard } from "@/components/changes-status-card";
+import { ChangesStatusChip } from "@/components/changes-status-card";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
@@ -139,11 +139,12 @@ export default async function MiEquipoPage() {
             </p>
           )}
         </div>
-        <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
+        <div className="flex items-stretch gap-2">
+          <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
+          {/* Chip compacto: cambios disponibles para la fecha vigente */}
+          {changesStatus && <ChangesStatusChip status={changesStatus} />}
+        </div>
       </section>
-
-      {/* Cuadro de cambios disponibles para la fecha vigente */}
-      {changesStatus && <ChangesStatusCard status={changesStatus} />}
 
       {/* El equipo manda: cancha grande + suplentes; los puntos van al costado */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">

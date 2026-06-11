@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { X, GripVertical, ArrowDownUp } from "lucide-react";
+import { X, GripVertical, ArrowDownUp, ArrowLeftRight } from "lucide-react";
 import {
   FORMATIONS,
   DEFAULT_FORMATION,
@@ -586,24 +586,21 @@ export function FieldBuilder({
             </ValidationCallout>
           )}
 
-          {/* Nombre del equipo (aparece en el ranking) — fijo una vez seteado */}
-          <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
-            <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
-            <input
-              value={teamName}
-              onChange={(e) => !nameLocked && setTeamName(e.target.value)}
-              maxLength={40}
-              placeholder="Ej: Los Galácticos"
-              aria-label="Nombre del equipo"
-              disabled={nameLocked}
-              className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors disabled:cursor-not-allowed disabled:opacity-70"
-            />
-            {nameLocked && (
-              <p className="mt-1.5 text-[11px] text-ink-3">
-                El nombre del equipo queda fijo una vez guardado.
-              </p>
-            )}
-          </div>
+          {/* Nombre del equipo (aparece en el ranking) — solo al armarlo por primera
+              vez; una vez guardado queda fijo y no hace falta mostrar la box. */}
+          {!nameLocked && (
+            <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
+              <Eyebrow className="mb-2">Nombre del equipo</Eyebrow>
+              <input
+                value={teamName}
+                onChange={(e) => setTeamName(e.target.value)}
+                maxLength={40}
+                placeholder="Ej: Los Galácticos"
+                aria-label="Nombre del equipo"
+                className="w-full rounded-[6px] border border-border bg-canvas px-3 py-2 text-sm font-semibold text-ink outline-none placeholder:font-normal placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
+              />
+            </div>
+          )}
 
           {/* Suplentes */}
           <div className="rounded-[8px] border border-border bg-surface card-shadow p-3">
@@ -696,34 +693,18 @@ export function FieldBuilder({
             </button>
           </div>
 
-          {/* Validación */}
-          <div className="space-y-2">
-            {errors.length === 0 && (
-              <ValidationCallout type="success">
-                ¡Equipo válido! Listo para guardar.
-              </ValidationCallout>
-            )}
-            {message && <ValidationCallout type="danger">{message}</ValidationCallout>}
-            {message && /pin/i.test(message) && (
-              <Link
-                href="/pines"
-                className="block rounded-[6px] border border-gold-border bg-gold-bg px-3 py-2 text-center text-sm font-display text-gold-ink hover:bg-gold hover:text-white transition-colors"
-              >
-                COMPRAR PINES →
-              </Link>
-            )}
-          </div>
         </div>
 
         {/* Guardar — fuera del área que scrollea, siempre visible al pie del rail */}
         <div className="shrink-0 space-y-2 pt-3">
-          {/* Contador de cambios de la fecha — solo cuando hay fecha anterior (edición limitada) */}
+          {/* Cambios de la fecha — solo cuando hay fecha anterior (edición limitada) */}
           {limited && (
-            <div className="rounded-[8px] border border-border bg-surface-2/50 px-3 py-2">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-3">
-                  Cambios · {cc!.roundName}
+            <div className="rounded-[8px] border border-border bg-surface card-shadow px-3 py-2">
+              <div className="flex items-center gap-2">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue/10 text-blue">
+                  <ArrowLeftRight size={14} strokeWidth={1.75} />
                 </span>
+                <Eyebrow className="flex-1">Cambios · {cc!.roundName}</Eyebrow>
                 <span className="jersey-numeral text-base leading-none text-ink">
                   {cc!.isPremium ? "∞" : freeLeft}{" "}
                   <span className="text-[11px] font-normal text-ink-3">
@@ -732,7 +713,7 @@ export function FieldBuilder({
                 </span>
               </div>
               {changesMade > 0 && !cc!.isPremium && (
-                <p className="mt-1 text-[11px] leading-relaxed text-ink-2">
+                <p className="mt-1.5 text-[11px] leading-relaxed text-ink-2">
                   Hiciste <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"}
                   {pinsDue > 0 && (
                     <> · usás <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc!.pinBalance})</>
@@ -753,9 +734,28 @@ export function FieldBuilder({
           {cc && !limited && cc.roundStarted && (
             <div className="rounded-[8px] border border-blue/25 bg-blue/5 px-3 py-2 text-[11px] leading-relaxed text-ink-2">
               Te sumás con el Mundial en juego: armás tu equipo para la{" "}
-              <strong className="text-blue">{cc.roundName}</strong> y sumás desde ahí. El armado inicial es gratis.
+              <strong className="text-blue">{cc.roundName}</strong> y sumás desde ahí. Tenés cambios{" "}
+              <strong className="text-blue">ilimitados</strong> hasta que arranque la{" "}
+              <strong className="text-blue">{cc.roundName}</strong>, luego será 1 por fecha.
             </div>
           )}
+
+          {/* Validación */}
+          {errors.length === 0 && (
+            <ValidationCallout type="success">
+              ¡Equipo válido! Listo para guardar.
+            </ValidationCallout>
+          )}
+          {message && <ValidationCallout type="danger">{message}</ValidationCallout>}
+          {message && /pin/i.test(message) && (
+            <Link
+              href="/pines"
+              className="block rounded-[6px] border border-gold-border bg-gold-bg px-3 py-2 text-center text-sm font-display text-gold-ink hover:bg-gold hover:text-white transition-colors"
+            >
+              COMPRAR PINES →
+            </Link>
+          )}
+
           <PrimaryButton
             onClick={() => {
               if (!valid || saving) return;
