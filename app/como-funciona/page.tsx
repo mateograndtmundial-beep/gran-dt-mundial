@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Shirt, Calculator, Users, Crown, ArrowLeftRight } from "lucide-react";
+import { Shirt, Calculator, Users, Crown, ArrowLeftRight, Coins } from "lucide-react";
 import { Card, PageTitle } from "@/components/ui";
 import {
   Eyebrow,
@@ -281,6 +281,16 @@ export default function ComoFuncionaPage() {
             . Si tenés el <strong>pack premium de cambios ilimitados</strong>, no pagás pines por
             los cambios extra.
           </RuleItem>
+          <RuleItem icon={<Coins size={22} strokeWidth={1.5} />} title="Pines acumulables, cambio gratis no">
+            Los pines son tuyos: si no los gastás en una fecha, quedan guardados para las
+            siguientes (no vencen). El <strong>cambio gratis es distinto</strong>: es 1 por fecha y
+            no se acumula — si no lo usás en una fecha, se pierde, no pasa a la siguiente.
+          </RuleItem>
+          <ValidationCallout type="success">
+            Cuando armás tu equipo por primera vez (o todavía no jugaste ninguna fecha puntuable),
+            los cambios son <strong>ilimitados y gratis</strong> hasta que arranque tu primera
+            fecha. A partir de ahí entra a regir el esquema de 1 cambio gratis por fecha.
+          </ValidationCallout>
           <ValidationCallout type="warning">
             Cada fecha se cierra cuando arranca su primer partido: el equipo que tenés en ese
             momento es el que suma los puntos de esa fecha. La ventana para los cambios de la
@@ -349,7 +359,10 @@ export default function ComoFuncionaPage() {
                 <p className="text-ink-2">
                   Tenés 1 cambio gratis por fecha. Si querés hacer más cambios en una misma fecha,
                   cada cambio extra cuesta <strong>1 pin</strong>. Si comprás el pack premium de
-                  cambios ilimitados, dejás de pagar pines por los cambios extra.
+                  cambios ilimitados, dejás de pagar pines por los cambios extra. Los pines que
+                  comprás <strong>no vencen</strong>: si no los usás en una fecha, quedan
+                  disponibles para las siguientes. El cambio gratis, en cambio, es por fecha y no
+                  se acumula.
                 </p>
               </AccordionContent>
             </AccordionItem>

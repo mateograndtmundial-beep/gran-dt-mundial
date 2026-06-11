@@ -19,6 +19,9 @@ import {
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
+import { FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { countPlayerChanges, freeChangesLeft } from "@/lib/game/changes";
+import { getPinBalance } from "@/lib/pins";
 import { countryEs } from "@/lib/i18n/countries";
 
 export type PlayerRow = Awaited<ReturnType<typeof getPlayersWithCountry>>[number];
@@ -532,6 +535,39 @@ export async function getEditContext(userId: number, editableRoundId: number, ed
   )[0];
 
   return { baselinePlayerIds, alreadySpentThisRound: curEr?.pinsSpent ?? 0 };
+}
+
+export type ChangesStatus =
+  | { state: "locked" }
+  | { state: "premium"; roundName: string }
+  | { state: "unlimited"; roundName: string }
+  | { state: "limited"; roundName: string; freeLeft: number; pinBalance: number };
+
+/**
+ * Estado de "cambios disponibles" para mostrar en /mi-equipo, con el mismo
+ * cálculo que el contador del armador (`getEditContext` + `lib/game/changes.ts`)
+ * para no desincronizarse del costo real que cobra `saveLineup`.
+ * - `locked`: no hay fecha editable (la fecha está en curso).
+ * - `premium`: pack de cambios ilimitados.
+ * - `unlimited`: sin fecha previa (primer equipo / fecha 1) → edición libre,
+ *   gratis hasta que arranque la fecha editable.
+ * - `limited`: cuenta los cambios gratis que quedan (0 o más) y el saldo de pines.
+ */
+export async function getChangesStatus(userId: number, isPremium: boolean): Promise<ChangesStatus> {
+  const editable = await getEditableRound();
+  if (!editable) return { state: "locked" };
+  const roundName = editable.round.name.split("—")[0]!.trim();
+  if (isPremium) return { state: "premium", roundName };
+
+  const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
+  if (editContext.baselinePlayerIds == null) return { state: "unlimited", roundName };
+
+  const lineup = await getEditableLineup(userId);
+  const currentIds = lineup ? Object.values(lineup.slots) : [];
+  const changesMade = countPlayerChanges(currentIds, editContext.baselinePlayerIds);
+  const freeLeft = freeChangesLeft(changesMade, FREE_CHANGES_PER_ROUND);
+  const pinBalance = await getPinBalance(userId);
+  return { state: "limited", roundName, freeLeft, pinBalance };
 }
 
 export async function getMyLeagues(userId: number) {

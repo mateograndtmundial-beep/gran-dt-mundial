@@ -4,8 +4,9 @@ import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/compone
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
+import { ChangesStatusCard } from "@/components/changes-status-card";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { formatPoints, formatPrice } from "@/lib/utils";
 
@@ -65,6 +66,13 @@ export default async function MiEquipoPage() {
     if (rankingsVisible) ranking = await getUserGlobalRank(team.entry.id);
   } catch {
     ranking = null;
+  }
+
+  let changesStatus: ChangesStatus | null = null;
+  try {
+    changesStatus = await getChangesStatus(user.id, user.isPremium);
+  } catch {
+    changesStatus = null;
   }
 
   // Lineup de la fecha vigente (la más reciente) para la cancha read-only
@@ -133,6 +141,9 @@ export default async function MiEquipoPage() {
         </div>
         <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
       </section>
+
+      {/* Cuadro de cambios disponibles para la fecha vigente */}
+      {changesStatus && <ChangesStatusCard status={changesStatus} />}
 
       {/* El equipo manda: cancha grande + suplentes; los puntos van al costado */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
