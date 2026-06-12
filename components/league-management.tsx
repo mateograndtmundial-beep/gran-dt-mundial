@@ -2,28 +2,47 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { renameLeague, removeMember } from "@/lib/actions";
+import { renameLeague, removeMember, setLeagueScoringStart } from "@/lib/actions";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
+import { roundDisplayName } from "@/lib/game/round-format";
 
 type Member = { userId: number; username: string | null; entryName: string | null };
+type Round = { id: number; name: string; order: number };
 
 export function LeagueManagement({
   leagueId,
   leagueName,
   ownerId,
   members,
+  rounds,
+  scoringStartRoundId,
 }: {
   leagueId: number;
   leagueName: string;
   ownerId: number;
   members: Member[];
+  rounds: Round[];
+  scoringStartRoundId: number | null;
 }) {
   const router = useRouter();
   const [name, setName] = useState(leagueName);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [toRemove, setToRemove] = useState<{ userId: number; label: string } | null>(null);
+  const [startBusy, setStartBusy] = useState(false);
+
+  async function onChangeStart(value: string) {
+    const roundId = value === "" ? null : Number(value);
+    setStartBusy(true);
+    setMsg(null);
+    const r = await setLeagueScoringStart(leagueId, roundId);
+    setStartBusy(false);
+    if (!r.ok && r.error === "auth") return router.push("/sign-in");
+    if (!r.ok) return setMsg("No se pudo cambiar la instancia.");
+    setMsg("Instancia de puntuación actualizada.");
+    router.refresh();
+  }
 
   async function onRename() {
     setBusy(true);
@@ -61,6 +80,27 @@ export function LeagueManagement({
         <PrimaryButton onClick={onRename} disabled={busy || !name.trim() || name.trim() === leagueName}>
           {busy ? "…" : "Renombrar"}
         </PrimaryButton>
+      </div>
+
+      <div className="border-t border-border pt-3">
+        <Eyebrow className="mb-1">Puntúa desde</Eyebrow>
+        <p className="mb-2 text-xs text-ink-3">
+          Elegí desde qué instancia se cuentan los puntos en esta liga. Quien se sume con el
+          Mundial ya empezado arranca en 0 dentro de la liga.
+        </p>
+        <select
+          value={scoringStartRoundId ?? ""}
+          onChange={(e) => onChangeStart(e.target.value)}
+          disabled={startBusy}
+          className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none focus:border-blue focus:ring-1 focus:ring-blue transition-colors disabled:opacity-50"
+        >
+          <option value="">Desde el inicio (Fecha 1)</option>
+          {rounds.map((r) => (
+            <option key={r.id} value={r.id}>
+              {roundDisplayName(r.name)}
+            </option>
+          ))}
+        </select>
       </div>
 
       <div className="border-t border-border pt-3">

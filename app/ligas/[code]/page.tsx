@@ -7,8 +7,9 @@ import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
 import { LeagueJoinCTA } from "@/components/league-join-cta";
 import { LeagueLeaveButton } from "@/components/league-leave-button";
-import { getLeagueRanking, getLeagueMembersForManagement, isLeagueMember } from "@/lib/queries";
+import { getLeagueRanking, getLeagueMembersForManagement, isLeagueMember, getAllRounds } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
+import { roundWithArticle } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,14 @@ export default async function LeaguePage({
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageTitle title={data.league.name} />
+        <PageTitle
+          title={data.league.name}
+          subtitle={
+            data.scoringStart
+              ? `Puntúa desde ${roundWithArticle(data.scoringStart.name)}`
+              : "Puntúa desde el inicio"
+          }
+        />
         <div className="text-right shrink-0">
           <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
           <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
@@ -115,6 +123,8 @@ export default async function LeaguePage({
           leagueName={data.league.name}
           ownerId={data.league.ownerId}
           members={await getLeagueMembersForManagement(data.league.id)}
+          rounds={await getAllRounds()}
+          scoringStartRoundId={data.league.scoringStartRoundId}
         />
       )}
 

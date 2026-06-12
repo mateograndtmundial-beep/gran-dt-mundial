@@ -227,10 +227,14 @@ export async function createLeague(name: string) {
   if (!user) return { ok: false as const, error: "auth" as const };
   const code = genCode();
   const cleanName = (typeof name === "string" ? name : "").trim().slice(0, LEAGUE_NAME_MAX) || "Mi liga";
+  // Por defecto la liga arranca a puntuar desde la próxima instancia jugable (la
+  // fecha editable): quien se sume con el Mundial ya empezado parte de 0 en la liga.
+  // Si no hay editable (torneo cerrado), null = cuenta todo desde Fecha 1.
+  const editable = await getEditableRound();
   const league = (
     await db
       .insert(leagues)
-      .values({ name: cleanName, code, ownerId: user.id, isPublic: false })
+      .values({ name: cleanName, code, ownerId: user.id, isPublic: false, scoringStartRoundId: editable?.round.id ?? null })
       .returning()
   )[0];
   if (!league) throw new Error("No se pudo crear la liga");
@@ -266,6 +270,25 @@ export async function renameLeague(leagueId: number, newName: string) {
   await db.update(leagues).set({ name }).where(eq(leagues.id, leagueId));
   revalidatePath(`/ligas/${league.code}`);
   revalidatePath("/ligas");
+  return { ok: true as const };
+}
+
+/**
+ * Solo el dueño define desde qué instancia puntúa la liga. `roundId` null =
+ * desde el inicio (Fecha 1, cuenta todo). Es reversible en cualquier momento.
+ */
+export async function setLeagueScoringStart(leagueId: number, roundId: number | null) {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false as const, error: "auth" as const };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league) return { ok: false as const, error: "not-found" as const };
+  if (league.ownerId !== user.id) return { ok: false as const, error: "forbidden" as const };
+  if (roundId != null) {
+    const r = (await db.select({ id: rounds.id }).from(rounds).where(eq(rounds.id, roundId)).limit(1))[0];
+    if (!r) return { ok: false as const, error: "not-found" as const };
+  }
+  await db.update(leagues).set({ scoringStartRoundId: roundId }).where(eq(leagues.id, leagueId));
+  revalidatePath(`/ligas/${league.code}`);
   return { ok: true as const };
 }
 

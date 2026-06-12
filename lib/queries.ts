@@ -20,6 +20,7 @@ import {
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
 import { FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { shortRoundName } from "@/lib/game/round-format";
 import { countPlayerChanges, freeChangesLeft } from "@/lib/game/changes";
 import { getPinBalance } from "@/lib/pins";
 import { countryEs } from "@/lib/i18n/countries";
@@ -556,7 +557,7 @@ export type ChangesStatus =
 export async function getChangesStatus(userId: number, isPremium: boolean): Promise<ChangesStatus> {
   const editable = await getEditableRound();
   if (!editable) return { state: "locked" };
-  const roundName = editable.round.name.split("—")[0]!.trim();
+  const roundName = shortRoundName(editable.round.name);
   if (isPremium) return { state: "premium", roundName };
 
   const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
@@ -595,6 +596,25 @@ export async function getLeagueRanking(code: string, page = 1) {
   )[0];
   if (!league) return null;
 
+  // Instancia de arranque: la liga solo suma entryRounds.points desde esta fecha
+  // (por su `order`) en adelante. null = desde el inicio (startOrder = 1 = cuenta
+  // todo, equivalente a entries.totalPoints).
+  let startOrder = 1;
+  let scoringStart: { roundId: number; name: string } | null = null;
+  if (league.scoringStartRoundId != null) {
+    const sr = (
+      await db
+        .select({ order: rounds.order, name: rounds.name })
+        .from(rounds)
+        .where(eq(rounds.id, league.scoringStartRoundId))
+        .limit(1)
+    )[0];
+    if (sr) {
+      startOrder = sr.order;
+      scoringStart = { roundId: league.scoringStartRoundId, name: sr.name };
+    }
+  }
+
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(leagueMembers)
@@ -604,22 +624,28 @@ export async function getLeagueRanking(code: string, page = 1) {
   const safePage = Math.max(1, page);
   const offset = (safePage - 1) * LEAGUE_RANKING_PAGE_SIZE;
 
+  // Suma por miembro de los puntos de sus fechas desde startOrder en adelante.
+  // Miembro sin entry o sin fechas en rango → 0.
+  const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} else 0 end), 0)`;
   const rows = await db
     .select({
       userId: leagueMembers.userId,
       username: users.username,
       entryName: entries.name,
-      totalPoints: entries.totalPoints,
+      totalPoints: pointsExpr,
     })
     .from(leagueMembers)
     .innerJoin(users, eq(leagueMembers.userId, users.id))
     .leftJoin(entries, eq(entries.userId, users.id))
+    .leftJoin(entryRounds, eq(entryRounds.entryId, entries.id))
+    .leftJoin(rounds, eq(rounds.id, entryRounds.roundId))
     .where(eq(leagueMembers.leagueId, league.id))
-    .orderBy(desc(entries.totalPoints))
+    .groupBy(leagueMembers.userId, users.username, entries.name)
+    .orderBy(desc(pointsExpr), asc(leagueMembers.userId))
     .limit(LEAGUE_RANKING_PAGE_SIZE)
     .offset(offset);
 
-  return { league, rows, total, page: safePage, pageSize: LEAGUE_RANKING_PAGE_SIZE };
+  return { league, rows, total, page: safePage, pageSize: LEAGUE_RANKING_PAGE_SIZE, scoringStart };
 }
 
 /**

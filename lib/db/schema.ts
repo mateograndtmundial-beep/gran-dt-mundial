@@ -214,6 +214,10 @@ export const leagues = pgTable('leagues', {
   code: text('code').notNull().unique(),
   ownerId: integer('owner_id').references(() => users.id).notNull(),
   isPublic: boolean('is_public').notNull().default(false),
+  // Instancia desde la que la liga contabiliza puntos en SU ranking (no afecta el
+  // total global). null = desde el inicio (Fecha 1, cuenta todo). El dueño la elige
+  // y puede cambiarla en cualquier momento (ver setLeagueScoringStart).
+  scoringStartRoundId: integer('scoring_start_round_id').references(() => rounds.id),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
