@@ -53,7 +53,7 @@ export function LeagueShare({ code, leagueName }: { code: string; leagueName: st
       ) : (
         <>
           {canShare ? <Share2 size={16} aria-hidden /> : <Copy size={16} aria-hidden />}
-          Compartir invitación
+          Compartir
         </>
       )}
     </GhostButton>
