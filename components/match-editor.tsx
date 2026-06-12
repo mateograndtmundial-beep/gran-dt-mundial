@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { saveMatchStats, type StatRowInput } from "@/lib/admin-actions";
+import { saveMatchStats, syncMatchAction, type StatRowInput } from "@/lib/admin-actions";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { SCORING, type Position } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
@@ -260,7 +260,22 @@ export function MatchEditor({ match, players }: { match: Match; players: PlayerR
   const [onlyPlayed, setOnlyPlayed] = useState(false);
   const [showExtra, setShowExtra] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+
+  async function onSync() {
+    setSyncing(true);
+    setMsg(null);
+    const r = await syncMatchAction(match.id);
+    if (!r.ok) {
+      setSyncing(false);
+      setMsg({ ok: false, text: r.error === "forbidden" ? "No autorizado" : r.error });
+      return;
+    }
+    // Recargamos para que los drafts se re-inicialicen con las stats recién bajadas
+    // (el estado local no se actualiza solo con router.refresh).
+    window.location.reload();
+  }
 
   const isKnockout = match.roundType === "knockout";
   const hs = toInt(homeScore);
@@ -377,8 +392,16 @@ export function MatchEditor({ match, players }: { match: Match; players: PlayerR
           )}
           {msg && <span className={cn("text-xs font-medium", msg.ok ? "text-success" : "text-danger")}>{msg.text}</span>}
           <button
+            onClick={onSync}
+            disabled={syncing || busy}
+            title="Baja las stats de este partido desde API-Football y recarga"
+            className="rounded-[6px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all disabled:opacity-50"
+          >
+            {syncing ? "Sincronizando…" : "Sincronizar"}
+          </button>
+          <button
             onClick={onSave}
-            disabled={busy}
+            disabled={busy || syncing}
             className="rounded-[6px] bg-blue px-5 py-2 font-display text-base text-white hover:bg-blue-hover transition-colors disabled:opacity-50"
           >
             {busy ? "Guardando…" : "Guardar partido"}

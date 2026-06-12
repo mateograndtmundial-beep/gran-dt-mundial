@@ -5,7 +5,7 @@ import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { players, matches, playerMatchStats, countries, rounds } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { syncRound } from "@/lib/api-football/sync";
+import { syncRound, syncMatch } from "@/lib/api-football/sync";
 import { publishRound } from "@/lib/scoring/publicar-fecha";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
@@ -38,6 +38,26 @@ export async function syncRoundAction(roundId: number) {
   } catch (e) {
     logAdmin("syncRound", admin.id, { roundId, ok: false, error: (e as Error).message });
     notifyError({ source: "syncRound", message: (e as Error).message });
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+export async function syncMatchAction(matchId: number) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(matchId) || matchId <= 0) return { ok: false as const, error: "partido inválido" };
+  try {
+    const r = await syncMatch(matchId);
+    if (!r.ok) {
+      logAdmin("syncMatch", admin.id, { matchId, ok: false, error: r.error });
+      return { ok: false as const, error: r.error };
+    }
+    logAdmin("syncMatch", admin.id, { matchId, ok: true });
+    revalidatePath(`/admin/partido/${matchId}`);
+    return { ok: true as const, info: "partido sincronizado" };
+  } catch (e) {
+    logAdmin("syncMatch", admin.id, { matchId, ok: false, error: (e as Error).message });
+    notifyError({ source: "syncMatch", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }

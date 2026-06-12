@@ -29,6 +29,20 @@ async function apiGet<T = unknown>(
   const json = (await res.json()) as { response: T[]; errors?: unknown };
   const errs = json.errors;
   const hasErrors = Array.isArray(errs) ? errs.length > 0 : errs && Object.keys(errs).length > 0;
+
+  // API-Football también devuelve el rate limit POR MINUTO como HTTP 200 con
+  // { errors: { rateLimit: "Too many requests..." } } en el body (no como 429).
+  // Es transitorio (se libera al pasar el minuto): reintentar con el mismo backoff.
+  // (El cap diario viene como errors.requests → ese NO se reintenta, no se recupera.)
+  const rateLimited =
+    !Array.isArray(errs) && !!errs && typeof errs === 'object' && 'rateLimit' in (errs as object);
+  if (rateLimited && attempt < 5) {
+    const retryAfter = Number(res.headers.get('retry-after'));
+    const waitSec = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter : Math.min(60, 2 ** attempt);
+    await new Promise((r) => setTimeout(r, waitSec * 1000));
+    return apiGet<T>(path, params, attempt + 1);
+  }
+
   if (hasErrors) throw new Error(`API-Football ${path} errors: ${JSON.stringify(errs)}`);
 
   return json.response ?? [];

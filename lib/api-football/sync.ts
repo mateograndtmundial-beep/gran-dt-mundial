@@ -27,14 +27,11 @@ async function mapLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promis
   return results;
 }
 
-/**
- * Trae las estadísticas de todos los partidos de una fecha desde API-Football,
- * calcula los puntos por jugador (sin capitán) y los guarda en player_match_stats.
- * También actualiza el marcador, el estado y la figura (MOTM) de cada partido.
- */
-export async function syncRound(roundId: number) {
-  const ms = await db.select().from(matches).where(eq(matches.roundId, roundId));
+type MatchRow = typeof matches.$inferSelect;
+type PlayerByApi = Map<number, { id: number; apiId: number | null; position: "GK" | "DEF" | "MID" | "FWD"; countryId: number }>;
 
+/** Construye el índice apiFootballId → jugador nuestro (se reusa entre partidos). */
+async function buildPlayerIndex(): Promise<PlayerByApi> {
   const allPlayers = await db
     .select({
       id: players.id,
@@ -43,9 +40,15 @@ export async function syncRound(roundId: number) {
       countryId: players.countryId,
     })
     .from(players);
-  const byApi = new Map(allPlayers.filter((p) => p.apiId != null).map((p) => [p.apiId as number, p]));
+  return new Map(allPlayers.filter((p) => p.apiId != null).map((p) => [p.apiId as number, p]));
+}
 
-  const syncMatch = async (m: (typeof ms)[number]): Promise<boolean> => {
+/**
+ * Sincroniza UN partido desde API-Football: baja stats, calcula los puntos por
+ * jugador (sin capitán), guarda player_match_stats y actualiza marcador, estado
+ * y figura (MOTM). Devuelve true si tenía fixture y se procesó.
+ */
+async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
     if (!m.apiFootballFixtureId) return false;
 
     // Las tres llamadas del partido van en paralelo. Los eventos traen los autogoles
@@ -212,9 +215,18 @@ export async function syncRound(roundId: number) {
     );
     await chunkedBatch(ops);
     return true;
-  };
+}
 
-  const results = await mapLimit(ms, SYNC_CONCURRENCY, syncMatch);
+/**
+ * Trae las estadísticas de todos los partidos de una fecha desde API-Football,
+ * calcula los puntos por jugador (sin capitán) y los guarda en player_match_stats.
+ * También actualiza el marcador, el estado y la figura (MOTM) de cada partido.
+ */
+export async function syncRound(roundId: number) {
+  const ms = await db.select().from(matches).where(eq(matches.roundId, roundId));
+  const byApi = await buildPlayerIndex();
+
+  const results = await mapLimit(ms, SYNC_CONCURRENCY, (m) => syncOneMatch(m, byApi));
 
   // Los partidos sincronizados pueden cambiar el próximo rival/dificultad de
   // cada selección (estado, kickoff reprogramado): invalidamos el caché de
@@ -222,4 +234,19 @@ export async function syncRound(roundId: number) {
   revalidateTag("country-fixtures", "max");
 
   return { matches: results.filter(Boolean).length };
+}
+
+/**
+ * Sincroniza UN solo partido (mismo efecto que syncRound pero acotado a un match).
+ * Útil para refrescar un partido puntual sin gastar el rate limit en toda la fecha.
+ */
+export async function syncMatch(matchId: number) {
+  const m = (await db.select().from(matches).where(eq(matches.id, matchId)).limit(1))[0];
+  if (!m) return { ok: false as const, error: "partido no existe" };
+  if (!m.apiFootballFixtureId) return { ok: false as const, error: "el partido no tiene fixture de API-Football" };
+
+  const byApi = await buildPlayerIndex();
+  await syncOneMatch(m, byApi);
+  revalidateTag("country-fixtures", "max");
+  return { ok: true as const };
 }
