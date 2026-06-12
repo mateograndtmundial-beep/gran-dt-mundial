@@ -159,7 +159,8 @@ export default function ComoFuncionaPage() {
           suplentes) más un técnico, todo dentro de un presupuesto. Cada fecha tus jugadores
           puntúan según lo que hacen en sus partidos reales del Mundial: goles, asistencias,
           vallas invictas, la figura del partido. Sumás esos puntos durante las{" "}
-          <strong>8 fechas</strong> del torneo y competís con tus amigos en tu liga.
+          <strong>8 fechas</strong> del torneo (3 de grupos + 5 playoffs) y competís
+          con tus amigos en tu liga.
         </p>
       </Card>
 

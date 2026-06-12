@@ -18,6 +18,7 @@ import { cn, formatPrice } from "@/lib/utils";
 import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
 import { countPlayerChanges, pinsForChanges, freeChangesLeft, pinsDueNow } from "@/lib/game/changes";
+import { roundArticle, roundDisplayName } from "@/lib/game/round-format";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } from "@/lib/lineup-draft";
@@ -733,10 +734,10 @@ export function FieldBuilder({
           {/* Caso borde: te sumás con el Mundial ya en juego → armado inicial gratis para la próxima fecha */}
           {cc && !limited && cc.roundStarted && (
             <div className="rounded-[8px] border border-blue/25 bg-blue/5 px-3 py-2 text-[11px] leading-relaxed text-ink-2">
-              Te sumás con el Mundial en juego: armás tu equipo para la{" "}
-              <strong className="text-blue">{cc.roundName}</strong> y sumás desde ahí. Tenés cambios{" "}
-              <strong className="text-blue">ilimitados</strong> hasta que arranque la{" "}
-              <strong className="text-blue">{cc.roundName}</strong>, luego será 1 por fecha.
+              Te sumás con el Mundial en juego: armás tu equipo para {roundArticle(cc.roundName)}{" "}
+              <strong className="text-blue">{roundDisplayName(cc.roundName)}</strong> y sumás desde ahí. Tenés cambios{" "}
+              <strong className="text-blue">ilimitados</strong> hasta que arranque {roundArticle(cc.roundName)}{" "}
+              <strong className="text-blue">{roundDisplayName(cc.roundName)}</strong>, luego será 1 por fecha.
             </div>
           )}
 
@@ -1104,11 +1105,11 @@ export function FieldBuilder({
             className="w-full max-w-sm rounded-[12px] border border-border bg-surface card-shadow-lg p-5 animate-slide-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-display text-xl text-ink">Confirmá tu equipo · {cc.roundName}</h3>
+            <h3 className="font-display text-xl text-ink">Confirmá tu equipo · {roundDisplayName(cc.roundName)}</h3>
 
             {cc.roundStarted && (
               <p className="mt-2 text-sm text-ink-2">
-                El Mundial ya está en juego: vas a fijar tu equipo para la <strong>{cc.roundName}</strong>.
+                El Mundial ya está en juego: vas a fijar tu equipo para {roundArticle(cc.roundName)} <strong>{roundDisplayName(cc.roundName)}</strong>.
               </p>
             )}
 

@@ -6,6 +6,7 @@ import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound,
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { shortRoundName } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
 
@@ -52,7 +53,7 @@ export default async function EquipoPage() {
           pinBalance,
           isPremium,
           freeChanges: FREE_CHANGES_PER_ROUND,
-          roundName: editable.round.name.split("—")[0]!.trim(),
+          roundName: shortRoundName(editable.round.name),
           roundStarted: editable.round.order > 1,
         }
       : null;
@@ -61,7 +62,7 @@ export default async function EquipoPage() {
   // primer partido de esa fecha). La ventana de cambios va desde que arranca una
   // fecha hasta el primer partido de la siguiente.
   const deadlineLabel = editable?.deadline
-    ? `${editable.round.name.split("—")[0]!.trim().toUpperCase()} · CERRÁ TU EQUIPO ANTES DEL ${editable.deadline
+    ? `${shortRoundName(editable.round.name).toUpperCase()} · CERRÁ TU EQUIPO ANTES DEL ${editable.deadline
         .toLocaleString("es-AR", {
           weekday: "short",
           day: "2-digit",

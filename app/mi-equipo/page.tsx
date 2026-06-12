@@ -8,6 +8,7 @@ import { ChangesStatusChip } from "@/components/changes-status-card";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
+import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export default async function MiEquipoPage() {
   // con el torneo ya empezado: su equipo recién suma desde esa fecha.
   const firstRound = team.rounds.length ? team.rounds[0]! : null;
   const lateStartName =
-    firstRound && firstRound.order > 1 ? firstRound.roundName.split("—")[0]!.trim() : null;
+    firstRound && firstRound.order > 1 ? roundWithArticle(firstRound.roundName) : null;
   const subs = lineup
     .filter((p) => !p.isStarter && p.slot)
     .sort((a, b) => POSITIONS.indexOf(a.position as Position) - POSITIONS.indexOf(b.position as Position));
