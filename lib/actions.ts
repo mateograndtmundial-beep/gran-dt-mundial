@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, desc, eq, inArray, lt } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
@@ -307,7 +307,60 @@ export async function removeMember(leagueId: number, userIdToRemove: number) {
   return { ok: true as const };
 }
 
-/** Cualquier miembro puede salir de una liga, salvo el dueño (debería eliminarla en su lugar). */
+/**
+ * El dueño elimina la liga. Solo permitido si es el único miembro: si hay más
+ * gente, primero debe transferir la propiedad (transferOwnershipAndLeave).
+ * Borra miembros y liga en un solo batch (atómico).
+ */
+export async function deleteLeague(leagueId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false as const, error: "auth" as const };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league) return { ok: false as const, error: "not-found" as const };
+  if (league.ownerId !== user.id) return { ok: false as const, error: "forbidden" as const };
+  const [{ count }] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(leagueMembers)
+    .where(eq(leagueMembers.leagueId, leagueId));
+  if (Number(count) > 1) return { ok: false as const, error: "not-empty" as const };
+  await db.batch([
+    db.delete(leagueMembers).where(eq(leagueMembers.leagueId, leagueId)),
+    db.delete(leagues).where(eq(leagues.id, leagueId)),
+  ]);
+  revalidatePath("/ligas");
+  return { ok: true as const };
+}
+
+/**
+ * El dueño transfiere la propiedad a otro miembro y sale de la liga. Es la única
+ * forma de que el dueño abandone una liga con gente (no puede quedar sin admin).
+ */
+export async function transferOwnershipAndLeave(leagueId: number, newOwnerId: number) {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false as const, error: "auth" as const };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league) return { ok: false as const, error: "not-found" as const };
+  if (league.ownerId !== user.id) return { ok: false as const, error: "forbidden" as const };
+  if (newOwnerId === user.id) return { ok: false as const, error: "invalid" as const };
+  // El nuevo dueño tiene que ser un miembro actual de la liga.
+  const member = (
+    await db
+      .select({ userId: leagueMembers.userId })
+      .from(leagueMembers)
+      .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, newOwnerId)))
+      .limit(1)
+  )[0];
+  if (!member) return { ok: false as const, error: "not-member" as const };
+  await db.batch([
+    db.update(leagues).set({ ownerId: newOwnerId }).where(eq(leagues.id, leagueId)),
+    db.delete(leagueMembers).where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, user.id))),
+  ]);
+  revalidatePath(`/ligas/${league.code}`);
+  revalidatePath("/ligas");
+  return { ok: true as const };
+}
+
+/** Cualquier miembro puede salir de una liga, salvo el dueño (debería eliminarla o transferirla en su lugar). */
 export async function leaveLeague(leagueId: number) {
   const user = await getCurrentUser();
   if (!user) return { ok: false as const, error: "auth" as const };

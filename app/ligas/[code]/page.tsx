@@ -55,22 +55,22 @@ export default async function LeaguePage({
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <PageTitle
-          title={data.league.name}
-          subtitle={
-            data.scoringStart
-              ? `Puntúa desde ${roundWithArticle(data.scoringStart.name)}`
-              : "Puntúa desde el inicio"
-          }
-        />
-        <div className="text-right shrink-0">
-          <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
-          <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
-            {data.league.code}
-          </p>
-          <LeagueShare code={data.league.code} leagueName={data.league.name} />
+      <div className="space-y-2">
+        <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+          <PageTitle title={data.league.name} />
+          <div className="text-right shrink-0">
+            <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
+            <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
+              {data.league.code}
+            </p>
+            <LeagueShare code={data.league.code} leagueName={data.league.name} />
+          </div>
         </div>
+        <p className="text-sm text-ink-3">
+          {data.scoringStart
+            ? `Puntúa desde ${roundWithArticle(data.scoringStart.name)}`
+            : "Puntúa desde el inicio"}
+        </p>
       </div>
 
       <LeagueJoinCTA
