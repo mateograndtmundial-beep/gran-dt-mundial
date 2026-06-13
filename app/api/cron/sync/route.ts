@@ -1,6 +1,7 @@
 import { getRoundsToSync } from "@/lib/queries";
 import { syncRound } from "@/lib/api-football/sync";
 import { notifyRoundSynced, notifyError } from "@/lib/notify/slack";
+import { postPendingRecaps } from "@/lib/stories/recap";
 
 /*
  * Cron de sincronización (Vercel Cron). Sincroniza las stats de las fechas en
@@ -32,7 +33,16 @@ async function run(req: Request): Promise<Response> {
       synced.push({ roundId: id, matches: r.matches });
       notifyRoundSynced({ roundId: id, matches: r.matches, source: "cron" });
     }
-    return Response.json({ ok: true, rounds: roundIds.length, synced });
+    // Tras sincronizar, genera y postea a #SOCIAL las stories de los partidos
+    // terminados con stats que aún no se postearon. Best-effort: un fallo de render
+    // no debe tumbar el sync (que es lo crítico).
+    let recaps = { posted: 0, skipped: 0 };
+    try {
+      recaps = await postPendingRecaps();
+    } catch (e) {
+      notifyError({ source: "cron/recaps", message: (e as Error).message });
+    }
+    return Response.json({ ok: true, rounds: roundIds.length, synced, recaps });
   } catch (e) {
     notifyError({ source: "cron/sync", message: (e as Error).message });
     return Response.json({ ok: false, error: (e as Error).message }, { status: 500 });

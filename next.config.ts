@@ -15,6 +15,24 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  // El generador de stories usa Chromium (vía @sparticuz/chromium + playwright-core)
+  // en el cron y en la acción de admin. Estos paquetes no se bundlean: se cargan de
+  // node_modules en runtime. (playwright/sharp idem.)
+  serverExternalPackages: ["@sparticuz/chromium", "playwright-core", "playwright", "sharp"],
+  // Incluir en las funciones que renderan stories: el binario de Chromium + los
+  // assets (template HTML, banderas, logo) que se leen por fs en runtime.
+  outputFileTracingIncludes: {
+    "/api/cron/sync": [
+      "./assets/stories/**",
+      "./public/images/logo/logo-badge-192.png",
+      "./node_modules/@sparticuz/chromium/**",
+    ],
+    "/admin": [
+      "./assets/stories/**",
+      "./public/images/logo/logo-badge-192.png",
+      "./node_modules/@sparticuz/chromium/**",
+    ],
+  },
   images: {
     // Banderas y fotos de jugadores vienen de la CDN de API-Football (seed.ts:
     // `team.flag`/`team.photo`/`p.photo`). Las dejamos remotas (la mayoría son

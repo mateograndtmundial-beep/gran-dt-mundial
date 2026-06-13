@@ -1,0 +1,1 @@
+ALTER TABLE "matches" ADD COLUMN "recap_posted_at" timestamp with time zone;

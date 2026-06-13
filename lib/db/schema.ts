@@ -88,6 +88,9 @@ export const matches = pgTable(
     status: matchStatusEnum('status').notNull().default('scheduled'),
     motmPlayerId: integer('motm_player_id'),
     apiFootballFixtureId: integer('api_football_fixture_id').unique(),
+    // Story de resumen ya generada y posteada a Slack para este partido (idempotencia
+    // del generador de stories). Null = todavía no se posteó.
+    recapPostedAt: timestamp('recap_posted_at', { withTimezone: true }),
   },
   (t) => [
     index('matches_round').on(t.roundId),

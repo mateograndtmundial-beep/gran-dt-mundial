@@ -12,6 +12,7 @@ import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
 import { clamp, round1 } from "@/lib/pricing/map";
 import { PRICING } from "@/lib/game/config";
 import { notifyRoundPublished, notifyRoundSynced, notifyError } from "@/lib/notify/slack";
+import { postPendingRecaps } from "@/lib/stories/recap";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
 async function currentAdmin() {
@@ -38,6 +39,32 @@ export async function syncRoundAction(roundId: number) {
   } catch (e) {
     logAdmin("syncRound", admin.id, { roundId, ok: false, error: (e as Error).message });
     notifyError({ source: "syncRound", message: (e as Error).message });
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+/**
+ * Genera y postea a #SOCIAL las stories de los partidos terminados con stats que
+ * aún no se postearon. Mismo resultado que el cron (postPendingRecaps), disparado
+ * a mano desde /admin. Idempotente.
+ */
+export async function generateRecapsAction() {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  try {
+    const { posted, skipped } = await postPendingRecaps();
+    logAdmin("generateRecaps", admin.id, { posted, skipped, ok: true });
+    return {
+      ok: true as const,
+      info: posted
+        ? `${posted} story(s) a #SOCIAL${skipped ? ` · ${skipped} omitida(s)` : ""}`
+        : skipped
+          ? `Sin novedades · ${skipped} partido(s) aún sin stats`
+          : "No hay partidos terminados pendientes",
+    };
+  } catch (e) {
+    logAdmin("generateRecaps", admin.id, { ok: false, error: (e as Error).message });
+    notifyError({ source: "generateRecaps", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }

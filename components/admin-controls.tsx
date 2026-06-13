@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { syncRoundAction, publishRoundAction, unpublishRound } from "@/lib/admin-actions";
+import { syncRoundAction, publishRoundAction, unpublishRound, generateRecapsAction } from "@/lib/admin-actions";
 import { Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import {
@@ -38,6 +38,17 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
   // Fecha que el admin quiere publicar (abre el diálogo de confirmación) + lo que tipeó.
   const [confirm, setConfirm] = useState<R | null>(null);
   const [confirmText, setConfirmText] = useState("");
+  // Generación manual de stories → #SOCIAL (mismo resultado que el cron).
+  const [recapBusy, setRecapBusy] = useState(false);
+  const [recapMsg, setRecapMsg] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  async function runRecaps() {
+    setRecapBusy(true);
+    const r = await generateRecapsAction();
+    setRecapBusy(false);
+    setRecapMsg({ ok: r.ok, msg: r.ok ? r.info : `Error: ${r.error}` });
+    if (r.ok) router.refresh();
+  }
 
   async function run(id: number, fn: (id: number) => Promise<ActionResult>, label: string) {
     setBusy(id);
@@ -66,6 +77,29 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
 
   return (
     <>
+    {/* Generación de stories de partidos → #SOCIAL. Mismo flujo que el cron, a mano. */}
+    <Card className="mb-2 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-ink">Stories de partidos → #SOCIAL</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
+            <Eyebrow>Postea las imágenes de los partidos terminados (idempotente)</Eyebrow>
+            {recapMsg && (
+              <span className={cn("text-[11px] font-medium", recapMsg.ok ? "text-success" : "text-danger")}>
+                · {recapMsg.msg}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          disabled={recapBusy}
+          onClick={runRecaps}
+          className="rounded-[6px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all disabled:opacity-50"
+        >
+          {recapBusy ? "Generando…" : "Generar stories pendientes"}
+        </button>
+      </div>
+    </Card>
     <div className="space-y-2">
       {rounds.map((r) => {
         const isBusy = busy === r.id;
