@@ -5,6 +5,7 @@ import { Eyebrow, PositionChip } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
 import { getRoundWithMatches, getRoundLivePoints } from "@/lib/queries";
 import { AdminControls } from "@/components/admin-controls";
+import { MatchRecapButton } from "@/components/match-recap-button";
 import { formatPoints } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -75,12 +76,15 @@ export default async function AdminRoundPage({ params }: { params: Promise<{ rou
                     {m.statsCount} con stats · {MATCH_STATUS[m.status] ?? m.status}
                   </Eyebrow>
                 </div>
-                <Link
-                  href={`/admin/partido/${m.id}`}
-                  className="rounded-[6px] border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all"
-                >
-                  Editar →
-                </Link>
+                <div className="flex flex-wrap items-center gap-2">
+                  <MatchRecapButton matchId={m.id} hasStats={m.statsCount > 0} />
+                  <Link
+                    href={`/admin/partido/${m.id}`}
+                    className="rounded-[6px] border border-border bg-surface px-3 py-1.5 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all"
+                  >
+                    Editar →
+                  </Link>
+                </div>
               </Card>
             );
           })}

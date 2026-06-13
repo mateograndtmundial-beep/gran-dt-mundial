@@ -12,7 +12,7 @@ import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
 import { clamp, round1 } from "@/lib/pricing/map";
 import { PRICING } from "@/lib/game/config";
 import { notifyRoundPublished, notifyRoundSynced, notifyError } from "@/lib/notify/slack";
-import { postPendingRecaps } from "@/lib/stories/recap";
+import { postPendingRecaps, postMatchRecap } from "@/lib/stories/recap";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
 async function currentAdmin() {
@@ -65,6 +65,27 @@ export async function generateRecapsAction() {
   } catch (e) {
     logAdmin("generateRecaps", admin.id, { ok: false, error: (e as Error).message });
     notifyError({ source: "generateRecaps", message: (e as Error).message });
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+/**
+ * Genera y postea a #SOCIAL la story de UN partido, SIEMPRE (re-trigger forzado,
+ * aunque ya se haya posteado), mientras tenga stats cargadas. Disparo manual por
+ * partido desde /admin/fecha/[id].
+ */
+export async function generateMatchRecapAction(matchId: number) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(matchId) || matchId <= 0) return { ok: false as const, error: "partido inválido" };
+  try {
+    const ok = await postMatchRecap(matchId);
+    logAdmin("generateMatchRecap", admin.id, { matchId, ok });
+    if (!ok) return { ok: false as const, error: "el partido todavía no tiene stats cargadas" };
+    return { ok: true as const, info: "story posteada a #SOCIAL" };
+  } catch (e) {
+    logAdmin("generateMatchRecap", admin.id, { matchId, ok: false, error: (e as Error).message });
+    notifyError({ source: "generateMatchRecap", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }
