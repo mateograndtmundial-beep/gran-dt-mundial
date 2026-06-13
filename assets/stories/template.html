@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE — Story "Resumen de partido" · Los 11 de Sampa
+  Lienzo: 1080 x 1920 (Instagram/Facebook Story)
+  Render: Playwright/Chromium headless, device_scale_factor=2, screenshot clip 1080x1920, downscale LANCZOS.
+
+  PLACEHOLDERS a reemplazar por la automatización (todos los {{...}}):
+    Marca / header:
+      {{LOGO_B64}}            base64 del logo-badge (PNG real)
+      {{FECHA_TORNEO}}        número de fecha (ej "1")  -> tag "RESUMEN · FECHA 1"
+    Partido:
+      {{GRUPO}}              ej "Grupo D"
+      {{ESTADIO}}            ej "SoFi Stadium · Los Ángeles"
+      {{LOCAL_FLAG_B64}}     base64 bandera local (PNG/JPG REAL, ver nota banderas)
+      {{LOCAL_SIGLA}}        ej "USA"
+      {{VIS_FLAG_B64}}       base64 bandera visitante (PNG/JPG REAL)
+      {{VIS_SIGLA}}          ej "PAR"
+      {{GOLES_LOCAL}}        ej "4"
+      {{GOLES_VIS}}          ej "1"
+      {{ESTADO_LINEA}}       ej "FINAL"  o  "FINAL · 22:00 HS"
+    Jugador (mejor del partido):
+      {{POS_COLOR}}          color segun posicion: DEL #D02B2B | MED #1E9E4B | DEF #1B4FD8 | ARQ #E6B400
+      {{POS_SIGLA}}          "DEL" | "MED" | "DEF" | "ARQ"
+      {{POS_LABEL}}          "Delantero" | "Mediocampista" | "Defensor" | "Arquero"
+      {{JUG_FLAG_B64}}       base64 bandera del jugador (PNG/JPG REAL)
+      {{JUG_PAIS_SIGLA}}     ej "US"
+      {{PUNTOS}}             ej "21"
+      {{NOMBRE}}             ej "Balogun"
+      {{FIGURA_BADGE}}       HTML del badge FIGURA (o "" si no es figura) -> ver snippet abajo
+      {{CARDS_BADGES}}       HTML de tarjetas (o "" si no tiene)         -> ver snippet abajo
+      {{CALIFICACION}}       ej "9.0"
+      {{CHIP_1_LABEL}} {{CHIP_1_VALUE}}   ej "GOLES" / "2"     (ofensivos: GOLES/ASIST/CAL ; defensivos: VALLA/.../CAL)
+      {{CHIP_2_LABEL}} {{CHIP_2_VALUE}}   ej "ASIST." / "0"
+      {{CHIP_3_LABEL}} {{CHIP_3_VALUE}}   ej "CAL." / "9.0"
+
+  SNIPPETS opcionales (insertar en {{FIGURA_BADGE}} y {{CARDS_BADGES}} o dejar vacío):
+
+    FIGURA (si figura == true):
+      <span style="background:#C8A24B;color:#111827;font-weight:800;font-size:22px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 16px;border-radius:6px;margin-left:14px;">★ Figura</span>
+
+    TARJETA AMARILLA (si tarjeta_amarilla == true):
+      <span style="display:inline-block;width:26px;height:38px;background:#FFC400;border:2px solid #111827;border-radius:4px;margin-left:12px;box-shadow:2px 2px 0 rgba(17,24,39,0.3);vertical-align:middle;"></span>
+
+    TARJETA ROJA (si tarjeta_roja == true):
+      <span style="display:inline-block;width:26px;height:38px;background:#D02B2B;border:2px solid #111827;border-radius:4px;margin-left:12px;box-shadow:2px 2px 0 rgba(17,24,39,0.3);vertical-align:middle;"></span>
+
+    CHIP DE VALLA INVICTA (para DEF/ARQ, valor "SÍ" o "NO" — recordar validar vs marcador):
+      usar {{CHIP_x_LABEL}}="VALLA" y {{CHIP_x_VALUE}}="SÍ" / "NO"
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#1B4FD8; --gold:#C8A24B; --ink:#111827; --bg:#F0F2F0;
+    --pos:{{POS_COLOR}};   /* color de la posición del jugador */
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+  .wrap{position:relative;width:1080px;height:1920px;background:var(--bg);overflow:hidden;padding:0 70px;}
+  .texture{position:absolute;inset:0;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+  .ghost{position:absolute;right:-60px;bottom:-150px;font-weight:800;font-size:720px;color:#111827;opacity:0.04;letter-spacing:-0.06em;line-height:1;pointer-events:none;}
+  .hd{display:flex;align-items:center;gap:18px;padding-top:150px;}
+  .hd .lg{width:80px;height:80px;border-radius:50%;border:3px solid var(--blue);overflow:hidden;background:#fff;box-shadow:3px 3px 0 rgba(17,24,39,0.18);}
+  .hd .lg img{width:100%;height:100%;display:block;}
+  .hd .wm{font-weight:800;font-size:33px;text-transform:uppercase;}
+  .hd .wm span{color:var(--blue);}
+  .tag{position:absolute;right:70px;top:158px;background:var(--ink);color:#fff;font-weight:800;font-size:21px;letter-spacing:0.12em;text-transform:uppercase;padding:14px 22px;border-radius:6px;box-shadow:3px 3px 0 rgba(0,0,0,0.25);}
+  .eyebrow{color:var(--blue);font-weight:700;text-transform:uppercase;letter-spacing:0.2em;}
+  .flag{border:1px solid rgba(0,0,0,0.25);border-radius:4px;overflow:hidden;display:inline-flex;box-shadow:2px 2px 0 rgba(17,24,39,0.18);}
+  .flag img{display:block;object-fit:cover;}
+  .url{background:var(--ink);color:#fff;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:6px;display:inline-block;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="texture"></div>
+  <div class="ghost">11</div>
+
+  <!-- HEADER -->
+  <div class="hd">
+    <div class="lg"><img src="data:image/png;base64,{{LOGO_B64}}"></div>
+    <div class="wm">LOS <span>11</span> DE SAMPA</div>
+  </div>
+  <div class="tag">Resumen · Fecha {{FECHA_TORNEO}}</div>
+
+  <!-- EYEBROW -->
+  <div class="eyebrow" style="margin-top:70px;font-size:26px;">{{GRUPO}} · {{ESTADIO}}</div>
+
+  <!-- SCOREBOARD -->
+  <div style="margin-top:30px;background:#101726;border:2px solid var(--ink);border-radius:16px;box-shadow:7px 7px 0 rgba(17,24,39,0.55);padding:48px 50px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:18px;width:300px;">
+        <span class="flag"><img src="data:image/png;base64,{{LOCAL_FLAG_B64}}" width="132" height="88"></span>
+        <div style="color:#fff;font-weight:800;font-size:46px;letter-spacing:-0.01em;">{{LOCAL_SIGLA}}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:22px;">
+        <div style="color:#fff;font-weight:800;font-size:120px;letter-spacing:-0.05em;line-height:1;">{{GOLES_LOCAL}}</div>
+        <div style="color:#5B86FF;font-weight:800;font-size:60px;">-</div>
+        <div style="color:#fff;font-weight:800;font-size:120px;letter-spacing:-0.05em;line-height:1;">{{GOLES_VIS}}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:18px;width:300px;">
+        <span class="flag"><img src="data:image/png;base64,{{VIS_FLAG_B64}}" width="132" height="88"></span>
+        <div style="color:#fff;font-weight:800;font-size:46px;letter-spacing:-0.01em;">{{VIS_SIGLA}}</div>
+      </div>
+    </div>
+    <div style="text-align:center;color:#9AA6BF;font-weight:700;font-size:24px;letter-spacing:0.14em;text-transform:uppercase;margin-top:36px;">{{ESTADO_LINEA}}</div>
+  </div>
+
+  <!-- DIVISOR -->
+  <div style="margin-top:64px;display:flex;align-items:center;gap:18px;">
+    <div style="height:4px;flex:1;background:var(--ink);opacity:0.18;"></div>
+    <div style="font-weight:800;font-size:28px;letter-spacing:0.2em;text-transform:uppercase;color:var(--ink);">El mejor del partido</div>
+    <div style="height:4px;flex:1;background:var(--ink);opacity:0.18;"></div>
+  </div>
+
+  <!-- PLAYER CARD -->
+  <div style="margin-top:36px;background:#fff;border:2px solid var(--ink);border-radius:18px;box-shadow:8px 8px 0 rgba(17,24,39,0.85);overflow:hidden;">
+    <!-- color band by position -->
+    <div style="background:var(--pos);height:140px;display:flex;align-items:center;padding:0 44px;position:relative;">
+      <div style="width:96px;height:96px;border-radius:14px;background:rgba(255,255,255,0.18);border:3px solid #fff;display:flex;align-items:center;justify-content:center;flex:0 0 96px;">
+        <span style="color:#fff;font-weight:800;font-size:30px;letter-spacing:0.02em;">{{POS_SIGLA}}</span>
+      </div>
+      <div style="margin-left:26px;">
+        <div style="color:rgba(255,255,255,0.85);font-weight:800;font-size:22px;letter-spacing:0.16em;text-transform:uppercase;">{{POS_LABEL}}</div>
+        <div style="display:flex;align-items:center;gap:16px;margin-top:6px;">
+          <span class="flag"><img src="data:image/png;base64,{{JUG_FLAG_B64}}" width="54" height="36"></span>
+          <span style="color:#fff;font-weight:800;font-size:34px;letter-spacing:0.04em;">{{JUG_PAIS_SIGLA}}</span>
+        </div>
+      </div>
+      <div style="position:absolute;right:40px;top:50%;transform:translateY(-50%);background:#101726;border:3px solid #fff;border-radius:14px;padding:14px 26px;text-align:center;box-shadow:4px 4px 0 rgba(0,0,0,0.3);">
+        <div style="color:#fff;font-weight:800;font-size:64px;letter-spacing:-0.04em;line-height:1;">{{PUNTOS}}</div>
+        <div style="color:#9AA6BF;font-weight:700;font-size:18px;letter-spacing:0.16em;text-transform:uppercase;margin-top:2px;">Puntos</div>
+      </div>
+    </div>
+
+    <!-- name + figura + cards + rating + chips -->
+    <div style="padding:38px 44px 30px;">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;">
+        <span style="font-weight:800;font-size:74px;letter-spacing:-0.02em;text-transform:uppercase;line-height:0.95;">{{NOMBRE}}</span>
+        {{FIGURA_BADGE}}
+        {{CARDS_BADGES}}
+      </div>
+      <div style="display:flex;align-items:center;gap:18px;margin-top:14px;">
+        <span style="font-weight:700;font-size:26px;color:#6B7280;">Calificación</span>
+        <span style="background:var(--pos);color:#fff;font-weight:800;font-size:30px;padding:6px 18px;border-radius:8px;">{{CALIFICACION}}</span>
+      </div>
+      <div style="display:flex;gap:18px;margin-top:30px;">
+        <div style="flex:1;background:#fff;border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 rgba(17,24,39,0.6);padding:22px 8px;text-align:center;">
+          <div style="font-weight:800;font-size:46px;letter-spacing:-0.03em;color:var(--ink);line-height:1;">{{CHIP_1_VALUE}}</div>
+          <div style="font-weight:700;font-size:18px;letter-spacing:0.12em;text-transform:uppercase;color:#6B7280;margin-top:8px;">{{CHIP_1_LABEL}}</div>
+        </div>
+        <div style="flex:1;background:#fff;border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 rgba(17,24,39,0.6);padding:22px 8px;text-align:center;">
+          <div style="font-weight:800;font-size:46px;letter-spacing:-0.03em;color:var(--ink);line-height:1;">{{CHIP_2_VALUE}}</div>
+          <div style="font-weight:700;font-size:18px;letter-spacing:0.12em;text-transform:uppercase;color:#6B7280;margin-top:8px;">{{CHIP_2_LABEL}}</div>
+        </div>
+        <div style="flex:1;background:#fff;border:2px solid var(--ink);border-radius:10px;box-shadow:3px 3px 0 rgba(17,24,39,0.6);padding:22px 8px;text-align:center;">
+          <div style="font-weight:800;font-size:46px;letter-spacing:-0.03em;color:var(--ink);line-height:1;">{{CHIP_3_VALUE}}</div>
+          <div style="font-weight:700;font-size:18px;letter-spacing:0.12em;text-transform:uppercase;color:#6B7280;margin-top:8px;">{{CHIP_3_LABEL}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <div style="position:absolute;left:70px;right:70px;bottom:180px;display:flex;align-items:center;justify-content:space-between;">
+    <div class="url"><span style="display:inline-block;padding:16px 26px;font-size:23px;">LOS11DESAMPA.COM</span></div>
+    <div style="font-weight:800;text-transform:uppercase;letter-spacing:0.1em;font-size:21px;color:#6B7280;">¿Lo tenías en tu equipo? 👀</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -51,3 +51,5 @@ next-env.d.ts
 # locales / logs
 .npmrc
 databricks_mcp.log
+# Stories generadas localmente
+out/
