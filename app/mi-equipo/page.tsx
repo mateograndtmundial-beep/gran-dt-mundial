@@ -6,7 +6,7 @@ import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { ChangesStatusChip } from "@/components/changes-status-card";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
@@ -79,11 +79,16 @@ export default async function MiEquipoPage() {
   // Lineup de la fecha vigente (la más reciente) para la cancha read-only
   const latestRound = team.rounds.length ? team.rounds[team.rounds.length - 1] : null;
   let lineup: Awaited<ReturnType<typeof getLineupPlayers>> = [];
+  let coach: Awaited<ReturnType<typeof getLineupCoach>> = null;
   if (latestRound) {
     try {
-      lineup = await getLineupPlayers(latestRound.id);
+      [lineup, coach] = await Promise.all([
+        getLineupPlayers(latestRound.id),
+        getLineupCoach(latestRound.id),
+      ]);
     } catch {
       lineup = [];
+      coach = null;
     }
   }
   const picks: Record<string, PitchPlayer> = {};
@@ -189,6 +194,27 @@ export default async function MiEquipoPage() {
                         <span className="jersey-numeral shrink-0 text-xs text-gold-ink">{formatPrice(s.price)}M</span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {coach && (
+                <div className="w-full">
+                  <Eyebrow className="mb-2">Técnico</Eyebrow>
+                  <div className="flex items-center gap-2 rounded-[6px] border border-border bg-surface px-2.5 py-2">
+                    <span className="shrink-0 rounded-[4px] bg-blue/10 px-1.5 py-0.5 text-[10px] font-display tracking-wide text-blue">
+                      DT
+                    </span>
+                    {coach.flagUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={coach.flagUrl} alt={coach.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                    ) : (
+                      <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
+                    )}
+                    <span className="min-w-0 flex-1 truncate text-sm font-semibold text-ink" title={coach.name}>
+                      {coach.name}
+                    </span>
+                    <span className="shrink-0 text-xs text-ink-3">{coach.countryName}</span>
                   </div>
                 </div>
               )}

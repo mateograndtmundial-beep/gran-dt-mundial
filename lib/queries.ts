@@ -357,6 +357,26 @@ export async function getCoaches() {
   return rows.map((c) => ({ ...c, countryName: countryEs(c.countryName) }));
 }
 
+/** Técnico (DT) elegido en una alineación, con su selección. null si no tiene. */
+export async function getLineupCoach(entryRoundId: number) {
+  const row = (
+    await db
+      .select({
+        id: coaches.id,
+        name: coaches.name,
+        countryName: countries.name,
+        flagUrl: countries.flagUrl,
+      })
+      .from(entryRounds)
+      .innerJoin(coaches, eq(entryRounds.coachId, coaches.id))
+      .innerJoin(countries, eq(coaches.countryId, countries.id))
+      .where(eq(entryRounds.id, entryRoundId))
+      .limit(1)
+  )[0];
+  if (!row) return null;
+  return { ...row, countryName: countryEs(row.countryName) };
+}
+
 /**
  * Fecha editable = la primera no publicada cuyo primer partido todavía no arrancó.
  * Su "deadline" es el kickoff de ese primer partido. Cuando ese partido empieza,
