@@ -11,6 +11,17 @@ const securityHeaders = [
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" },
 ];
 
+// Archivos que las funciones que renderan stories necesitan en runtime: Chromium
+// (@sparticuz + playwright-core COMPLETO — incluye browsers.json, que coreBundle.js
+// carga dinámicamente y el tracer de Next no detecta solo) + los assets (template,
+// banderas, logo) que se leen por fs.
+const STORY_TRACE = [
+  "./assets/stories/**",
+  "./public/images/logo/logo-badge-192.png",
+  "./node_modules/@sparticuz/chromium/**",
+  "./node_modules/playwright-core/**",
+];
+
 const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
@@ -19,19 +30,12 @@ const nextConfig: NextConfig = {
   // en el cron y en la acción de admin. Estos paquetes no se bundlean: se cargan de
   // node_modules en runtime. (playwright/sharp idem.)
   serverExternalPackages: ["@sparticuz/chromium", "playwright-core", "playwright", "sharp"],
-  // Incluir en las funciones que renderan stories: el binario de Chromium + los
-  // assets (template HTML, banderas, logo) que se leen por fs en runtime.
+  // Incluir Chromium + assets en TODAS las funciones que renderan: el cron, el botón
+  // bulk (/admin) y el botón por partido (/admin/fecha/[roundId], donde corre la action).
   outputFileTracingIncludes: {
-    "/api/cron/sync": [
-      "./assets/stories/**",
-      "./public/images/logo/logo-badge-192.png",
-      "./node_modules/@sparticuz/chromium/**",
-    ],
-    "/admin": [
-      "./assets/stories/**",
-      "./public/images/logo/logo-badge-192.png",
-      "./node_modules/@sparticuz/chromium/**",
-    ],
+    "/api/cron/sync": STORY_TRACE,
+    "/admin": STORY_TRACE,
+    "/admin/fecha/[roundId]": STORY_TRACE,
   },
   images: {
     // Banderas y fotos de jugadores vienen de la CDN de API-Football (seed.ts:
