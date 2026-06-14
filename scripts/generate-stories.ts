@@ -7,9 +7,7 @@ import {
   postMatchRecap,
   postPendingRecaps,
   storyFileName,
-  storyComment,
 } from "../lib/stories/recap";
-import { uploadStoryToSlack } from "../lib/stories/slack";
 
 /*
  * Generador de stories "Resumen de partido". Usa los MISMOS módulos que el cron y
@@ -52,16 +50,13 @@ async function main() {
 
   const toSlack = has("slack");
 
-  // --demo: data de prueba (sin DB).
+  // --demo: data de prueba (sin DB). SIEMPRE a disco — no postea a Slack para no
+  // ensuciar #SOCIAL con data falsa (los nombres de archivo colisionan con los
+  // partidos reales y confunden con "duplicados"). Para probar el upload real usá
+  // --match <id> (que además marca recapPostedAt).
   if (has("demo")) {
-    if (toSlack) {
-      for (const d of DEMO) {
-        await uploadStoryToSlack(await generateStoryPng(d), storyFileName(d), storyComment(d));
-        console.log(`✓ #SOCIAL ← ${storyFileName(d)}`);
-      }
-    } else {
-      await toDisk(DEMO);
-    }
+    if (toSlack) console.warn("⚠ --demo no postea a Slack (data de prueba). Generando a disco. Para probar el upload usá --match <id>.");
+    await toDisk(DEMO);
     return;
   }
 
