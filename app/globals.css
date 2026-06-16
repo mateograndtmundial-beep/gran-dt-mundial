@@ -23,8 +23,14 @@
   --color-border-strong: #B8C0B8;
   --color-ink:           #111827;
   --color-ink-2:         #4B5563;
-  --color-ink-3:         #6B7280;
-  --color-ink-faint:     #9CA3AF;
+  /* ink-3: texto secundario (hints, captions). #6B7280 daba 4.3:1 sobre canvas
+     (debajo de AA 4.5). #5E6573 → 5.2 canvas / 5.9 white / 4.9 surface-2: AA en
+     las tres superficies. */
+  --color-ink-3:         #5E6573;
+  /* ink-faint: placeholders / decorativo. #9CA3AF daba 2.3:1 (falla). #6B7280 →
+     4.8 white / 4.3 canvas: muy por encima del anterior, AA en cards (white). El
+     texto informativo que debe ser AA estricto usa ink-3, no ink-faint. */
+  --color-ink-faint:     #6B7280;
 
   /* Azul deportivo — primario / CTAs / marca */
   --color-blue:          #1B4FD8;
@@ -119,7 +125,7 @@
   --secondary:             #E8EBE8;
   --secondary-foreground:  #4B5563;
   --muted:                 #E8EBE8;
-  --muted-foreground:      #6B7280;
+  --muted-foreground:      #5E6573;
   --accent:                #FBF5E6;
   --accent-foreground:     #7A5C10;
   --destructive:           #DC2626;

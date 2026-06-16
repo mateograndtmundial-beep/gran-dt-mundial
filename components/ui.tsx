@@ -68,7 +68,7 @@ export function EmptyState({ title, hint }: { title: string; hint?: string }) {
   return (
     <div className="rounded-[8px] border border-dashed border-border-strong/50 p-10 text-center">
       <p className="font-semibold text-ink-3">{title}</p>
-      {hint && <p className="mt-1 text-sm text-ink-faint">{hint}</p>}
+      {hint && <p className="mt-1 text-sm text-ink-3">{hint}</p>}
     </div>
   );
 }

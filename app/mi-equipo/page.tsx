@@ -234,7 +234,7 @@ export default async function MiEquipoPage() {
               ¿Cómo se calculan?
             </Link>
           </div>
-          <p className="mb-3 text-xs text-ink-faint">
+          <p className="mb-3 text-xs text-ink-3">
             Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos.
           </p>
           <PointsBreakdown rounds={team.rounds} />
