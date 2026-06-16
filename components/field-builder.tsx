@@ -13,7 +13,8 @@ import {
   type Position,
 } from "@/lib/game/config";
 import { saveLineup } from "@/lib/actions";
-import type { PlayerRow, CoachRow } from "@/lib/queries";
+import type { PlayerRow, CoachRow, PlayerStats } from "@/lib/queries";
+import { PlayerStatLine } from "@/components/domain/PlayerStats";
 import { cn, formatPrice } from "@/lib/utils";
 import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
@@ -108,6 +109,8 @@ export type ChangeContext = {
 export function FieldBuilder({
   players,
   coaches,
+  stats = {},
+  ownership = {},
   budget = BUDGET,
   maxPerCountry = MAX_PER_COUNTRY,
   initial,
@@ -115,9 +118,12 @@ export function FieldBuilder({
   deadlineLabel = "CERRÁ TU EQUIPO",
   isAuthed = false,
   changeContext = null,
+  addPlayerId = null,
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
+  stats?: Record<number, PlayerStats>;
+  ownership?: Record<number, number>;
   budget?: number;
   maxPerCountry?: number | null;
   initial?: InitialLineup | null;
@@ -125,7 +131,10 @@ export function FieldBuilder({
   deadlineLabel?: string;
   isAuthed?: boolean;
   changeContext?: ChangeContext | null;
+  addPlayerId?: number | null;
 }) {
+  const hasStats = Object.keys(stats).length > 0;
+  const hasOwnership = Object.keys(ownership).length > 0;
   const router = useRouter();
   const [formation, setFormation]   = useState(initial?.formation ?? DEFAULT_FORMATION);
   const [picks, setPicks]           = useState<Record<string, PlayerRow>>(() => {
@@ -146,7 +155,7 @@ export function FieldBuilder({
   const [modal, setModal]           = useState<{ type: "player"; slot: Slot } | { type: "coach" } | { type: "swap"; sub: Slot } | null>(null);
   const [search, setSearch]         = useState("");
   const [modalCountry, setModalCountry] = useState<string>("ALL");
-  const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc">("price-desc");
+  const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc" | "ppp-desc" | "owned-desc">("price-desc");
   const [modalShown, setModalShown] = useState(MODAL_PAGE);
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
@@ -319,6 +328,16 @@ export function FieldBuilder({
         .sort((a, b) => {
           if (modalSort === "name-asc") return a.name.localeCompare(b.name);
           if (modalSort === "price-asc") return a.price - b.price || a.name.localeCompare(b.name);
+          if (modalSort === "ppp-desc") {
+            const pa = stats[a.id]?.ppp ?? -1;
+            const pb = stats[b.id]?.ppp ?? -1;
+            return pb - pa || a.name.localeCompare(b.name);
+          }
+          if (modalSort === "owned-desc") {
+            const oa = ownership[a.id] ?? -1;
+            const ob = ownership[b.id] ?? -1;
+            return ob - oa || a.name.localeCompare(b.name);
+          }
           return b.price - a.price || a.name.localeCompare(b.name);
         })
     : [];
@@ -342,19 +361,64 @@ export function FieldBuilder({
   // Suplente que se está haciendo entrar (tap-to-swap mobile). Null si no hay swap abierto.
   const swapSub = modal?.type === "swap" ? modal.sub : null;
 
-  // Aplica un borrador (equipo armado sin loguearse) al estado del armador.
-  function applyDraft(d: LineupDraft) {
+  // Reconstruye el mapa de picks (slot -> jugador) desde un borrador.
+  function draftToPicks(d: LineupDraft): Record<string, PlayerRow> {
     const byId = new Map(players.map((p) => [p.id, p]));
-    const nextPicks: Record<string, PlayerRow> = {};
+    const m: Record<string, PlayerRow> = {};
     for (const [slot, pid] of Object.entries(d.slots)) {
       const p = byId.get(pid);
-      if (p) nextPicks[slot] = p;
+      if (p) m[slot] = p;
     }
+    return m;
+  }
+
+  // Aplica un borrador (equipo armado sin loguearse) al estado del armador.
+  function applyDraft(d: LineupDraft) {
     setFormation(d.formation in FORMATIONS ? d.formation : DEFAULT_FORMATION);
-    setPicks(nextPicks);
+    setPicks(draftToPicks(d));
     setCaptainId(d.captainPlayerId);
     setCoachId(d.coachId);
     if (d.teamName) setTeamName(d.teamName);
+  }
+
+  // Puente desde /jugadores ("Agregar a mi equipo"): coloca al jugador en el
+  // primer slot libre de su posición (titular antes que suplente) sobre `base`,
+  // respetando los mismos límites que el picker (presupuesto, máx por país).
+  // Devuelve los picks resultantes y, si no entra, un mensaje explicando por qué.
+  function addToPicks(
+    base: Record<string, PlayerRow>,
+    baseFormation: string,
+    pid: number,
+  ): { picks: Record<string, PlayerRow>; error: string | null } {
+    const player = players.find((p) => p.id === pid);
+    if (!player) return { picks: base, error: null };
+    // Ya está en el equipo → no duplicar (no es error: el usuario lo ve en cancha).
+    if (Object.values(base).some((p) => p.id === pid)) return { picks: base, error: null };
+
+    // Presupuesto disponible (jugadores ya puestos + técnico elegido si lo hay).
+    const coachPrice = coaches.find((c) => c.id === (initial?.coachId ?? null))?.price ?? 0;
+    const usedNow = round1(Object.values(base).reduce((s, p) => s + p.price, 0) + coachPrice);
+    if (player.price > round1(budget - usedNow) + 0.05) {
+      return { picks: base, error: `No se puede sumar a ${player.name}: se pasa del presupuesto.` };
+    }
+    // Tope por país (solo en fase de grupos; en playoffs maxPerCountry es null).
+    if (maxPerCountry != null) {
+      const sameCountry = Object.values(base).filter((p) => p.countryId === player.countryId).length;
+      if (sameCountry >= maxPerCountry) {
+        return { picks: base, error: `Ya tenés ${maxPerCountry} jugadores de ${player.countryName}.` };
+      }
+    }
+    const sl = buildSlots(baseFormation);
+    const slot =
+      sl.find((s) => s.isStarter && s.position === player.position && !base[s.id]) ??
+      sl.find((s) => !s.isStarter && s.position === player.position && !base[s.id]);
+    if (!slot) {
+      return {
+        picks: base,
+        error: `Ya tenés todos tus ${POSITION_LABELS[player.position].toLowerCase()} cubiertos. Quitá uno para sumar a ${player.name}.`,
+      };
+    }
+    return { picks: { ...base, [slot.id]: player }, error: null };
   }
 
   // Al montar: si hay un borrador (equipo armado sin login), lo restauramos. Si
@@ -367,6 +431,36 @@ export function FieldBuilder({
     if (draftHandled.current) return;
     draftHandled.current = true;
     const d = readDraft();
+
+    // Intención explícita "agregar jugador" (deep-link /equipo?add=<id>).
+    if (addPlayerId != null) {
+      if (!initial) {
+        // Sin equipo guardado: partimos del borrador (si hay) para no perder lo
+        // que venía armando, y sumamos encima.
+        const base = d ? draftToPicks(d) : {};
+        const baseFormation = d && d.formation in FORMATIONS ? d.formation : formation;
+        if (d) {
+          setFormation(baseFormation);
+          setCaptainId(d.captainPlayerId);
+          setCoachId(d.coachId);
+          if (d.teamName) setTeamName(d.teamName);
+        }
+        const res = addToPicks(base, baseFormation, addPlayerId);
+        setPicks(res.picks);
+        if (res.error) setMessage(res.error);
+      } else {
+        // Equipo guardado: sumamos sobre la alineación guardada e ignoramos un
+        // borrador stale (el usuario pidió explícitamente sumar a SU equipo).
+        const res = addToPicks(picks, formation, addPlayerId);
+        setPicks(res.picks);
+        if (res.error) setMessage(res.error);
+        clearDraft();
+      }
+      // Limpiamos el ?add= para que un refresh no vuelva a agregarlo.
+      router.replace("/equipo");
+      return;
+    }
+
     if (!d) return;
     if (!initial) {
       // Usuario sin equipo guardado (típicamente recién registrado): restauramos
@@ -841,6 +935,8 @@ export function FieldBuilder({
                     <option value="price-desc">Precio: mayor a menor</option>
                     <option value="price-asc">Precio: menor a mayor</option>
                     <option value="name-asc">Nombre: A → Z</option>
+                    {hasStats && <option value="ppp-desc">Puntos por partido</option>}
+                    {hasOwnership && <option value="owned-desc">Más elegidos</option>}
                   </select>
                 </div>
               )}
@@ -903,6 +999,7 @@ export function FieldBuilder({
                             {p.countryName}
                             {reason && <span className="text-danger"> · {reason}</span>}
                           </span>
+                          <PlayerStatLine stats={stats[p.id]} ownership={ownership[p.id]} ownershipAvailable={hasOwnership} className="mt-0.5" />
                         </span>
                         <span className={cn("jersey-numeral text-sm shrink-0", selectable ? "text-blue" : "text-danger")}>{formatPrice(p.price)}M</span>
                       </button>

@@ -2,6 +2,8 @@ import type { ReactNode } from "react";
 import { cn, formatPrice } from "@/lib/utils";
 import { POSITION_COLORS, type Position } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
+import { PlayerStatLine } from "@/components/domain/PlayerStats";
+import type { PlayerStats } from "@/lib/queries";
 
 export { PositionChip };
 
@@ -14,6 +16,10 @@ export function PlayerCard({
   flagUrl,
   eliminated,
   isCaptain,
+  stats,
+  ownership,
+  ownershipAvailable = false,
+  showStatsSlot = false,
   action,
   className,
 }: {
@@ -25,6 +31,10 @@ export function PlayerCard({
   flagUrl?: string | null;
   eliminated?: boolean;
   isCaptain?: boolean;
+  stats?: PlayerStats;
+  ownership?: number;
+  ownershipAvailable?: boolean;
+  showStatsSlot?: boolean;
   action?: ReactNode;
   className?: string;
 }) {
@@ -77,6 +87,14 @@ export function PlayerCard({
             </span>
           ) : null}
         </div>
+        {/* Línea 3: rendimiento (PPP · goles · figuras). Se reserva el alto cuando
+            hay datos en el torneo, así las cards sin stats igualan a las que sí
+            tienen (no se rompe la grilla). Pre-Mundial (sin datos) no se reserva. */}
+        {showStatsSlot && (
+          <div className="mt-1 min-h-[1rem]">
+            <PlayerStatLine stats={stats} ownership={ownership} ownershipAvailable={ownershipAvailable} variant="card" />
+          </div>
+        )}
       </div>
 
       <div className="text-right shrink-0">

@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
@@ -210,6 +210,8 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   }
 
   revalidatePath("/mi-equipo");
+  // El roster cambió → el ownership (% de equipos por jugador) puede haberse movido.
+  revalidateTag("player-ownership", "max");
   return { ok: true as const, changes, pinsSpent: pinsNeeded };
 }
 

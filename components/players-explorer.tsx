@@ -7,7 +7,7 @@ import { PlayerCard } from "@/components/player-card";
 import { PlayerDetailDialog } from "@/components/player-detail-dialog";
 import { cn, formatPrice } from "@/lib/utils";
 import { normalizeName } from "@/lib/pricing/normalize";
-import type { FixtureInfo } from "@/lib/queries";
+import type { FixtureInfo, PlayerStats } from "@/lib/queries";
 
 type P = {
   id: number;
@@ -27,11 +27,13 @@ const POS_LABELS: Record<Position | "ALL", string> = {
   ...POSITION_ABBR,
 };
 
-type SortKey = "price-desc" | "price-asc" | "name-asc";
+type SortKey = "price-desc" | "price-asc" | "name-asc" | "ppp-desc" | "owned-desc";
 const SORT_LABELS: Record<SortKey, string> = {
   "price-desc": "Precio: mayor a menor",
   "price-asc":  "Precio: menor a mayor",
   "name-asc":   "Nombre: A → Z",
+  "ppp-desc":   "Puntos por partido",
+  "owned-desc": "Más elegidos",
 };
 
 /* Render incremental: pintamos PAGE tarjetas y crecemos con "Mostrar más".
@@ -70,7 +72,19 @@ function FilterSelect({
   );
 }
 
-export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures: Record<number, FixtureInfo[]> }) {
+export function PlayersExplorer({
+  players,
+  fixtures,
+  stats = {},
+  ownership = {},
+}: {
+  players: P[];
+  fixtures: Record<number, FixtureInfo[]>;
+  stats?: Record<number, PlayerStats>;
+  ownership?: Record<number, number>;
+}) {
+  const hasStats = Object.keys(stats).length > 0;
+  const hasOwnership = Object.keys(ownership).length > 0;
   const [q, setQ]           = useState("");
   const [pos, setPos]       = useState<Position | "ALL">("ALL");
   const [country, setCountry] = useState<string>("ALL");
@@ -115,10 +129,22 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
     out.sort((a, b) => {
       if (sort === "name-asc") return a.name.localeCompare(b.name);
       if (sort === "price-asc") return a.price - b.price || a.name.localeCompare(b.name);
+      // Puntos por partido desc: los "sin jugar" (sin stats) caen al final.
+      if (sort === "ppp-desc") {
+        const pa = stats[a.id]?.ppp ?? -1;
+        const pb = stats[b.id]?.ppp ?? -1;
+        return pb - pa || a.name.localeCompare(b.name);
+      }
+      // Más elegidos: ownership desc; los sin dato caen al final.
+      if (sort === "owned-desc") {
+        const oa = ownership[a.id] ?? -1;
+        const ob = ownership[b.id] ?? -1;
+        return ob - oa || a.name.localeCompare(b.name);
+      }
       return b.price - a.price || a.name.localeCompare(b.name);
     });
     return out;
-  }, [players, pos, country, hideElim, effectiveCap, q, sort]);
+  }, [players, pos, country, hideElim, effectiveCap, q, sort, stats, ownership]);
 
   // Cada vez que cambian los filtros, volvemos a la primera "página". Ajuste de
   // estado durante el render (sin useEffect) según recomienda React.
@@ -205,11 +231,13 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
             value={sort}
             onChange={(v) => setSort(v as SortKey)}
           >
-            {(Object.keys(SORT_LABELS) as SortKey[]).map((k) => (
-              <option key={k} value={k}>
-                {SORT_LABELS[k]}
-              </option>
-            ))}
+            {(Object.keys(SORT_LABELS) as SortKey[])
+              .filter((k) => (k !== "ppp-desc" || hasStats) && (k !== "owned-desc" || hasOwnership))
+              .map((k) => (
+                <option key={k} value={k}>
+                  {SORT_LABELS[k]}
+                </option>
+              ))}
           </FilterSelect>
 
           {/* Ocultar eliminados */}
@@ -301,6 +329,10 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
                 countryName={p.countryName}
                 flagUrl={p.flagUrl}
                 eliminated={p.eliminatedRound != null}
+                stats={stats[p.id]}
+                ownership={ownership[p.id]}
+                ownershipAvailable={hasOwnership}
+                showStatsSlot={hasStats || hasOwnership}
               />
             </button>
           ))}
@@ -324,6 +356,9 @@ export function PlayersExplorer({ players, fixtures }: { players: P[]; fixtures:
       <PlayerDetailDialog
         player={selected}
         fixtures={selected ? fixtures[selected.countryId] : undefined}
+        stats={selected ? stats[selected.id] : undefined}
+        ownership={selected ? ownership[selected.id] : undefined}
+        ownershipAvailable={hasOwnership}
         onClose={() => setSelected(null)}
       />
     </div>

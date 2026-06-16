@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { players, matches, playerMatchStats, countries, rounds } from "@/lib/db/schema";
@@ -316,6 +316,9 @@ export async function saveMatchStats(input: SaveMatchInput) {
   logAdmin("saveMatchStats", admin.id, { matchId: m.id, rows: saved });
   revalidatePath(`/admin/partido/${m.id}`);
   revalidatePath(`/admin/fecha/${m.roundId}`);
+  // Si la fecha ya estaba publicada, las stats acumuladas (getPlayerTournamentStats)
+  // cambiaron → invalidar su caché para que /jugadores y /equipo no queden viejos.
+  revalidateTag("player-stats", "max");
   return { ok: true as const, saved };
 }
 
@@ -340,5 +343,7 @@ export async function unpublishRound(roundId: number) {
   revalidatePath("/admin");
   revalidatePath(`/admin/fecha/${roundId}`);
   revalidatePath("/ranking");
+  // La fecha sale de "published" → ya no cuenta en las stats acumuladas; invalidar.
+  revalidateTag("player-stats", "max");
   return { ok: true as const, info: "Fecha despublicada. Revisá y volvé a publicar." };
 }

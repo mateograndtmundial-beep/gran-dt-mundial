@@ -19,7 +19,8 @@ import {
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
-import { FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { FREE_CHANGES_PER_ROUND, SCORING } from "@/lib/game/config";
+import { round1 } from "@/lib/pricing/map";
 import { shortRoundName } from "@/lib/game/round-format";
 import { countPlayerChanges, freeChangesLeft } from "@/lib/game/changes";
 import { getPinBalance } from "@/lib/pins";
@@ -59,6 +60,130 @@ export async function getPlayersWithCountry() {
   const rows = await getPlayersWithCountryRaw();
   return rows.map((p) => ({ ...p, countryName: countryEs(p.countryName) }));
 }
+
+// ---------- Stats acumuladas por jugador (torneo) ----------
+
+/** Rendimiento acumulado de un jugador en el torneo (solo fechas publicadas). */
+export type PlayerStats = {
+  pj: number; // partidos jugados (>= SCORING.minMinutes)
+  goals: number;
+  penaltyGoals: number; // goles de penal convertidos (subconjunto de goals)
+  penaltyMissed: number; // penales errados (para mostrar convertidos/pateados)
+  assists: number;
+  yellow: number;
+  red: number;
+  cleanSheets: number; // valla invicta (solo relevante GK/DEF)
+  motm: number; // veces figura del partido
+  avgRating: number | null;
+  ppp: number; // puntos por partido (Σ fantasyPoints / PJ), 1 decimal
+};
+
+/**
+ * Stats acumuladas por jugador a lo largo del torneo, agregando
+ * `playerMatchStats` SOLO de fechas `published` (los usuarios nunca ven datos en
+ * vivo; eso es admin-only vía getRoundLivePoints). Devuelve un mapa
+ * playerId -> PlayerStats; los jugadores con 0 PJ (no llegaron a los 20') se
+ * omiten, así `Object.keys(map).length > 0` indica "ya hay datos que mostrar".
+ *
+ * Cacheada con el Data Cache (tag `player-stats`): los valores solo cambian al
+ * publicar una fecha (`publishRound` invalida el tag), no en el camino caliente.
+ */
+export const getPlayerTournamentStats = unstable_cache(
+  async (): Promise<Record<number, PlayerStats>> => {
+    const rows = await db
+      .select({
+        playerId: playerMatchStats.playerId,
+        pj: sql<number>`count(*) filter (where ${playerMatchStats.minutes} >= ${SCORING.minMinutes})::int`,
+        goals: sql<number>`sum(${playerMatchStats.goals})::int`,
+        penaltyGoals: sql<number>`sum(${playerMatchStats.penaltyGoals})::int`,
+        penaltyMissed: sql<number>`sum(${playerMatchStats.penaltiesMissed})::int`,
+        assists: sql<number>`sum(${playerMatchStats.assists})::int`,
+        yellow: sql<number>`sum(${playerMatchStats.yellow})::int`,
+        red: sql<number>`sum(${playerMatchStats.red})::int`,
+        cleanSheets: sql<number>`count(*) filter (where ${playerMatchStats.cleanSheet} and ${playerMatchStats.minutes} >= ${SCORING.minMinutes})::int`,
+        motm: sql<number>`count(*) filter (where ${playerMatchStats.isMotm})::int`,
+        avgRating: sql<number | null>`avg(${playerMatchStats.rating}) filter (where ${playerMatchStats.minutes} >= ${SCORING.minMinutes})`,
+        totalPoints: sql<number>`sum(${playerMatchStats.fantasyPoints})`,
+      })
+      .from(playerMatchStats)
+      .innerJoin(matches, eq(playerMatchStats.matchId, matches.id))
+      .innerJoin(rounds, eq(matches.roundId, rounds.id))
+      .where(eq(rounds.status, "published"))
+      .groupBy(playerMatchStats.playerId);
+
+    const out: Record<number, PlayerStats> = {};
+    for (const r of rows) {
+      const pj = Number(r.pj) || 0;
+      if (pj === 0) continue; // "sin jugar": no entra al mapa
+      const totalPoints = Number(r.totalPoints) || 0;
+      out[r.playerId] = {
+        pj,
+        goals: Number(r.goals) || 0,
+        penaltyGoals: Number(r.penaltyGoals) || 0,
+        penaltyMissed: Number(r.penaltyMissed) || 0,
+        assists: Number(r.assists) || 0,
+        yellow: Number(r.yellow) || 0,
+        red: Number(r.red) || 0,
+        cleanSheets: Number(r.cleanSheets) || 0,
+        motm: Number(r.motm) || 0,
+        avgRating: r.avgRating != null ? round1(Number(r.avgRating)) : null,
+        ppp: round1(totalPoints / pj),
+      };
+    }
+    return out;
+  },
+  ["player-tournament-stats"],
+  // Red de seguridad: además de la invalidación on-demand por tag (publishRound,
+  // saveMatchStats, unpublishRound), un TTL para que cualquier corrección de
+  // stats que olvide bustear el tag igual se refleje dentro de la hora.
+  { tags: ["player-stats"], revalidate: 3600 },
+);
+
+// ---------- Ownership (% de equipos que eligió a cada jugador) ----------
+
+// Mínimo de equipos en la fecha para mostrar ownership. Por debajo, un "100%"
+// con 1 de 1 equipo es ruido/engañoso (típico pre-lanzamiento) → no se muestra.
+export const MIN_OWNERSHIP_SAMPLE = 30;
+
+/**
+ * % de equipos que rostean a cada jugador en una fecha (la editable).
+ * Denominador = equipos con alineación en esa fecha. Devuelve playerId -> % (0–100,
+ * entero). Mapa vacío si el universo es menor a MIN_OWNERSHIP_SAMPLE (anti-ruido).
+ * Cacheado con tag "player-ownership" (cambia al editar equipos, no solo al publicar)
+ * + TTL corto.
+ */
+export const getPlayerOwnership = unstable_cache(
+  async (roundId: number): Promise<Record<number, number>> => {
+    const totalRows = await db
+      .select({ total: sql<number>`count(distinct ${entryRounds.entryId})::int` })
+      .from(entryRounds)
+      .where(eq(entryRounds.roundId, roundId));
+    const total = Number(totalRows[0]?.total) || 0;
+    if (total < MIN_OWNERSHIP_SAMPLE) return {};
+
+    const rows = await db
+      .select({
+        playerId: entryRoundPlayers.playerId,
+        owners: sql<number>`count(distinct ${entryRounds.entryId})::int`,
+      })
+      .from(entryRoundPlayers)
+      .innerJoin(entryRounds, eq(entryRoundPlayers.entryRoundId, entryRounds.id))
+      .where(eq(entryRounds.roundId, roundId))
+      .groupBy(entryRoundPlayers.playerId);
+
+    const out: Record<number, number> = {};
+    for (const r of rows) {
+      const owners = Number(r.owners) || 0;
+      // % crudo (1 decimal): el front decide "<1%" vs "N%". Los jugadores que no
+      // aparecen acá (0 dueños) no entran al mapa → el front los muestra "<1%"
+      // mientras haya datos (la fecha superó MIN_OWNERSHIP_SAMPLE).
+      out[r.playerId] = Math.round((owners / total) * 1000) / 10;
+    }
+    return out;
+  },
+  ["player-ownership"],
+  { tags: ["player-ownership"], revalidate: 300 },
+);
 
 // ---------- Info de Mundial para /jugadores ----------
 

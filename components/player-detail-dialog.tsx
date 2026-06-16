@@ -1,10 +1,12 @@
 "use client";
 
 import { X } from "lucide-react";
-import { PositionChip } from "@/components/editorial";
+import { useRouter } from "next/navigation";
+import { PositionChip, PrimaryButton } from "@/components/editorial";
+import { PlayerStatGrid, ownershipText } from "@/components/domain/PlayerStats";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Position } from "@/lib/game/config";
-import type { FixtureInfo } from "@/lib/queries";
+import type { FixtureInfo, PlayerStats } from "@/lib/queries";
 
 export type ExplorerPlayer = {
   id: number;
@@ -49,13 +51,22 @@ function shortRound(name: string | null): string {
 export function PlayerDetailDialog({
   player,
   fixtures,
+  stats,
+  ownership,
+  ownershipAvailable = false,
   onClose,
 }: {
   player: ExplorerPlayer | null;
   fixtures: FixtureInfo[] | undefined;
+  stats?: PlayerStats;
+  ownership?: number;
+  ownershipAvailable?: boolean;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const firstKickoff = fixtures && fixtures[0] ? formatKickoff(fixtures[0].kickoff) : null;
+  const hasStats = !!stats && stats.pj > 0;
+  const eliminated = !!player && player.eliminatedRound != null;
 
   if (!player) return null;
 
@@ -111,6 +122,27 @@ export function PlayerDetailDialog({
               </button>
             </div>
 
+            {/* Cuántos equipos lo eligieron (solo con muestra suficiente; ver
+                MIN_OWNERSHIP_SAMPLE). Sirve como señal a la hora de armar. Si nadie
+                lo tiene (o <1%) igual se muestra "<1%", nunca queda en blanco. */}
+            {ownershipAvailable && (
+              <p className="text-xs text-ink-3">
+                Lo eligió{" "}
+                <span className="font-semibold text-ink-2">
+                  {(ownership ?? 0) < 1 ? "menos del 1%" : `el ${ownershipText(ownership)}`}
+                </span>{" "}
+                de los equipos.
+              </p>
+            )}
+
+            {/* Rendimiento acumulado en el torneo (solo si ya hay datos publicados) */}
+            {hasStats && (
+              <div className="rounded-[8px] border border-border bg-canvas p-3">
+                <p className="eyebrow mb-2">Rendimiento en el torneo</p>
+                <PlayerStatGrid stats={stats} position={player.position} />
+              </div>
+            )}
+
             {/* Próximos partidos del equipo */}
             <div className="rounded-[8px] border border-border bg-canvas p-3">
               <p className="eyebrow mb-2">Próximos partidos de {player.countryName}</p>
@@ -155,7 +187,7 @@ export function PlayerDetailDialog({
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-ink-faint">
+                <p className="text-sm text-ink-3">
                   {player.eliminatedRound != null
                     ? "Selección eliminada del torneo."
                     : "Sin próximos partidos programados."}
@@ -163,9 +195,25 @@ export function PlayerDetailDialog({
               )}
             </div>
 
-            <p className="text-[11px] text-ink-3">
-              Cuando arranque el Mundial, vas a poder ver acá su rendimiento por fecha y qué porcentaje de los equipos lo eligió.
-            </p>
+            {!hasStats && (
+              <p className="text-[11px] text-ink-3">
+                Cuando arranque el Mundial, vas a poder ver acá su rendimiento por fecha.
+              </p>
+            )}
+
+            {/* Puente con el armador: suma al jugador al equipo sin volver a buscarlo.
+                /equipo lo coloca en un slot libre de su posición (no auto-guarda). */}
+            {!eliminated && (
+              <PrimaryButton
+                className="w-full justify-center"
+                onClick={() => {
+                  router.push(`/equipo?add=${player.id}`);
+                  onClose();
+                }}
+              >
+                Agregar a mi equipo →
+              </PrimaryButton>
+            )}
         </div>
       </div>
     </div>

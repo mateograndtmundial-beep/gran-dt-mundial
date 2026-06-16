@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { PlayersExplorer } from "@/components/players-explorer";
-import { getPlayersWithCountry, getCountryFixtures, type PlayerRow, type FixtureInfo } from "@/lib/queries";
+import { getPlayersWithCountry, getCountryFixtures, getPlayerTournamentStats, getEditableRound, getPlayerOwnership, type PlayerRow, type FixtureInfo, type PlayerStats } from "@/lib/queries";
 
 // ISR: contenido no dependiente del usuario. Se revalida cada 60s y on-demand
 // (updatePlayerPrice hace revalidatePath("/jugadores")).
@@ -20,9 +20,22 @@ export const metadata: Metadata = {
 export default async function JugadoresPage() {
   let players: PlayerRow[] = [];
   let fixtures: Record<number, FixtureInfo[]> = {};
+  let stats: Record<number, PlayerStats> = {};
+  let ownership: Record<number, number> = {};
   let error = false;
   try {
-    [players, fixtures] = await Promise.all([getPlayersWithCountry(), getCountryFixtures()]);
+    const [p, f, s, editable] = await Promise.all([
+      getPlayersWithCountry(),
+      getCountryFixtures(),
+      getPlayerTournamentStats(),
+      getEditableRound(),
+    ]);
+    players = p;
+    fixtures = f;
+    stats = s;
+    // Ownership de la fecha que se está editando (el % se calcula sobre los
+    // equipos con alineación en esa fecha). Vacío si no hay fecha editable.
+    ownership = editable ? await getPlayerOwnership(editable.round.id) : {};
   } catch {
     error = true;
   }
@@ -38,7 +51,7 @@ export default async function JugadoresPage() {
       ) : players.length === 0 ? (
         <EmptyState title="Todavía no hay jugadores cargados." hint="Volvé a entrar más tarde." />
       ) : (
-        <PlayersExplorer players={players} fixtures={fixtures} />
+        <PlayersExplorer players={players} fixtures={fixtures} stats={stats} ownership={ownership} />
       )}
     </div>
   );

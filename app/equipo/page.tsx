@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
-import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, type PlayerRow, type CoachRow } from "@/lib/queries";
+import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
@@ -10,9 +10,19 @@ import { shortRoundName } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
 
-export default async function EquipoPage() {
+export default async function EquipoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ add?: string }>;
+}) {
+  // Deep-link desde /jugadores ("Agregar a mi equipo"): el armador coloca al
+  // jugador en un slot libre de su posición. Number("") y NaN → null.
+  const { add } = await searchParams;
+  const addPlayerId = Number(add) > 0 ? Number(add) : null;
   let players: PlayerRow[] = [];
   let coaches: CoachRow[] = [];
+  let stats: Record<number, PlayerStats> = {};
+  let ownership: Record<number, number> = {};
   let initial: Awaited<ReturnType<typeof getEditableLineup>> = null;
   let editable: Awaited<ReturnType<typeof getEditableRound>> = null;
   let editContext: Awaited<ReturnType<typeof getEditContext>> | null = null;
@@ -21,11 +31,15 @@ export default async function EquipoPage() {
   let isAuthed = false;
   let error = false;
   try {
-    [players, coaches, editable] = await Promise.all([
+    [players, coaches, editable, stats] = await Promise.all([
       getPlayersWithCountry(),
       getCoaches(),
       getEditableRound(),
+      getPlayerTournamentStats(),
     ]);
+    // Ownership de la fecha editable (% de equipos que tiene a cada jugador), para
+    // el orden "Más elegidos" del picker. Vacío si no hay fecha editable.
+    ownership = editable ? await getPlayerOwnership(editable.round.id) : {};
     const user = await getCurrentUser();
     isAuthed = !!user;
     if (user) {
@@ -102,6 +116,8 @@ export default async function EquipoPage() {
           <FieldBuilder
             players={players}
             coaches={coaches}
+            stats={stats}
+            ownership={ownership}
             budget={BUDGET}
             maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
             initial={initial}
@@ -109,6 +125,7 @@ export default async function EquipoPage() {
             deadlineLabel={deadlineLabel}
             isAuthed={isAuthed}
             changeContext={changeContext}
+            addPlayerId={addPlayerId}
           />
         </div>
       )}

@@ -1,5 +1,5 @@
 import { and, eq, inArray, lt, ne, sql } from "drizzle-orm";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import {
   matches,
@@ -263,6 +263,16 @@ export async function publishRound(roundId: number) {
   // Los totales cambiaron → invalidamos el caché del rank global
   // (getUserGlobalRank) para que /mi-equipo refleje las nuevas posiciones.
   revalidateTag("global-rank", "max");
+  // Y las stats acumuladas por jugador (getPlayerTournamentStats), que ahora
+  // incluyen esta fecha recién publicada.
+  revalidateTag("player-stats", "max");
+  // El ownership pasa a contar la fecha siguiente (nueva editable) → invalidar.
+  revalidateTag("player-ownership", "max");
+  // /jugadores es ISR (revalidate=60): revalidar el tag invalida la función
+  // cacheada pero no el HTML prerenderizado, que tiene su propio reloj. Forzamos
+  // el re-render para que las stats nuevas aparezcan al instante, no hasta 60s
+  // después. (/equipo es force-dynamic → ya es fresco.)
+  revalidatePath("/jugadores");
 
   return { entries: affectedEntryIds.size, players: pts.size };
 }
