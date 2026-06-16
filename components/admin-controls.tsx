@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { syncRoundAction, publishRoundAction, unpublishRound, generateRecapsAction } from "@/lib/admin-actions";
+import { syncRoundAction, publishRoundAction, unpublishRound, generateRecapsAction, generateScoreboardsAction } from "@/lib/admin-actions";
 import { Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import {
@@ -47,6 +47,18 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
     const r = await generateRecapsAction();
     setRecapBusy(false);
     setRecapMsg({ ok: r.ok, msg: r.ok ? r.info : `Error: ${r.error}` });
+    if (r.ok) router.refresh();
+  }
+
+  // Generación manual del carrusel de puntajes → #SOCIAL (mismo resultado que el cron).
+  const [sbBusy, setSbBusy] = useState(false);
+  const [sbMsg, setSbMsg] = useState<{ ok: boolean; msg: string } | null>(null);
+
+  async function runScoreboards() {
+    setSbBusy(true);
+    const r = await generateScoreboardsAction();
+    setSbBusy(false);
+    setSbMsg({ ok: r.ok, msg: r.ok ? r.info : `Error: ${r.error}` });
     if (r.ok) router.refresh();
   }
 
@@ -97,6 +109,30 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
           className="rounded-[6px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all disabled:opacity-50"
         >
           {recapBusy ? "Generando…" : "Generar stories pendientes"}
+        </button>
+      </div>
+    </Card>
+
+    {/* Carrusel de puntajes por grupo/fecha → #SOCIAL. Mismo flujo que el cron, a mano. */}
+    <Card className="mb-2 p-4">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <div className="text-sm font-semibold text-ink">Carrusel de puntajes → #SOCIAL</div>
+          <div className="mt-0.5 flex flex-wrap items-center gap-2">
+            <Eyebrow>Portada + tabla por equipo + leyenda, por grupo/fecha (idempotente)</Eyebrow>
+            {sbMsg && (
+              <span className={cn("text-[11px] font-medium", sbMsg.ok ? "text-success" : "text-danger")}>
+                · {sbMsg.msg}
+              </span>
+            )}
+          </div>
+        </div>
+        <button
+          disabled={sbBusy}
+          onClick={runScoreboards}
+          className="rounded-[6px] border border-border bg-surface px-3 py-2 text-sm font-semibold text-ink hover:bg-surface-2 hover:border-border-strong transition-all disabled:opacity-50"
+        >
+          {sbBusy ? "Generando…" : "Generar carruseles pendientes"}
         </button>
       </div>
     </Card>

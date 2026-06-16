@@ -35,15 +35,19 @@ export type StoryData = {
 
 export type FlagMap = Record<string, { name: string; group: string | null; b64: string }>;
 
-// Color + siglas por posición (SPEC §2). DB usa GK/DEF/MID/FWD.
-const POS: Record<Pos, { sigla: string; label: string; color: string }> = {
+// Color + siglas por posición (SPEC §2). DB usa GK/DEF/MID/FWD. Exportado para que
+// el carrusel de puntajes por grupo (scoreboard-data.ts) reuse el mismo mapeo.
+export const POS: Record<Pos, { sigla: string; label: string; color: string }> = {
   GK: { sigla: "ARQ", label: "Arquero", color: "#E6B400" },
   DEF: { sigla: "DEF", label: "Defensor", color: "#1B4FD8" },
   MID: { sigla: "MED", label: "Mediocampista", color: "#1E9E4B" },
   FWD: { sigla: "DEL", label: "Delantero", color: "#D02B2B" },
 };
 
-const groupEs = (g: string | null) => (g ? g.replace(/^Group\s+/i, "Grupo ") : "");
+// Orden ARQ -> DEF -> MED -> DEL (SPEC del carrusel de puntajes).
+export const POS_ORDER: Record<Pos, number> = { GK: 0, DEF: 1, MID: 2, FWD: 3 };
+
+export const groupEs = (g: string | null) => (g ? g.replace(/^Group\s+/i, "Grupo ") : "");
 
 // Snippets condicionales (copiados del comentario de assets/stories/template.html).
 const FIGURA_SNIPPET = `<span style="background:#C8A24B;color:#111827;font-weight:800;font-size:22px;letter-spacing:0.08em;text-transform:uppercase;padding:8px 16px;border-radius:6px;margin-left:14px;">★ Figura</span>`;

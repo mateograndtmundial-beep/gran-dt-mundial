@@ -13,6 +13,7 @@ import { clamp, round1 } from "@/lib/pricing/map";
 import { PRICING } from "@/lib/game/config";
 import { notifyRoundPublished, notifyRoundSynced, notifyError } from "@/lib/notify/slack";
 import { postPendingRecaps, postMatchRecap } from "@/lib/stories/recap";
+import { postPendingScoreboards } from "@/lib/stories/scoreboard";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
 async function currentAdmin() {
@@ -65,6 +66,32 @@ export async function generateRecapsAction() {
   } catch (e) {
     logAdmin("generateRecaps", admin.id, { ok: false, error: (e as Error).message });
     notifyError({ source: "generateRecaps", message: (e as Error).message });
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+/**
+ * Genera y postea a #SOCIAL los carruseles de puntajes (portada + tabla por equipo
+ * + leyenda) por grupo/fecha (grupos) o por partido (eliminatorias) que aún no se
+ * postearon. Mismo resultado que el cron (postPendingScoreboards). Idempotente.
+ */
+export async function generateScoreboardsAction() {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  try {
+    const { posted, skipped } = await postPendingScoreboards();
+    logAdmin("generateScoreboards", admin.id, { posted, skipped, ok: true });
+    return {
+      ok: true as const,
+      info: posted
+        ? `${posted} carrusel(es) a #SOCIAL${skipped ? ` · ${skipped} omitido(s)` : ""}`
+        : skipped
+          ? `Sin novedades · ${skipped} unidad(es) aún sin stats`
+          : "No hay grupos/partidos pendientes",
+    };
+  } catch (e) {
+    logAdmin("generateScoreboards", admin.id, { ok: false, error: (e as Error).message });
+    notifyError({ source: "generateScoreboards", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }
@@ -158,6 +185,10 @@ export type StatRowInput = {
   ownGoals: number;
   penaltiesSaved: number;
   penaltiesMissed: number;
+  // Goles recibidos por su equipo MIENTRAS estuvo en cancha (para la valla invicta
+  // y el −1 del arquero, calculados a nivel jugador). Si es null/undefined se usa
+  // el total del rival (default a nivel equipo, igual que el marcador).
+  goalsConceded?: number | null;
 };
 
 export type SaveMatchInput = {
@@ -213,7 +244,11 @@ export async function saveMatchStats(input: SaveMatchInput) {
     if (p.countryId !== m.homeCountryId && p.countryId !== m.awayCountryId) continue; // no es de este partido
     const isHome = p.countryId === m.homeCountryId;
     const concededTeam = isHome ? awayScore ?? 0 : homeScore ?? 0;
-    const cleanSheet = finished ? concededTeam === 0 : false;
+    // Valla invicta a nivel jugador: si el admin mandó los goles recibidos estando
+    // en cancha, se usan; si no, se cae al total del equipo (marcador del rival).
+    const conceded =
+      r.goalsConceded == null ? concededTeam : Math.max(0, Math.min(concededTeam, int(r.goalsConceded)));
+    const cleanSheet = finished ? conceded === 0 : false;
     const isMotm = input.motmPlayerId === r.playerId;
     // El rating se procesa como ENTERO en todo el juego (clamp 0-10 + redondeo).
     const rating =
@@ -236,7 +271,7 @@ export async function saveMatchStats(input: SaveMatchInput) {
     const bd = calcularPuntos({
       position: p.position,
       rating,
-      goalsConceded: concededTeam,
+      goalsConceded: conceded,
       cleanSheet,
       isMotm,
       isCaptain: false,
@@ -247,7 +282,7 @@ export async function saveMatchStats(input: SaveMatchInput) {
       playerId: r.playerId,
       matchId: m.id,
       ...stat,
-      goalsConceded: p.position === "GK" ? concededTeam : 0,
+      goalsConceded: p.position === "GK" ? conceded : 0,
       cleanSheet,
       rating,
       isMotm,

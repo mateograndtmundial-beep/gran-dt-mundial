@@ -3,6 +3,7 @@ import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
 import { matches, players, playerMatchStats } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
+import { parseMatchTiming, concededWhileOnPitch } from "@/lib/api-football/timing";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { chunkedBatch, type BatchOp } from "@/lib/db/batch";
 import { SCORING } from "@/lib/game/config";
@@ -94,6 +95,7 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
       penaltiesMissed: number;
       ownGoals: number;
       isHome: boolean;
+      substitute: boolean;
     };
     const raws: Raw[] = [];
 
@@ -120,6 +122,7 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
           penaltiesMissed: st.penalty?.missed ?? 0,
           ownGoals: ownGoalByApiId.get(pl?.player?.id) ?? 0,
           isHome,
+          substitute: st.games?.substitute ?? false,
         });
       }
     }
@@ -146,10 +149,33 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
       .limit(1);
     const effectiveMotm = manualRow.length > 0 ? m.motmPlayerId : motmPlayerId;
 
+    // Valla invicta y goles recibidos A NIVEL JUGADOR: reconstruimos los minutos
+    // de cada gol recibido y la ventana en cancha de cada jugador, y contamos solo
+    // los goles que entraron MIENTRAS estaba jugando. Así un suplente que entra con
+    // el partido 0-3 y no recibe goles suma valla, y un titular que sale antes del
+    // gol no la pierde (y el arquero solo descuenta por los goles que recibió él).
+    const timing = parseMatchTiming(events ?? [], homeTeamApi);
+    // Reconciliación: si los goles parseados de un equipo no coinciden con el
+    // marcador final (eventos incompletos/ausentes, p.ej. carga manual), caemos
+    // al cálculo a nivel equipo para ese equipo (no inventamos vallas de más).
+    const concededFinal = { home: awayScore ?? 0, away: homeScore ?? 0 };
+    const timingOk = {
+      home: finished && timing.concededMinutes.home.length === concededFinal.home,
+      away: finished && timing.concededMinutes.away.length === concededFinal.away,
+    };
+
+    const concededForPlayer = (r: Raw): number => {
+      const side = r.isHome ? "home" : "away";
+      if (!finished) return concededFinal[side]; // partido en vivo: total del equipo
+      if (!timingOk[side]) return concededFinal[side]; // fallback seguro a nivel equipo
+      const iv = (r.our.apiId != null ? timing.intervals.get(r.our.apiId) : undefined) ?? { enter: 0, exit: Infinity };
+      return concededWhileOnPitch(iv, timing.concededMinutes[side]);
+    };
+
     const ops: BatchOp[] = [];
     for (const r of raws) {
-      const concededTeam = r.isHome ? awayScore ?? 0 : homeScore ?? 0;
-      const cleanSheet = finished ? concededTeam === 0 : false;
+      const conceded = concededForPlayer(r); // goles recibidos con el jugador en cancha
+      const cleanSheet = finished ? conceded === 0 : false;
       const isMotm = r.our.id === effectiveMotm;
       const bd = calcularPuntos({
         position: r.our.position,
@@ -163,7 +189,7 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
         ownGoals: r.ownGoals,
         penaltiesSaved: r.saves,
         penaltiesMissed: r.penaltiesMissed,
-        goalsConceded: concededTeam,
+        goalsConceded: conceded,
         cleanSheet,
         isMotm,
         isCaptain: false,
@@ -181,11 +207,12 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
         ownGoals: r.ownGoals,
         penaltiesSaved: r.saves,
         penaltiesMissed: r.penaltiesMissed,
-        goalsConceded: r.our.position === "GK" ? concededTeam : 0,
+        goalsConceded: r.our.position === "GK" ? conceded : 0,
         cleanSheet,
         rating: r.rating,
         isMotm,
         fantasyPoints: bd.total,
+        substitute: r.substitute,
       };
       ops.push(
         db
@@ -197,6 +224,15 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
             // No pisar filas editadas a mano por el admin (el cron respeta las correcciones).
             setWhere: ne(playerMatchStats.manualEdit, true),
           }),
+      );
+      // `substitute` (titular/suplente) es metadata de la API, NO una corrección de
+      // puntaje: se refresca SIEMPRE, también en filas manualEdit, para poder separar
+      // titulares/suplentes en el carrusel aunque el partido se haya cargado a mano.
+      ops.push(
+        db
+          .update(playerMatchStats)
+          .set({ substitute: r.substitute })
+          .where(and(eq(playerMatchStats.playerId, r.our.id), eq(playerMatchStats.matchId, m.id))),
       );
     }
 
@@ -231,7 +267,13 @@ export async function syncRound(roundId: number) {
   // Los partidos sincronizados pueden cambiar el próximo rival/dificultad de
   // cada selección (estado, kickoff reprogramado): invalidamos el caché de
   // getCountryFixtures (TTL de 1h) para que /jugadores refleje el cambio ya.
-  revalidateTag("country-fixtures", "max");
+  // Solo aplica dentro de un request de Next (cron/admin); desde un script CLI
+  // no hay store de revalidación → ignorar el error para no tumbar el sync.
+  try {
+    revalidateTag("country-fixtures", "max");
+  } catch {
+    /* fuera de un request de Next (CLI): no hay caché que invalidar */
+  }
 
   return { matches: results.filter(Boolean).length };
 }

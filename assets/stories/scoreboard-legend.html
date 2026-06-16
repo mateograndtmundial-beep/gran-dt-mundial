@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<!-- TEMPLATE — Slide LEYENDA de íconos (última del carrusel). 1080x1350.
+     Placeholders: {{LOGO_B64}} {{PAGINA}} {{TOTAL}} y un {{IC_*}} por ícono.
+     Los íconos los inyecta buildLegendPlaceholders (mismo builder que las filas). -->
+<html lang="es"><head><meta charset="UTF-8"><style>
+:root{--blue:#1B4FD8;--ink:#111827;--bg:#F0F2F0;}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+.wrap{position:relative;width:1080px;height:1350px;background:var(--bg);overflow:hidden;padding:0 60px;}
+.ghost{position:absolute;right:-40px;top:-120px;font-weight:800;font-size:420px;color:#111827;opacity:0.04;line-height:1;}
+.hd{display:flex;align-items:center;gap:14px;padding-top:54px;}
+.hd .lg{width:62px;height:62px;border-radius:50%;border:3px solid var(--blue);overflow:hidden;background:#fff;box-shadow:3px 3px 0 rgba(17,24,39,0.18);}
+.hd .lg img{width:100%;height:100%;display:block;}
+.hd .wm{font-weight:800;font-size:27px;text-transform:uppercase;} .hd .wm span{color:var(--blue);}
+.page{position:absolute;right:60px;top:58px;font-weight:800;font-size:15px;letter-spacing:0.1em;color:#9CA3AF;background:#fff;border:2px solid var(--ink);border-radius:6px;padding:8px 13px;box-shadow:3px 3px 0 rgba(17,24,39,0.2);}
+.page b{color:var(--ink);}
+.grid{margin-top:30px;display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.it{display:flex;align-items:center;gap:18px;background:#fff;border:2px solid #111827;border-radius:12px;box-shadow:4px 4px 0 rgba(17,24,39,0.85);padding:18px 22px;}
+.it .ico{width:46px;display:flex;align-items:center;justify-content:center;flex:0 0 46px;}
+.it .lbl{font-weight:700;font-size:26px;}
+.url{background:var(--ink);color:#fff;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:6px;display:inline-block;}
+{{TITLE_FONT_CSS}}
+</style></head><body>
+<div class="wrap"><div class="ghost">11</div>
+<div class="hd"><div class="lg"><img src="data:image/png;base64,{{LOGO_B64}}"></div><div class="wm">LOS <span>11</span> DE SAMPA</div></div>
+<div class="page"><b>{{PAGINA}}</b> / {{TOTAL}}</div>
+<div style="margin-top:46px;color:var(--blue);font-weight:700;font-size:21px;letter-spacing:0.2em;text-transform:uppercase;">Cómo leer los puntajes</div>
+<div style="margin-top:14px;"><span style="font-family:'TitleHeavy',sans-serif;font-size:84px;text-transform:uppercase;letter-spacing:0.005em;display:inline-block;">Referencias.</span></div>
+<div class="grid">
+  <div class="it"><div class="ico">{{IC_GOL}}</div><div class="lbl">Gol</div></div>
+  <div class="it"><div class="ico">{{IC_ASIST}}</div><div class="lbl">Asistencia</div></div>
+  <div class="it"><div class="ico">{{IC_GOLPEN}}</div><div class="lbl">Gol de penal</div></div>
+  <div class="it"><div class="ico">{{IC_FIGURA}}</div><div class="lbl">Figura</div></div>
+  <div class="it"><div class="ico">{{IC_VALLA}}</div><div class="lbl">Valla invicta</div></div>
+  <div class="it"><div class="ico">{{IC_AMARILLA}}</div><div class="lbl">T. amarilla</div></div>
+  <div class="it"><div class="ico">{{IC_ROJA}}</div><div class="lbl">T. roja</div></div>
+  <div class="it"><div class="ico">{{IC_PENATAJADO}}</div><div class="lbl">Penal atajado</div></div>
+  <div class="it"><div class="ico">{{IC_PENERRADO}}</div><div class="lbl">Penal errado</div></div>
+  <div class="it"><div class="ico">{{IC_GOLRECIBIDO}}</div><div class="lbl">Gol recibido (ARQ)</div></div>
+  <div class="it"><div class="ico">{{IC_GOLCONTRA}}</div><div class="lbl">Gol en contra</div></div>
+  <div class="it"><div class="ico"><span style="display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 8px;background:var(--blue);color:#fff;border-radius:7px;font-weight:800;font-size:20px;letter-spacing:-0.01em;box-shadow:2px 2px 0 rgba(17,24,39,0.3);">7,5</span></div><div class="lbl">Nota (1&ndash;10)</div></div>
+</div>
+<div class="url" style="position:absolute;left:60px;bottom:56px;"><span style="display:inline-block;padding:14px 22px;font-size:20px;">LOS11DESAMPA.COM</span></div>
+</div></body></html>
