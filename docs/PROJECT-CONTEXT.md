@@ -114,7 +114,7 @@ npm run make-admin [username]  # marca usuario(s) como admin
   - Base = **rating de API-Football** (requiere ≥20' de tiempo reglamentario, sin contar agregado: 90' o 120' con tiempo extra); si jugó menos, **no suma nada en absoluto** (ni base ni bonos) y puntúa el suplente de su posición que sí jugó (auto-sustitución, garantiza nunca > 11 por equipo); el **capitán duplica SOLO el rating base**, no los bonos.
   - Gol por puesto: **GK 12, DEF 9, MID 6, FWD 4** · gol de penal **+3** (reemplaza el de puesto).
   - Asistencia **+2** (todas las posiciones).
-  - Valla invicta (jugó ≥20', equipo no recibió): **GK +3, DEF +2**.
+  - Valla invicta (jugó ≥20', **su equipo no recibió goles MIENTRAS estuvo en cancha** — se evalúa a nivel jugador, no equipo): **GK +3, DEF +2**.
   - Penal atajado (GK) **+4** · gol recibido **−1 SOLO al GK** (el defensor no pierde).
   - Figura del partido **+4** (mayor rating; empate lo define el admin).
   - Amarilla **−2** · roja (directa o doble amarilla) **−4 fijo** (no se suman las amarillas) · gol en contra **−2** · penal errado **−4**.

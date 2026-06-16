@@ -18,17 +18,24 @@ async function launchBrowser() {
   return pw.launch();
 }
 
-/** Rasteriza HTML a PNG 1080×1920 (render 2× + downscale LANCZOS, SPEC §0). */
-export async function renderStoryPng(html: string): Promise<Buffer> {
+export type RenderSize = { width: number; height: number };
+
+/** Rasteriza HTML a PNG `size` (render 2× + downscale LANCZOS, SPEC §0). */
+export async function renderPng(html: string, size: RenderSize): Promise<Buffer> {
   const browser = await launchBrowser();
   try {
-    const page = await browser.newPage({ viewport: { width: 1080, height: 1920 }, deviceScaleFactor: 2 });
+    const page = await browser.newPage({ viewport: size, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: "networkidle" });
     // Asegura que la fuente (Poppins) ya cargó antes del screenshot.
     await page.evaluate(() => (document as unknown as { fonts: { ready: Promise<unknown> } }).fonts.ready);
-    const shot = await page.screenshot({ clip: { x: 0, y: 0, width: 1080, height: 1920 } });
-    return await sharp(shot).resize(1080, 1920, { kernel: "lanczos3" }).png().toBuffer();
+    const shot = await page.screenshot({ clip: { x: 0, y: 0, width: size.width, height: size.height } });
+    return await sharp(shot).resize(size.width, size.height, { kernel: "lanczos3" }).png().toBuffer();
   } finally {
     await browser.close();
   }
+}
+
+/** Rasteriza una story 1080×1920 (SPEC §0). Wrapper de `renderPng` para no romper callers. */
+export async function renderStoryPng(html: string): Promise<Buffer> {
+  return renderPng(html, { width: 1080, height: 1920 });
 }

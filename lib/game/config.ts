@@ -71,6 +71,9 @@ export const SCORING = {
   goalByPosition: { GK: 12, DEF: 9, MID: 6, FWD: 4 } as Record<Position, number>,
   penaltyGoal: 3,
   assist: 2,
+  // Valla invicta: se evalúa A NIVEL JUGADOR (sin goles recibidos mientras estuvo
+  // en cancha y jugó ≥20'), no a nivel equipo. Ídem el −1 del arquero (solo los
+  // goles que recibió él). Ver lib/api-football/timing.ts.
   cleanSheet: { GK: 3, DEF: 2, MID: 0, FWD: 0 } as Record<Position, number>,
   penaltySaved: 4,
   goalConcededGK: -1,

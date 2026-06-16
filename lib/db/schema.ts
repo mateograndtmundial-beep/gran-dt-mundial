@@ -122,6 +122,9 @@ export const playerMatchStats = pgTable(
     fantasyPoints: doublePrecision('fantasy_points').notNull().default(0),
     // El admin editó esta fila a mano: el sync (incl. el cron) no la pisa.
     manualEdit: boolean('manual_edit').notNull().default(false),
+    // Arrancó desde el banco (games.substitute de API-Football). Usado para
+    // separar titulares/suplentes en el carrusel de puntajes por grupo.
+    substitute: boolean('substitute').notNull().default(false),
   },
   (t) => [
     uniqueIndex('pms_player_match').on(t.playerId, t.matchId),
@@ -141,6 +144,21 @@ export const playerRoundPoints = pgTable(
     uniqueIndex('prp_player_round').on(t.playerId, t.roundId),
     index('prp_round').on(t.roundId),
   ],
+);
+
+// Carrusel de "puntajes" (portada + tabla por equipo + leyenda) ya posteado a
+// #SOCIAL para una unidad de una fecha. `bucket` = "group:A" (un carrusel por
+// grupo en fase de grupos) | "match:123" (un carrusel por partido en eliminatorias).
+// Idempotencia: si ya existe la fila (roundId, bucket), no se re-postea.
+export const scoreboardPosts = pgTable(
+  'scoreboard_posts',
+  {
+    id: serial('id').primaryKey(),
+    roundId: integer('round_id').references(() => rounds.id).notNull(),
+    bucket: text('bucket').notNull(),
+    postedAt: timestamp('posted_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex('sbp_round_bucket').on(t.roundId, t.bucket)],
 );
 
 // ---------- Datos del juego (usuarios) ----------

@@ -2,6 +2,7 @@ import { getRoundsToSync } from "@/lib/queries";
 import { syncRound } from "@/lib/api-football/sync";
 import { notifyRoundSynced, notifyError } from "@/lib/notify/slack";
 import { postPendingRecaps } from "@/lib/stories/recap";
+import { postPendingScoreboards } from "@/lib/stories/scoreboard";
 
 /*
  * Cron de sincronización (Vercel Cron). Sincroniza las stats de las fechas en
@@ -42,7 +43,14 @@ async function run(req: Request): Promise<Response> {
     } catch (e) {
       notifyError({ source: "cron/recaps", message: (e as Error).message });
     }
-    return Response.json({ ok: true, rounds: roundIds.length, synced, recaps });
+    // Idem para el carrusel de puntajes por grupo/fecha. Best-effort también.
+    let scoreboards = { posted: 0, skipped: 0 };
+    try {
+      scoreboards = await postPendingScoreboards();
+    } catch (e) {
+      notifyError({ source: "cron/scoreboards", message: (e as Error).message });
+    }
+    return Response.json({ ok: true, rounds: roundIds.length, synced, recaps, scoreboards });
   } catch (e) {
     notifyError({ source: "cron/sync", message: (e as Error).message });
     return Response.json({ ok: false, error: (e as Error).message }, { status: 500 });

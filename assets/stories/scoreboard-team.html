@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE — Slide TABLA DE PUNTAJES por EQUIPO · Los 11 de Sampa
+  Lienzo: 1080 x 1350. Render: Playwright/Chromium, device_scale_factor=2.
+
+  Una slide por equipo. 11 titulares + 5/6 suplentes + fila DT.
+  ORDENADOS POR POSICIÓN dentro de titulares y dentro de suplentes: ARQ -> DEF -> MED -> DEL.
+  NO incluye leyenda de íconos (las referencias van en la última slide del carrusel).
+
+  PLACEHOLDERS:
+    {{LOGO_B64}} {{PAGINA}} {{TOTAL}}
+    {{TEAM_FLAG_B64}}   bandera del equipo (PNG/JPG REAL)
+    {{TEAM_SIGLA}}      "GER"
+    {{SUBTITLE}}        "Puntajes · Fecha 1" (grupos) o "Puntajes · 16vos de Final" (eliminatorias)
+    {{ROW_CLASS}}       "" normalmente, " compact" si titulares+suplentes >= 17 (filas más bajas)
+    {{ROWS_TITULARES}}  HTML de 11 filas (ver PLAYER_ROW)
+    {{ROWS_SUPLENTES}}  HTML de 5-6 filas (ver PLAYER_ROW, con clase "sub")
+    {{DT_NOMBRE}}       "J. Nagelsmann"
+    {{DT_RESULTADO}}    "victoria" | "empate" | "derrota"
+    {{DT_SIGNO}}        "+2" | "0" | "−2"
+    {{DT_COLOR}}        "#16713F" (victoria) | "#6B7280" (empate) | "#D02B2B" (derrota)
+
+  SNIPPET PLAYER_ROW (una por jugador):
+    Variables: {{POS_SIGLA}} {{POS_COLOR}} {{NOMBRE}} {{EVENT_ICONS}} {{RATING}} {{PTS}} {{PTS_COLOR}}
+    - clase "sub" para suplentes; agregar "dim" + sufijo "<20'" en el nombre si jugó <20 min (rating "-", pts 0).
+    - EVENT_ICONS: concatenar chips de íconos. Para duplicados usar ×N (p.ej. una pelota + "×2").
+      Tamaño de íconos en fila: 30px. Mapa de íconos (ver SPEC §ICONOS):
+        gol=imagen pelota, asistencia=imagen botín, gol_pen=imagen arco+pelota, pen_atajado=imagen guante,
+        figura=estrella SVG dorada, valla=escudo+candado SVG verde, amarilla/roja=rectángulos SVG,
+        pen_errado=pelota gris con diagonal roja, gol_contra=pelota rojiza con flecha abajo,
+        gol_recibido (SOLO ARQ)=arco en tono BORDÓ con ×N.
+
+    <div class="row {{SUB}} {{DIM}}">
+      <div class="bar" style="background:{{POS_COLOR}};"></div>
+      <div class="pos" style="color:{{POS_COLOR}};">{{POS_SIGLA}}</div>
+      <div style="flex:1;display:flex;align-items:center;min-width:0;">
+        <div class="nm">{{NOMBRE}}</div><div class="ev">{{EVENT_ICONS}}</div></div>
+      <div class="rt">{{RATING}}</div>
+      <div class="pt" style="color:{{PTS_COLOR}};">{{PTS}}</div>
+    </div>
+-->
+<html lang="es"><head><meta charset="UTF-8"><style>
+  :root{--blue:#1B4FD8;--gold:#C8A24B;--ink:#111827;--bg:#F0F2F0;}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+  .wrap{position:relative;width:1080px;height:1350px;background:var(--bg);overflow:hidden;padding:0 60px;}
+  .texture{position:absolute;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+  .ghost{position:absolute;left:-40px;bottom:-150px;font-weight:800;font-size:440px;color:#111827;opacity:0.04;letter-spacing:-0.06em;line-height:1;}
+  .hd{display:flex;align-items:center;gap:14px;padding-top:54px;}
+  .hd .lg{width:62px;height:62px;border-radius:50%;border:3px solid var(--blue);overflow:hidden;background:#fff;box-shadow:3px 3px 0 rgba(17,24,39,0.18);}
+  .hd .lg img{width:100%;height:100%;display:block;}
+  .hd .wm{font-weight:800;font-size:27px;text-transform:uppercase;}
+  .hd .wm span{color:var(--blue);}
+  .page{position:absolute;right:60px;top:58px;font-weight:800;font-size:15px;letter-spacing:0.1em;color:#9CA3AF;background:#fff;border:2px solid var(--ink);border-radius:6px;padding:8px 13px;box-shadow:3px 3px 0 rgba(17,24,39,0.2);}
+  .page b{color:var(--ink);}
+  .flag{border:1px solid rgba(0,0,0,0.25);border-radius:3px;overflow:hidden;display:inline-flex;box-shadow:2px 2px 0 rgba(17,24,39,0.18);}
+  .flag img{display:block;object-fit:cover;}
+  .url{background:var(--ink);color:#fff;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:6px;display:inline-block;}
+  .row{display:flex;align-items:center;padding:4px 0;border-bottom:1px solid #E6E8E6;height:52px;}
+  .row .bar{width:8px;height:38px;border-radius:4px;flex:0 0 8px;margin-right:16px;}
+  .row .pos{width:52px;font-weight:800;font-size:16px;color:#6B7280;flex:0 0 52px;}
+  .row .nm{font-weight:700;font-size:25px;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .row .ev{display:flex;align-items:center;margin-left:14px;flex:1;}
+  .row .rt{font-weight:800;font-size:23px;color:#374151;width:58px;text-align:center;flex:0 0 58px;}
+  .row .pt{font-weight:800;font-size:30px;letter-spacing:-0.03em;color:var(--ink);width:74px;text-align:right;flex:0 0 74px;}
+  .row.sub .nm{font-size:24px;color:#4B5563;}
+  .row.sub .bar{height:32px;}
+  .row.dim{opacity:0.5;}
+  /* Hasta 17 jugadores (11 titulares + 6 suplentes, cambio extra en TE): filas más
+     bajas para que entren sin chocar la fila del DT / footer. */
+  .wrap.compact .row{height:44px;padding:2px 0;}
+  .wrap.compact .row .bar{height:32px;}
+  .wrap.compact .row.sub .bar{height:26px;}
+  .wrap.compact .row .nm{font-size:22px;}
+  .wrap.compact .row.sub .nm{font-size:21px;}
+  .wrap.compact .row .rt{font-size:20px;}
+  .wrap.compact .row .pt{font-size:26px;}
+  .wrap.compact .sechead{margin:4px 0 0;}
+  .sechead{font-weight:800;font-size:14px;letter-spacing:0.16em;text-transform:uppercase;color:#9CA3AF;margin:6px 0 1px;}
+  .colhead{display:flex;align-items:center;padding:6px 0;border-bottom:2px solid var(--ink);font-weight:800;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#9CA3AF;}
+</style></head><body>
+<div class="wrap{{ROW_CLASS}}">
+  <div class="texture"></div>
+  <div class="ghost">11</div>
+  <div class="hd"><div class="lg"><img src="data:image/png;base64,{{LOGO_B64}}"></div><div class="wm">LOS <span>11</span> DE SAMPA</div></div>
+  <div class="page"><b>{{PAGINA}}</b> / {{TOTAL}}</div>
+
+  <div style="margin-top:20px;display:flex;align-items:center;gap:16px;">
+    <span class="flag"><img src="data:image/png;base64,{{TEAM_FLAG_B64}}" width="60" height="40"></span>
+    <div style="font-weight:800;font-size:40px;text-transform:uppercase;letter-spacing:-0.02em;">{{TEAM_SIGLA}}</div>
+    <div style="margin-left:auto;font-weight:800;font-size:16px;letter-spacing:0.14em;text-transform:uppercase;color:#9CA3AF;">{{SUBTITLE}}</div>
+  </div>
+
+  <div style="margin-top:10px;" class="colhead">
+    <div style="width:8px;flex:0 0 8px;margin-right:16px;"></div>
+    <div style="width:52px;flex:0 0 52px;">Pos</div>
+    <div style="flex:1;">Jugador / eventos</div>
+    <div style="width:58px;flex:0 0 58px;text-align:center;">Nota</div>
+    <div style="width:74px;flex:0 0 74px;text-align:right;">Pts</div>
+  </div>
+
+  <div class="sechead">Titulares</div>
+  {{ROWS_TITULARES}}
+  <div class="sechead">Suplentes</div>
+  {{ROWS_SUPLENTES}}
+
+  <!-- DT row -->
+  <div style="position:absolute;left:60px;right:60px;bottom:108px;display:flex;align-items:center;background:#101726;border-radius:10px;padding:12px 20px;box-shadow:3px 3px 0 rgba(17,24,39,0.5);">
+    <div style="width:40px;height:40px;border-radius:8px;background:var(--gold);color:#111827;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:15px;flex:0 0 40px;margin-right:14px;">DT</div>
+    <div style="color:#fff;font-weight:800;font-size:23px;flex:1;">{{DT_NOMBRE}}</div>
+    <div style="color:#9AA6BF;font-weight:700;font-size:18px;text-transform:uppercase;letter-spacing:0.08em;margin-right:18px;">{{DT_RESULTADO}}</div>
+    <div style="color:{{DT_COLOR}};font-weight:800;font-size:30px;">{{DT_SIGNO}}</div>
+  </div>
+
+  <div style="position:absolute;left:60px;right:60px;bottom:42px;display:flex;align-items:center;justify-content:space-between;">
+    <div class="url"><span style="display:inline-block;padding:12px 20px;font-size:18px;">LOS11DESAMPA.COM</span></div>
+    <div style="font-weight:700;font-size:16px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.06em;">Referencias en la última imagen &rarr;</div>
+  </div>
+</div>
+</body></html>
