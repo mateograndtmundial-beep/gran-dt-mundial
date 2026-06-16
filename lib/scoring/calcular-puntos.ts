@@ -12,8 +12,8 @@ export interface StatsInput {
   ownGoals: number;
   penaltiesSaved: number;
   penaltiesMissed: number;
-  goalsConceded: number; // goles recibidos por el equipo (solo afecta al arquero)
-  cleanSheet: boolean; // el equipo no recibió goles
+  goalsConceded: number; // goles recibidos con el jugador en cancha (solo afecta al arquero)
+  cleanSheet: boolean; // el equipo no recibió goles MIENTRAS el jugador estuvo en cancha
   isMotm: boolean; // figura del partido
   isCaptain: boolean;
 }

@@ -138,7 +138,7 @@ Estados de una fecha: `abierta` → `cerrada` (pasó el deadline) → `publicada
 | **Gol** | +12 | +9 | +6 | +4 |
 | Gol de penal *(reemplaza al de arriba)* | +3 | +3 | +3 | +3 |
 | **Asistencia** | +2 | +2 | +2 | +2 |
-| Valla invicta *(jugó ≥20', su equipo no recibió goles)* | +3 | +2 | — | — |
+| Valla invicta *(jugó ≥20', su equipo no recibió goles **estando él en cancha**)* | +3 | +2 | — | — |
 | Penal atajado | +4 | — | — | — |
 | Gol recibido *(por cada uno)* | **−1** | — | — | — |
 | Figura del partido | +4 | +4 | +4 | +4 |
@@ -149,8 +149,8 @@ Estados de una fecha: `abierta` → `cerrada` (pasó el deadline) → `publicada
 | **Técnico** *(ver §7)* | +2 / −2 / 0 | | | |
 
 **Reglas finas:**
-- **Valla invicta:** a partir de **≥20 min** (no 60).
-- **Gol recibido:** resta **solo al arquero**; el defensor no pierde puntos por goles recibidos.
+- **Valla invicta:** a partir de **≥20 min** (no 60). Se evalúa **a nivel jugador**: cuenta si su equipo **no recibió goles mientras él estuvo en cancha** (no el resultado final del equipo). Así, un suplente que entra perdiendo 0-3 y no recibe más goles **suma valla**, y un titular que sale antes del gol **no la pierde**.
+- **Gol recibido:** resta **solo al arquero**, y solo por los goles que recibió **estando él en cancha**; el defensor no pierde puntos por goles recibidos.
 - **Doble amarilla = −4 fijo** (no se suman las dos amarillas; si hubo roja, vale −4 y nada más).
 - **Figura del partido:** el jugador con el **rating más alto del partido** (+4). Si hay **empate** en el rating más alto, lo **define el admin** al confirmar la fecha.
 - **No existen** (sacados del Gran DT clásico): bono por gol de visitante, gol de oro, y puntos fijos por "jugar / jugar 90'" (la calificación ya lo refleja).
