@@ -11,6 +11,7 @@
 | [`PINES-API.md`](./PINES-API.md) | Contrato del backend de pines/pagos para el frontend (server actions, flujo de compra). | Vas a tocar `/pines` o algo que consuma pines/pagos desde el front. |
 | [`TODO.md`](./TODO.md) | Pendientes técnicos concretos (post Fase 2): fotos a hosting propio, cadencia del cron, edge cases de fechas, hardening de pagos. | Buscás en qué seguir o querés saber qué riesgos conocidos quedan abiertos. |
 | [`ui/UI-DIRECTION.md`](./ui/UI-DIRECTION.md) | Dirección de diseño/UI: sistema editorial, paleta, componentes, reglas de responsive. | Vas a tocar cualquier UI — recordá que **todo tiene que andar en mobile y desktop**. |
+| [`social/`](./social/README.md) | **Dirección estética de redes** (fuente de la verdad): sistema visual de las placas (carrusel/story), formatos por plataforma + cómo generarlas, y voz/copy/estrategia (IG/FB/X). | Vas a generar contenido para redes (placas o captions). |
 
 ## Orden sugerido para alguien nuevo
 1. `PROJECT-CONTEXT.md` — contexto general.
