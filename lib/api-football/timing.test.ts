@@ -12,13 +12,14 @@ const goal = (team: number, min: number, detail = "Normal Goal", extra: object =
   time: { elapsed: min, extra: null },
   ...extra,
 });
+// En el feed de API-Football `player` es quien SALE y `assist` quien ENTRA.
 const subst = (team: number, min: number, inId: number, outId: number) => ({
   type: "subst",
   detail: "Substitution 1",
   team: { id: team },
   time: { elapsed: min, extra: null },
-  player: { id: inId },
-  assist: { id: outId },
+  player: { id: outId },
+  assist: { id: inId },
 });
 
 describe("parseMatchTiming", () => {

@@ -25,11 +25,13 @@ function eventMinute(e: any): number {
  * invicta y los goles recibidos del arquero A NIVEL JUGADOR (solo lo que pasó
  * mientras estuvo en cancha), en vez de a nivel equipo.
  *
- * Convención de los eventos (verificada contra la API): en un `subst`, `player`
- * es quien ENTRA y `assist` quien SALE; en un `Goal`, `team` es quien convierte
- * (el rival recibe), salvo el autogol, donde `team` es el equipo del autor (que
- * es justamente el que recibe). La tanda de penales (`comments: "Penalty
- * Shootout"`) y los penales errados (`detail: "Missed Penalty"`) no son goles.
+ * Convención de los eventos (verificada empíricamente contra la API, 75/76
+ * sustituciones): en un `subst`, `player` es quien SALE y `assist` quien ENTRA
+ * (al revés de lo que sugiere el nombre del campo); en un `Goal`, `team` es quien
+ * convierte (el rival recibe), salvo el autogol, donde `team` es el equipo del
+ * autor (que es justamente el que recibe). La tanda de penales (`comments:
+ * "Penalty Shootout"`) y los penales errados (`detail: "Missed Penalty"`) no son
+ * goles.
  */
 export function parseMatchTiming(events: any[], homeTeamApi: number | undefined): MatchTiming {
   const home: number[] = [];
@@ -60,8 +62,10 @@ export function parseMatchTiming(events: any[], homeTeamApi: number | undefined)
         (scorerIsHome ? away : home).push(min);
       }
     } else if (e?.type === "subst") {
-      const inId = e?.player?.id;
-      const outId = e?.assist?.id;
+      // OJO: en el feed de API-Football `player` es quien SALE y `assist` quien
+      // ENTRA (verificado: 75/76 sustituciones tenían al titular en `player`).
+      const outId = e?.player?.id;
+      const inId = e?.assist?.id;
       if (inId != null) ensure(inId).enter = Math.max(ensure(inId).enter, min);
       if (outId != null) ensure(outId).exit = Math.min(ensure(outId).exit, min);
     } else if (e?.type === "Card" && e?.detail === "Red Card") {
