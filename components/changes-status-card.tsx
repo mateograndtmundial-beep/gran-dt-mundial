@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ChangesStatus } from "@/lib/queries";
 
@@ -15,7 +15,31 @@ const CHIP_CLASSES = cn(
  * /pines (los extra se compran con pines).
  */
 export function ChangesStatusChip({ status }: { status: ChangesStatus }) {
-  if (status.state === "locked") return null;
+  // Torneo terminado: no hay nada que recordar.
+  if (status.state === "ended") return null;
+
+  // Fecha en juego / próxima sin fixtures: en vez de quedar en silencio,
+  // avisamos que el equipo está cerrado y cuándo se reabre la edición.
+  if (status.state === "waiting") {
+    return (
+      <div
+        className={cn(CHIP_CLASSES, "max-w-[15rem]")}
+        title="Tu equipo está cerrado mientras se juega la fecha. Vas a poder hacer cambios para la próxima cuando se habilite."
+      >
+        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-ink/10 text-ink-3">
+          <Lock size={13} strokeWidth={1.75} />
+        </span>
+        <span className="leading-tight">
+          <span className="block text-[11px] font-semibold leading-tight text-ink-2">
+            Equipo cerrado
+          </span>
+          <span className="block text-[10px] leading-tight text-ink-faint">
+            Cambios para {status.nextRoundName ?? "la próxima fecha"} cuando se habilite
+          </span>
+        </span>
+      </div>
+    );
+  }
 
   const unlimited = status.state === "premium" || status.state === "unlimited";
   const numeral = unlimited ? "∞" : status.freeLeft;

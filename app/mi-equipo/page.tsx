@@ -5,6 +5,8 @@ import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { ChangesStatusChip } from "@/components/changes-status-card";
+import { SaveConfirmBanner } from "@/components/save-confirm-banner";
+import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
@@ -13,7 +15,13 @@ import { formatPoints, formatPrice } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export default async function MiEquipoPage() {
+export default async function MiEquipoPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ saved?: string; ch?: string; pins?: string }>;
+}) {
+  const sp = await searchParams;
+  const justSaved = sp.saved === "1";
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let team: Awaited<ReturnType<typeof getMyTeam>> = null;
   let error = false;
@@ -117,6 +125,9 @@ export default async function MiEquipoPage() {
 
   return (
     <div className="space-y-5">
+      {/* Confirmación tras guardar desde el armador (?saved=1) */}
+      {justSaved && <SaveConfirmBanner changes={Number(sp.ch ?? 0)} pins={Number(sp.pins ?? 0)} />}
+
       {/* Aviso: cada fecha se cierra al arrancar su primer partido (cerrable, se recuerda en localStorage) */}
       <LineupLockNotice />
 
@@ -151,6 +162,14 @@ export default async function MiEquipoPage() {
           {changesStatus && <ChangesStatusChip status={changesStatus} />}
         </div>
       </section>
+
+      {/* Leyenda del cierre de la fecha: roja si faltan <24 h, amarilla si no. */}
+      {changesStatus &&
+        (changesStatus.state === "limited" ||
+          changesStatus.state === "unlimited" ||
+          changesStatus.state === "premium") && (
+          <DeadlineNotice deadline={changesStatus.deadline} roundName={changesStatus.roundName} />
+        )}
 
       {/* El equipo manda: cancha grande + suplentes; los puntos van al costado */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
