@@ -684,36 +684,109 @@ export async function getEditContext(userId: number, editableRoundId: number, ed
 }
 
 export type ChangesStatus =
-  | { state: "locked" }
-  | { state: "premium"; roundName: string }
-  | { state: "unlimited"; roundName: string }
-  | { state: "limited"; roundName: string; freeLeft: number; pinBalance: number };
+  | { state: "ended" }
+  | { state: "waiting"; nextRoundName: string | null }
+  | { state: "premium"; roundName: string; deadline: string }
+  | { state: "unlimited"; roundName: string; deadline: string }
+  | { state: "limited"; roundName: string; deadline: string; freeLeft: number; pinBalance: number };
 
 /**
  * Estado de "cambios disponibles" para mostrar en /mi-equipo, con el mismo
  * cálculo que el contador del armador (`getEditContext` + `lib/game/changes.ts`)
  * para no desincronizarse del costo real que cobra `saveLineup`.
- * - `locked`: no hay fecha editable (la fecha está en curso).
+ * - `ended`: no quedan fechas pendientes (el torneo terminó / todo publicado).
+ * - `waiting`: hay fechas pendientes pero ninguna editable ahora (la fecha está
+ *   en juego, o la próxima todavía no tiene fixtures). `nextRoundName` = la
+ *   primera no publicada, para anticipar "vas a poder cambiar para X".
  * - `premium`: pack de cambios ilimitados.
  * - `unlimited`: sin fecha previa (primer equipo / fecha 1) → edición libre,
  *   gratis hasta que arranque la fecha editable.
  * - `limited`: cuenta los cambios gratis que quedan (0 o más) y el saldo de pines.
+ *
+ * Los estados abiertos llevan `deadline` (ISO) = kickoff del primer partido de
+ * la fecha editable, para el countdown / aviso de cierre.
  */
 export async function getChangesStatus(userId: number, isPremium: boolean): Promise<ChangesStatus> {
   const editable = await getEditableRound();
-  if (!editable) return { state: "locked" };
+  if (!editable) {
+    // Sin fecha editable: distinguir "torneo terminado" de "fecha en juego /
+    // próxima sin fixtures todavía" para no quedar en silencio en /mi-equipo.
+    const pending = (
+      await db
+        .select({ name: rounds.name })
+        .from(rounds)
+        .where(ne(rounds.status, "published"))
+        .orderBy(asc(rounds.order))
+        .limit(1)
+    )[0];
+    if (!pending) return { state: "ended" };
+    return { state: "waiting", nextRoundName: shortRoundName(pending.name) };
+  }
   const roundName = shortRoundName(editable.round.name);
-  if (isPremium) return { state: "premium", roundName };
+  const deadline = editable.deadline.toISOString();
+  if (isPremium) return { state: "premium", roundName, deadline };
 
   const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
-  if (editContext.baselinePlayerIds == null) return { state: "unlimited", roundName };
+  if (editContext.baselinePlayerIds == null) return { state: "unlimited", roundName, deadline };
 
   const lineup = await getEditableLineup(userId);
   const currentIds = lineup ? Object.values(lineup.slots) : [];
   const changesMade = countPlayerChanges(currentIds, editContext.baselinePlayerIds);
   const freeLeft = freeChangesLeft(changesMade, FREE_CHANGES_PER_ROUND);
   const pinBalance = await getPinBalance(userId);
-  return { state: "limited", roundName, freeLeft, pinBalance };
+  return { state: "limited", roundName, deadline, freeLeft, pinBalance };
+}
+
+/** Ventana del recordatorio de cierre: aparece desde 24 h antes del deadline. */
+const CHANGE_REMINDER_WINDOW_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Payload del popup recordatorio "te quedan menos de 24 h para cambiar tu equipo".
+ * Devuelve no-null SOLO si: hay fecha editable, faltan <24 h para su cierre, el
+ * usuario tiene equipo y TODAVÍA NO tocó su equipo para esa fecha (mismo cálculo
+ * de cambios que `getChangesStatus`/`saveLineup`). Si no, `null` (no se muestra).
+ * El short-circuit por la ventana de 24 h va primero para que el costo por
+ * request (se monta global en el layout) sea mínimo cuando no aplica.
+ */
+export async function getChangeReminder(
+  userId: number,
+  now: Date = new Date(),
+): Promise<{ roundId: number; roundName: string; deadline: string } | null> {
+  const editable = await getEditableRound(now);
+  if (!editable) return null;
+  const msLeft = editable.deadline.getTime() - now.getTime();
+  if (msLeft <= 0 || msLeft > CHANGE_REMINDER_WINDOW_MS) return null;
+
+  const entry = (
+    await db.select({ id: entries.id }).from(entries).where(eq(entries.userId, userId)).limit(1)
+  )[0];
+  if (!entry) return null; // el popup es solo para quien ya tiene equipo
+
+  const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
+  if (editContext.baselinePlayerIds == null) {
+    // Edición libre (primer equipo / fecha 1): "no hizo su cambio" = todavía no
+    // guardó alineación para la fecha editable.
+    const curEr = (
+      await db
+        .select({ id: entryRounds.id })
+        .from(entryRounds)
+        .where(and(eq(entryRounds.entryId, entry.id), eq(entryRounds.roundId, editable.round.id)))
+        .limit(1)
+    )[0];
+    if (curEr) return null;
+  } else {
+    const lineup = await getEditableLineup(userId);
+    const currentIds = lineup ? Object.values(lineup.slots) : [];
+    if (countPlayerChanges(currentIds, editContext.baselinePlayerIds) !== 0) return null;
+  }
+
+  return {
+    roundId: editable.round.id,
+    // Nombre completo de la DB: el popup lo formatea con `roundWithArticle`
+    // ("La Fecha 2", "Los 16vos de Final", "La Final"…).
+    roundName: editable.round.name,
+    deadline: editable.deadline.toISOString(),
+  };
 }
 
 export async function getMyLeagues(userId: number) {
