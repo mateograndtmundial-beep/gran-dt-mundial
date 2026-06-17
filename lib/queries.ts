@@ -22,7 +22,7 @@ import type { Position } from "@/lib/game/config";
 import { FREE_CHANGES_PER_ROUND, SCORING } from "@/lib/game/config";
 import { round1 } from "@/lib/pricing/map";
 import { shortRoundName } from "@/lib/game/round-format";
-import { countPlayerChanges, freeChangesLeft } from "@/lib/game/changes";
+import { freeChangesLeft } from "@/lib/game/changes";
 import { getPinBalance } from "@/lib/pins";
 import { countryEs } from "@/lib/i18n/countries";
 
@@ -639,19 +639,32 @@ export async function getEditableLineup(userId: number) {
 
 /**
  * Contexto para el contador de cambios y el cartel de confirmación del armador.
- * - `baselinePlayerIds`: los 15 de la alineación de la fecha ANTERIOR más reciente
- *   del usuario — el MISMO baseline contra el que `saveLineup` cuenta cambios
- *   (entryRound con `order < fecha editable`). `null` = el usuario no tiene fecha
- *   previa (primer equipo, o estamos en la fecha 1) → armado/edición libre, sin costo.
- * - `alreadySpentThisRound`: pines ya gastados en la fecha editable (si ya guardó
- *   una alineación para ella), para no re-cobrar al re-editar.
+ * El baseline es el ÚLTIMO equipo CONFIRMADO: una vez que guardás una alineación
+ * para la fecha editable, ESE equipo pasa a ser el baseline y los cambios nuevos
+ * se cuentan contra él (no contra la fecha anterior). Así, repetir/revertir un
+ * cambio ya confirmado cuenta como cambio nuevo y no "devuelve" el cupo gratis.
+ *
+ * - `baselinePlayerIds`: los 15 del equipo confirmado contra los que se cuentan
+ *   los cambios NUEVOS. Es la alineación de la fecha editable si ya guardaste una;
+ *   si no, la de la fecha anterior. `null` = no hay fecha previa (primer equipo /
+ *   fecha 1) → armado libre, sin costo.
+ * - `priorChanges`: cambios ya aplicados (acumulados) en la fecha editable
+ *   (`entryRounds.changesMade`) — el cupo gratis ya pudo haberse consumido.
+ * - `alreadySpentThisRound`: pines ya gastados en la fecha editable (reconcilia
+ *   re-ediciones para no re-cobrar).
+ * - `savedThisRound`: si ya hay alineación guardada para la fecha editable.
  */
 export async function getEditContext(userId: number, editableRoundId: number, editableRoundOrder: number) {
   const entry = (await db.select({ id: entries.id }).from(entries).where(eq(entries.userId, userId)).limit(1))[0];
-  if (!entry) return { baselinePlayerIds: null as number[] | null, alreadySpentThisRound: 0 };
+  if (!entry)
+    return {
+      baselinePlayerIds: null as number[] | null,
+      priorChanges: 0,
+      alreadySpentThisRound: 0,
+      savedThisRound: false,
+    };
 
-  // Baseline = entryRound más reciente con order < fecha editable (idéntico al
-  // `prevEr` de saveLineup). Sus jugadores son los 15 contra los que se cuentan cambios.
+  // ¿Hay fecha previa? Define si la edición es "limitada" (cuenta cambios) o libre.
   const prevEr = (
     await db
       .select({ id: entryRounds.id })
@@ -662,25 +675,35 @@ export async function getEditContext(userId: number, editableRoundId: number, ed
       .limit(1)
   )[0];
 
-  let baselinePlayerIds: number[] | null = null;
-  if (prevEr) {
-    const rows = await db
-      .select({ playerId: entryRoundPlayers.playerId })
-      .from(entryRoundPlayers)
-      .where(eq(entryRoundPlayers.entryRoundId, prevEr.id));
-    baselinePlayerIds = rows.map((r) => r.playerId);
-  }
-
-  // Pines ya gastados en la fecha editable (si ya hay alineación guardada para ella).
+  // Alineación ya guardada para la fecha editable (el equipo confirmado actual).
   const curEr = (
     await db
-      .select({ pinsSpent: entryRounds.pinsSpent })
+      .select({ id: entryRounds.id, pinsSpent: entryRounds.pinsSpent, changesMade: entryRounds.changesMade })
       .from(entryRounds)
       .where(and(eq(entryRounds.entryId, entry.id), eq(entryRounds.roundId, editableRoundId)))
       .limit(1)
   )[0];
 
-  return { baselinePlayerIds, alreadySpentThisRound: curEr?.pinsSpent ?? 0 };
+  let baselinePlayerIds: number[] | null = null;
+  let priorChanges = 0;
+  if (prevEr) {
+    // Baseline = equipo confirmado de la fecha editable si existe, si no el de la
+    // fecha anterior. Idéntico criterio al de `saveLineup`.
+    const baseErId = curEr?.id ?? prevEr.id;
+    const rows = await db
+      .select({ playerId: entryRoundPlayers.playerId })
+      .from(entryRoundPlayers)
+      .where(eq(entryRoundPlayers.entryRoundId, baseErId));
+    baselinePlayerIds = rows.map((r) => r.playerId);
+    priorChanges = curEr?.changesMade ?? 0;
+  }
+
+  return {
+    baselinePlayerIds,
+    priorChanges,
+    alreadySpentThisRound: curEr?.pinsSpent ?? 0,
+    savedThisRound: !!curEr,
+  };
 }
 
 export type ChangesStatus =
@@ -729,10 +752,10 @@ export async function getChangesStatus(userId: number, isPremium: boolean): Prom
   const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
   if (editContext.baselinePlayerIds == null) return { state: "unlimited", roundName, deadline };
 
-  const lineup = await getEditableLineup(userId);
-  const currentIds = lineup ? Object.values(lineup.slots) : [];
-  const changesMade = countPlayerChanges(currentIds, editContext.baselinePlayerIds);
-  const freeLeft = freeChangesLeft(changesMade, FREE_CHANGES_PER_ROUND);
+  // El cupo gratis restante sale de los cambios YA acumulados en la fecha
+  // (`priorChanges`), no de un diff recalculado: el baseline es el equipo
+  // confirmado, así que un diff daría siempre 0.
+  const freeLeft = freeChangesLeft(editContext.priorChanges, FREE_CHANGES_PER_ROUND);
   const pinBalance = await getPinBalance(userId);
   return { state: "limited", roundName, deadline, freeLeft, pinBalance };
 }
@@ -766,18 +789,10 @@ export async function getChangeReminder(
   if (editContext.baselinePlayerIds == null) {
     // Edición libre (primer equipo / fecha 1): "no hizo su cambio" = todavía no
     // guardó alineación para la fecha editable.
-    const curEr = (
-      await db
-        .select({ id: entryRounds.id })
-        .from(entryRounds)
-        .where(and(eq(entryRounds.entryId, entry.id), eq(entryRounds.roundId, editable.round.id)))
-        .limit(1)
-    )[0];
-    if (curEr) return null;
-  } else {
-    const lineup = await getEditableLineup(userId);
-    const currentIds = lineup ? Object.values(lineup.slots) : [];
-    if (countPlayerChanges(currentIds, editContext.baselinePlayerIds) !== 0) return null;
+    if (editContext.savedThisRound) return null;
+  } else if (editContext.priorChanges !== 0) {
+    // Ya hizo (y confirmó) al menos un cambio en la fecha → no insistimos.
+    return null;
   }
 
   return {

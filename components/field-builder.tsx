@@ -19,7 +19,7 @@ import { PlayerStatLine } from "@/components/domain/PlayerStats";
 import { cn, formatPrice } from "@/lib/utils";
 import { round1 } from "@/lib/pricing/map";
 import { normalizeName } from "@/lib/pricing/normalize";
-import { countPlayerChanges, pinsForChanges, freeChangesLeft, pinsDueNow } from "@/lib/game/changes";
+import { countPlayerChanges, roundTally } from "@/lib/game/changes";
 import { roundArticle, roundDisplayName } from "@/lib/game/round-format";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
 import { CloseCountdown } from "@/components/close-countdown";
@@ -99,7 +99,8 @@ export type InitialLineup = {
 };
 
 export type ChangeContext = {
-  baselinePlayerIds: number[] | null; // 15 de la fecha anterior; null = edición libre (sin fecha previa)
+  baselinePlayerIds: number[] | null; // 15 del equipo CONFIRMADO; null = edición libre (sin fecha previa)
+  priorChanges: number;               // cambios ya acumulados (y confirmados) en la fecha
   alreadySpent: number;               // pines ya gastados en la fecha editable (reconciliación)
   pinBalance: number;
   isPremium: boolean;
@@ -188,17 +189,28 @@ export function FieldBuilder({
   // ── Cambios de la fecha: contador + costo en pines (misma fórmula que el
   // server, lib/game/changes.ts → no se desincronizan). `limited` = hay una fecha
   // anterior contra la cual contar; si no (primer equipo / fecha 1) la edición es
-  // libre y no mostramos contador ni cobramos.
+  // libre y no mostramos contador ni cobramos. El baseline es el equipo CONFIRMADO,
+  // así que `changesMade` = cambios NUEVOS de esta edición (los ya confirmados no
+  // se recuentan); el tally suma `priorChanges` para el cupo gratis y los pines.
   const cc = changeContext;
   const limited = cc != null && cc.baselinePlayerIds != null;
   const changesMade = limited ? countPlayerChanges(chosen.map((p) => p.id), cc!.baselinePlayerIds) : 0;
-  const pinsTotal = limited ? pinsForChanges(changesMade, { freeChanges: cc!.freeChanges, isPremium: cc!.isPremium }) : 0;
-  const pinsDue = limited ? pinsDueNow(pinsTotal, cc!.alreadySpent) : 0;
-  const freeLeft = limited ? freeChangesLeft(changesMade, cc!.freeChanges) : 0;
+  const tally = limited
+    ? roundTally({
+        priorChanges: cc!.priorChanges,
+        newChanges: changesMade,
+        freeChanges: cc!.freeChanges,
+        isPremium: cc!.isPremium,
+        alreadySpent: cc!.alreadySpent,
+      })
+    : null;
+  const pinsDue = tally?.pinsDue ?? 0;
+  const freeLeft = tally?.freeLeft ?? 0;
+  const freeUsedNow = tally?.freeUsedNow ?? 0;
   const notEnoughPins = limited && !cc!.isPremium && pinsDue > cc!.pinBalance;
 
   // Diff de jugadores para el cartel de confirmación: quiénes salen (estaban en
-  // la fecha anterior y ya no) y quiénes entran. Solo importa en edición limitada.
+  // el equipo confirmado y ya no) y quiénes entran. Solo importa en edición limitada.
   const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
   const baseline = limited ? cc!.baselinePlayerIds! : [];
   const currentIdSet = new Set(chosen.map((p) => p.id));
@@ -574,7 +586,7 @@ export function FieldBuilder({
       round: cc?.roundName ?? null,
       changes_made: changesMade,
       pins_spent: pinsDue,
-      used_free_change: limited && changesMade > 0 && changesMade <= cc!.freeChanges,
+      used_free_change: freeUsedNow > 0,
       is_premium: cc?.isPremium ?? false,
     });
     // Confirmación en /mi-equipo: pasamos los números por query y ahí mostramos
@@ -1260,10 +1272,12 @@ export function FieldBuilder({
             ) : (
               <p className="mt-2 text-sm text-ink-2">
                 Estás haciendo <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"} en esta fecha.{" "}
-                {changesMade <= cc.freeChanges ? (
+                {freeUsedNow > 0 && pinsDue === 0 ? (
                   <>Usás tu <strong>cambio gratis</strong>.</>
+                ) : freeUsedNow > 0 && pinsDue > 0 ? (
+                  <>{freeUsedNow} gratis y el resto cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}).</>
                 ) : pinsDue > 0 ? (
-                  <>{cc.freeChanges} gratis y el resto cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}).</>
+                  <>Cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}). Ya usaste tu cambio gratis de la fecha.</>
                 ) : (
                   <>Sin costo extra (ya estaban pagos).</>
                 )}
@@ -1310,7 +1324,7 @@ export function FieldBuilder({
               </div>
             )}
 
-            {!cc.isPremium && changesMade > cc.freeChanges && !notEnoughPins && (
+            {!cc.isPremium && pinsDue > 0 && !notEnoughPins && (
               <p className="mt-2 text-[11px] text-ink-3">
                 ¿Querés hacer más cambios?{" "}
                 <Link href="/pines" className="font-semibold text-gold-ink hover:text-gold">Comprá pines</Link>.

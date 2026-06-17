@@ -11,7 +11,7 @@ import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND, type Position } from "
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
 import { round1 } from "@/lib/pricing/map";
-import { countPlayerChanges, pinsForChanges } from "@/lib/game/changes";
+import { countPlayerChanges, roundTally } from "@/lib/game/changes";
 
 type BatchOp = Parameters<typeof db.batch>[0][number];
 
@@ -100,7 +100,11 @@ export async function saveLineup(rawInput: SaveLineupInput) {
       .limit(1)
   )[0];
 
-  // Contar cambios vs la alineación de la fecha anterior.
+  // ¿Hay fecha previa? Solo entonces los cambios cuentan (en la fecha 1 / primer
+  // equipo el armado es libre). El baseline es el ÚLTIMO equipo CONFIRMADO: la
+  // alineación ya guardada de ESTA fecha (er0) si existe, si no la de la fecha
+  // anterior. Así, una vez confirmado un cambio queda fijado y los cambios nuevos
+  // (incluso revertir uno confirmado) se cuentan aparte y consumen cupo/pines.
   const prevEr = (
     await db
       .select({ id: entryRounds.id })
@@ -111,24 +115,33 @@ export async function saveLineup(rawInput: SaveLineupInput) {
       .limit(1)
   )[0];
 
-  let changes = 0;
+  let newChanges = 0;
+  const priorChanges = prevEr ? (er0?.changesMade ?? 0) : 0;
   if (prevEr) {
-    const prev = await db
+    const baseErId = er0?.id ?? prevEr.id;
+    const base = await db
       .select({ playerId: entryRoundPlayers.playerId })
       .from(entryRoundPlayers)
-      .where(eq(entryRoundPlayers.entryRoundId, prevEr.id));
-    changes = countPlayerChanges(
+      .where(eq(entryRoundPlayers.entryRoundId, baseErId));
+    newChanges = countPlayerChanges(
       input.players.map((p) => p.playerId),
-      prev.map((p) => p.playerId),
+      base.map((p) => p.playerId),
     );
   }
 
-  // 1er cambio gratis por fecha; los extra cuestan pines. Reconcilia re-ediciones.
-  // Los usuarios premium (compraron el pack "ilimitado") no pagan cambios extra.
-  // Fórmula en lib/game/changes.ts (compartida con el contador del armador).
-  const pinsNeeded = pinsForChanges(changes, { freeChanges: FREE_CHANGES_PER_ROUND, isPremium: user.isPremium });
-  const alreadySpent = er0?.pinsSpent ?? 0;
-  const delta = pinsNeeded - alreadySpent;
+  // Cupo gratis por fecha + pines por los extra, sobre el ACUMULADO de la fecha
+  // (`priorChanges + newChanges`). El total es monótono creciente → `delta` nunca
+  // es negativo y nunca se reembolsan pines. Fórmula en lib/game/changes.ts.
+  const tally = roundTally({
+    priorChanges,
+    newChanges,
+    freeChanges: FREE_CHANGES_PER_ROUND,
+    isPremium: user.isPremium,
+    alreadySpent: er0?.pinsSpent ?? 0,
+  });
+  const totalChanges = tally.totalChanges;
+  const pinsNeeded = tally.pinsTotal;
+  const delta = tally.pinsDue; // = max(0, pinsNeeded - alreadySpent); monótono ⇒ sin refunds
 
   if (delta > 0) {
     const balance = await getPinBalance(user.id);
@@ -143,7 +156,7 @@ export async function saveLineup(rawInput: SaveLineupInput) {
     coachId: input.coachId,
     budgetUsed,
     pinsSpent: pinsNeeded,
-    changesMade: changes,
+    changesMade: totalChanges,
   };
   const playerRows = input.players.map((p) => ({
     playerId: p.playerId,
@@ -212,7 +225,7 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   revalidatePath("/mi-equipo");
   // El roster cambió → el ownership (% de equipos por jugador) puede haberse movido.
   revalidateTag("player-ownership", "max");
-  return { ok: true as const, changes, pinsSpent: pinsNeeded };
+  return { ok: true as const, changes: newChanges, totalChanges, pinsSpent: pinsNeeded };
 }
 
 function genCode(): string {

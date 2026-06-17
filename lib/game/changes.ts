@@ -51,3 +51,33 @@ export function freeChangesLeft(changes: number, freeChanges: number): number {
 export function pinsDueNow(totalPins: number, alreadySpent: number): number {
   return Math.max(0, totalPins - alreadySpent);
 }
+
+/**
+ * Tally de cambios de una fecha cuyo baseline es el ÚLTIMO equipo CONFIRMADO
+ * (no la fecha anterior). Una vez que confirmás un cambio, ese equipo queda
+ * fijado y los cambios siguientes se cuentan contra él:
+ * - `priorChanges`: cambios ya aplicados (y contabilizados) en la fecha.
+ * - `newChanges`: cambios nuevos de esta edición vs el equipo confirmado.
+ *
+ * El cupo gratis es por fecha y se consume UNA sola vez: `priorChanges` ya pudo
+ * haberlo usado, así que un cambio nuevo (incluso revertir uno confirmado) cuesta
+ * pines. El total de la fecha (`priorChanges + newChanges`) es monótono creciente
+ * → nunca hay "deshacer gratis".
+ */
+export function roundTally(p: {
+  priorChanges: number;
+  newChanges: number;
+  freeChanges: number;
+  isPremium: boolean;
+  alreadySpent: number;
+}) {
+  const totalChanges = p.priorChanges + p.newChanges;
+  const pinsTotal = pinsForChanges(totalChanges, { freeChanges: p.freeChanges, isPremium: p.isPremium });
+  const pinsDue = pinsDueNow(pinsTotal, p.alreadySpent);
+  // Cupo gratis que quedaba ANTES de esta edición y cuántos de los cambios nuevos
+  // lo aprovechan (para el copy "X gratis y el resto en pines").
+  const freeLeftBefore = freeChangesLeft(p.priorChanges, p.freeChanges);
+  const freeUsedNow = Math.min(p.newChanges, freeLeftBefore);
+  const freeLeft = freeChangesLeft(totalChanges, p.freeChanges);
+  return { totalChanges, pinsTotal, pinsDue, freeLeft, freeUsedNow };
+}

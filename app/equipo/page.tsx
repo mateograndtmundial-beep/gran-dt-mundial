@@ -63,6 +63,7 @@ export default async function EquipoPage({
     editable && editContext
       ? {
           baselinePlayerIds: editContext.baselinePlayerIds,
+          priorChanges: editContext.priorChanges,
           alreadySpent: editContext.alreadySpentThisRound,
           pinBalance,
           isPremium,
