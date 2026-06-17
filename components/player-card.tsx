@@ -4,6 +4,7 @@ import { POSITION_COLORS, type Position } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
 import { PlayerStatLine } from "@/components/domain/PlayerStats";
 import type { PlayerStats } from "@/lib/queries";
+import { flagUrl } from "@/lib/flags";
 
 export { PositionChip };
 
@@ -13,7 +14,7 @@ export function PlayerCard({
   price,
   club,
   countryName,
-  flagUrl,
+  code,
   eliminated,
   isCaptain,
   stats,
@@ -28,7 +29,7 @@ export function PlayerCard({
   price: number;
   club?: string | null;
   countryName: string;
-  flagUrl?: string | null;
+  code?: string | null;
   eliminated?: boolean;
   isCaptain?: boolean;
   stats?: PlayerStats;
@@ -50,9 +51,9 @@ export function PlayerCard({
       )}
       style={{ borderLeftColor: POSITION_COLORS[position] }}
     >
-      {flagUrl ? (
+      {flagUrl(code) ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={flagUrl} alt={countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
+        <img src={flagUrl(code)!} alt={countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
       ) : (
         <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
       )}

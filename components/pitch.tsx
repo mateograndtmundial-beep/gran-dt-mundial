@@ -15,6 +15,7 @@ import {
 import { cn, formatPrice } from "@/lib/utils";
 // Lógica de slots centralizada en lib/game/lineup (compartida con el server action).
 import { buildSlots, ROWS, type Slot } from "@/lib/game/lineup";
+import { flagUrl } from "@/lib/flags";
 
 export { buildSlots, ROWS };
 export type { Slot };
@@ -24,7 +25,7 @@ export type PitchPlayer = {
   id: number;
   name: string;
   position: Position;
-  flagUrl?: string | null;
+  code?: string | null;
   countryName: string;
   price?: number;
   eliminatedRound?: number | null;
@@ -231,10 +232,10 @@ export function Figurita({
           )}
           style={{ borderBottom: `3px solid ${color}` }}
         >
-          {player.flagUrl ? (
+          {flagUrl(player.code) ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={player.flagUrl}
+              src={flagUrl(player.code)!}
               alt={player.countryName}
               width={48}
               height={32}

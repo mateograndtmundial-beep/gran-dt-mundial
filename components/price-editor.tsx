@@ -7,6 +7,7 @@ import { PRICING } from "@/lib/game/config";
 import { PositionChip } from "@/components/editorial";
 import { cn, formatPrice } from "@/lib/utils";
 import type { Position } from "@/lib/game/config";
+import { flagUrl } from "@/lib/flags";
 
 type P = {
   id: number;
@@ -14,7 +15,7 @@ type P = {
   position: Position;
   price: number;
   countryName: string;
-  flagUrl: string | null;
+  code: string | null;
 };
 
 const LIMIT = 250;
@@ -97,9 +98,9 @@ export function PriceEditor({ players }: { players: P[] }) {
                 needsReview ? "border-warning/60" : "border-border",
               )}
             >
-              {p.flagUrl ? (
+              {flagUrl(p.code) ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={p.flagUrl} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
+                <img src={flagUrl(p.code)!} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
               ) : (
                 <div className="h-4 w-6 rounded-sm bg-surface-2 shrink-0" />
               )}

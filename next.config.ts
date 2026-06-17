@@ -38,12 +38,16 @@ const nextConfig: NextConfig = {
     "/admin/fecha/[roundId]": STORY_TRACE,
   },
   images: {
-    // Banderas y fotos de jugadores vienen de la CDN de API-Football (seed.ts:
-    // `team.flag`/`team.photo`/`p.photo`). Las dejamos remotas (la mayoría son
-    // SVG, que Next no optimiza sin `dangerouslyAllowSVG` — riesgo de XSS que no
-    // vale la pena para banderitas de 28×20). Esto solo habilita el proxy/caché
-    // de Vercel si en algún momento se migra a next/image.
-    remotePatterns: [{ protocol: "https", hostname: "media.api-sports.io" }],
+    // Fotos de jugadores vienen de la CDN de API-Football (seed.ts: `p.photo`).
+    // Las banderas vienen de flagcdn.com (lib/flags.ts) — recortadas a la
+    // proporción real de cada país, sin el relleno blanco de los PNG cuadrados
+    // de API-Football. Quedan remotas (no se usa next/image para banderitas de
+    // 28×20, no vale la pena el costo de optimización); esto solo habilita el
+    // proxy/caché de Vercel si en algún momento se migra a next/image.
+    remotePatterns: [
+      { protocol: "https", hostname: "media.api-sports.io" },
+      { protocol: "https", hostname: "flagcdn.com" },
+    ],
   },
 };
 

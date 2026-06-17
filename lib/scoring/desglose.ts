@@ -19,6 +19,7 @@ export type BreakdownLine = {
   name: string;
   position: Position;
   flagUrl: string | null;
+  code: string | null;
   countryName: string;
   eliminated: boolean;
   isCaptain: boolean;
@@ -31,6 +32,7 @@ export type CoachLine = {
   name: string;
   countryName: string;
   flagUrl: string | null;
+  code: string | null;
   result: "win" | "loss" | "draw" | null;
   points: number;
 };
@@ -53,6 +55,7 @@ export type BdLineupRow = {
   position: Position;
   countryName: string;
   flagUrl: string | null;
+  code: string | null;
   eliminatedRound: number | null;
 };
 
@@ -73,7 +76,13 @@ export type BdStatRow = {
   isMotm: boolean;
 };
 
-export type BdCoach = { name: string; countryId: number; countryName: string; flagUrl: string | null } | null;
+export type BdCoach = {
+  name: string;
+  countryId: number;
+  countryName: string;
+  flagUrl: string | null;
+  code: string | null;
+} | null;
 
 const round1 = (n: number) => Math.round(n * 10) / 10;
 const rank = (p: Position) => POSITIONS.indexOf(p);
@@ -184,7 +193,7 @@ export function buildRoundBreakdown(input: {
     }
     return {
       playerId: pid, name: info.name, position: info.position, flagUrl: info.flagUrl,
-      countryName: info.countryName, eliminated: info.eliminatedRound != null,
+      code: info.code, countryName: info.countryName, eliminated: info.eliminatedRound != null,
       isCaptain, total: round1(total), chips, note,
     };
   }
@@ -214,7 +223,7 @@ export function buildRoundBreakdown(input: {
     .sort((a, b) => rank(a.position) - rank(b.position))
     .map((l) => ({
       playerId: l.playerId, name: l.name, position: l.position, flagUrl: l.flagUrl,
-      countryName: l.countryName, eliminated: l.eliminatedRound != null,
+      code: l.code, countryName: l.countryName, eliminated: l.eliminatedRound != null,
       isCaptain: false, total: 0, chips: [], note: "No entró",
     }));
 
@@ -236,7 +245,7 @@ export function buildRoundBreakdown(input: {
     }
     coachLine = {
       name: coach.name, countryName: coach.countryName, flagUrl: coach.flagUrl,
-      result, points: result ? calcularPuntosTecnico(result) : 0,
+      code: coach.code, result, points: result ? calcularPuntosTecnico(result) : 0,
     };
   }
 

@@ -17,7 +17,7 @@ type P = {
   club: string | null;
   countryId: number;
   countryName: string;
-  flagUrl: string | null;
+  code: string | null;
   eliminatedRound: number | null;
 };
 
@@ -327,7 +327,7 @@ export function PlayersExplorer({
                 price={p.price}
                 club={p.club}
                 countryName={p.countryName}
-                flagUrl={p.flagUrl}
+                code={p.code}
                 eliminated={p.eliminatedRound != null}
                 stats={stats[p.id]}
                 ownership={ownership[p.id]}

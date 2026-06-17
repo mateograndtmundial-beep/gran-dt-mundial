@@ -25,6 +25,7 @@ import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/compo
 import { CloseCountdown } from "@/components/close-countdown";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } from "@/lib/lineup-draft";
+import { flagUrl } from "@/lib/flags";
 
 /* Altura reservada para el chrome de arriba (header + título + control bar).
    Usamos svh (small viewport) en vez de dvh: es estático y no cambia cuando la
@@ -774,9 +775,9 @@ export function FieldBuilder({
                           <ArrowDownUp size={15} className="text-blue md:hidden" />
                           <GripVertical size={14} className="hidden md:inline-block" />
                         </button>
-                        {p.flagUrl ? (
+                        {flagUrl(p.code) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
+                          <img src={flagUrl(p.code)!} alt={p.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-4 w-6 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -1035,9 +1036,9 @@ export function FieldBuilder({
                           selectable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
                         )}
                       >
-                        {p.flagUrl ? (
+                        {flagUrl(p.code) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt={p.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
+                          <img src={flagUrl(p.code)!} alt={p.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -1061,9 +1062,9 @@ export function FieldBuilder({
                         onClick={() => { setCoachId(c.id); setModal(null); }}
                         className="flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group hover:bg-surface-2"
                       >
-                        {c.flagUrl ? (
+                        {flagUrl(c.code) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.flagUrl} alt={c.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
+                          <img src={flagUrl(c.code)!} alt={c.countryName} width={28} height={20} loading="lazy" decoding="async" className="h-5 w-7 rounded-sm object-cover shrink-0" />
                         ) : (
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
@@ -1134,9 +1135,9 @@ export function FieldBuilder({
                       >
                         {sp ? (
                           <>
-                            {sp.flagUrl ? (
+                            {flagUrl(sp.code) ? (
                               // eslint-disable-next-line @next/next/no-img-element
-                              <img src={sp.flagUrl} alt={sp.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                              <img src={flagUrl(sp.code)!} alt={sp.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
                             ) : (
                               <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
                             )}
@@ -1209,9 +1210,9 @@ export function FieldBuilder({
               <ul className="mt-3 space-y-1.5">
                 {lost.map((p) => (
                   <li key={p.id} className="flex items-center gap-2 text-sm font-semibold text-ink">
-                    {p.flagUrl ? (
+                    {flagUrl(p.code) ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={p.flagUrl} alt="" aria-hidden width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover" />
+                      <img src={flagUrl(p.code)!} alt="" aria-hidden width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 rounded-sm object-cover" />
                     ) : (
                       <span className="h-4 w-6 rounded-sm bg-surface-2" />
                     )}
@@ -1291,9 +1292,9 @@ export function FieldBuilder({
                   <ul className="space-y-1.5">
                     {leaving.map((p) => (
                       <li key={p.id} className="flex items-center gap-1.5">
-                        {p.flagUrl && (
+                        {flagUrl(p.code) && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                          <img src={flagUrl(p.code)!} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
                         )}
                         <span className="truncate text-[12px] text-ink-2">{p.name}</span>
                       </li>
@@ -1305,9 +1306,9 @@ export function FieldBuilder({
                   <ul className="space-y-1.5">
                     {entering.map((p) => (
                       <li key={p.id} className="flex items-center gap-1.5">
-                        {p.flagUrl && (
+                        {flagUrl(p.code) && (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={p.flagUrl} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                          <img src={flagUrl(p.code)!} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
                         )}
                         <span className="truncate text-[12px] font-semibold text-ink">{p.name}</span>
                       </li>
@@ -1356,9 +1357,9 @@ export function FieldBuilder({
           className="pointer-events-none fixed z-[60] flex -translate-x-1/2 -translate-y-1/2 items-center gap-1.5 rounded-[6px] border border-gold-border bg-surface px-2 py-1 card-shadow-lg"
           style={{ left: drag.x, top: drag.y }}
         >
-          {drag.player.flagUrl && (
+          {flagUrl(drag.player.code) && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={drag.player.flagUrl} alt="" aria-hidden width={24} height={16} decoding="async" className="h-4 w-6 rounded-sm object-cover" />
+            <img src={flagUrl(drag.player.code)!} alt="" aria-hidden width={24} height={16} decoding="async" className="h-4 w-6 rounded-sm object-cover" />
           )}
           <span className="text-xs font-bold text-ink">{drag.player.name}</span>
         </div>

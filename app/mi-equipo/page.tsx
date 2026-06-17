@@ -12,6 +12,7 @@ import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRanki
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
+import { flagUrl } from "@/lib/flags";
 
 export const dynamic = "force-dynamic";
 
@@ -106,7 +107,7 @@ export default async function MiEquipoPage({
       id: p.id,
       name: p.name,
       position: p.position as Position,
-      flagUrl: p.flagUrl,
+      code: p.code,
       countryName: p.countryName,
       price: p.price,
       eliminatedRound: p.eliminatedRound,
@@ -198,9 +199,9 @@ export default async function MiEquipoPage({
                         className="flex items-center gap-2 rounded-[6px] border border-border bg-surface px-2.5 py-2"
                       >
                         <PositionChip position={s.position as Position} />
-                        {s.flagUrl ? (
+                        {flagUrl(s.code) ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={s.flagUrl} alt={s.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                          <img src={flagUrl(s.code)!} alt={s.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
                         ) : (
                           <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
                         )}
@@ -224,9 +225,9 @@ export default async function MiEquipoPage({
                     <span className="shrink-0 rounded-[4px] bg-blue/10 px-1.5 py-0.5 text-[10px] font-display tracking-wide text-blue">
                       DT
                     </span>
-                    {coach.flagUrl ? (
+                    {flagUrl(coach.code) ? (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={coach.flagUrl} alt={coach.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
+                      <img src={flagUrl(coach.code)!} alt={coach.countryName} width={24} height={16} loading="lazy" decoding="async" className="h-4 w-6 shrink-0 rounded-sm object-cover" />
                     ) : (
                       <div className="h-4 w-6 shrink-0 rounded-sm bg-surface-2" />
                     )}

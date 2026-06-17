@@ -49,6 +49,7 @@ export async function getPlayersWithCountryRaw() {
       countryId: players.countryId,
       countryName: countries.name,
       flagUrl: countries.flagUrl,
+      code: countries.code,
       eliminatedRound: countries.eliminatedRound,
     })
     .from(players)
@@ -476,6 +477,7 @@ export async function getCoaches() {
       countryId: coaches.countryId,
       countryName: countries.name,
       flagUrl: countries.flagUrl,
+      code: countries.code,
     })
     .from(coaches)
     .innerJoin(countries, eq(coaches.countryId, countries.id));
@@ -491,6 +493,7 @@ export async function getLineupCoach(entryRoundId: number) {
         name: coaches.name,
         countryName: countries.name,
         flagUrl: countries.flagUrl,
+        code: countries.code,
       })
       .from(entryRounds)
       .innerJoin(coaches, eq(entryRounds.coachId, coaches.id))
@@ -906,6 +909,7 @@ export async function getLineupPlayers(entryRoundId: number) {
       slot: entryRoundPlayers.slot,
       countryName: countries.name,
       flagUrl: countries.flagUrl,
+      code: countries.code,
       eliminatedRound: countries.eliminatedRound,
     })
     .from(entryRoundPlayers)
@@ -952,6 +956,7 @@ export async function getRoundBreakdown(
       position: players.position,
       countryName: countries.name,
       flagUrl: countries.flagUrl,
+      code: countries.code,
       eliminatedRound: countries.eliminatedRound,
     })
     .from(entryRoundPlayers)
@@ -1011,6 +1016,7 @@ export async function getRoundBreakdown(
               countryId: coaches.countryId,
               countryName: countries.name,
               flagUrl: countries.flagUrl,
+              code: countries.code,
             })
             .from(coaches)
             .innerJoin(countries, eq(coaches.countryId, countries.id))

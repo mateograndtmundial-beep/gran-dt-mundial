@@ -6,6 +6,7 @@ import { cn, formatPoints } from "@/lib/utils";
 import { PositionChip } from "@/components/editorial";
 import { getRoundBreakdownAction } from "@/lib/breakdown-actions";
 import type { RoundBreakdown, BreakdownLine, BreakdownChip } from "@/lib/scoring/desglose";
+import { flagUrl } from "@/lib/flags";
 
 type RoundPoints = { id: number; roundName: string; points: number };
 
@@ -26,7 +27,8 @@ function Chip({ chip }: { chip: BreakdownChip }) {
   );
 }
 
-function Flag({ url, alt }: { url: string | null; alt: string }) {
+function Flag({ code, alt }: { code: string | null; alt: string }) {
+  const url = flagUrl(code);
   return url ? (
     // eslint-disable-next-line @next/next/no-img-element
     <img src={url} alt={alt} width={24} height={16} loading="lazy" decoding="async" className="mt-0.5 h-4 w-6 shrink-0 rounded-sm object-cover" />
@@ -38,7 +40,7 @@ function Flag({ url, alt }: { url: string | null; alt: string }) {
 function PlayerRow({ line, muted }: { line: BreakdownLine; muted?: boolean }) {
   return (
     <div className={cn("flex items-start gap-2.5 py-2", (muted || line.eliminated) && "opacity-50")}>
-      <Flag url={line.flagUrl} alt={line.countryName} />
+      <Flag code={line.code} alt={line.countryName} />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <span className="truncate text-sm font-semibold text-ink">{line.name}</span>
@@ -86,7 +88,7 @@ function Detail({ data }: { data: Extract<RoundBreakdown, { published: true }> }
         <div>
           <p className="eyebrow mb-1">Técnico</p>
           <div className="flex items-center gap-2.5 py-1.5">
-            <Flag url={data.coach.flagUrl} alt={data.coach.countryName} />
+            <Flag code={data.coach.code} alt={data.coach.countryName} />
             <div className="min-w-0 flex-1">
               <span className="truncate text-sm font-semibold text-ink">{data.coach.name}</span>
               <p className="text-[11px] text-ink-3">

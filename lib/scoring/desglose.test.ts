@@ -5,7 +5,7 @@ import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import type { Position } from "@/lib/game/config";
 
 function L(playerId: number, slot: string, position: Position, isStarter: boolean, name: string): BdLineupRow {
-  return { playerId, isStarter, slot, name, position, countryName: `P${playerId}`, flagUrl: null, eliminatedRound: null };
+  return { playerId, isStarter, slot, name, position, countryName: `P${playerId}`, flagUrl: null, code: null, eliminatedRound: null };
 }
 function S(playerId: number, o: Partial<BdStatRow>): BdStatRow {
   return {
@@ -39,7 +39,7 @@ const stats: BdStatRow[] = [
 const matches = [
   { homeCountryId: 100, awayCountryId: 200, homeScore: 2, awayScore: 0, homePenalties: null, awayPenalties: null },
 ];
-const coach = { name: "Sampaoli", countryId: 100, countryName: "Argentina", flagUrl: null };
+const coach = { name: "Sampaoli", countryId: 100, countryName: "Argentina", flagUrl: null, code: null };
 
 const result = buildRoundBreakdown({ captainPlayerId: 4, lineup, stats, matches, coach });
 

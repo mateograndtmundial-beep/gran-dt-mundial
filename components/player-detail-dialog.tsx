@@ -7,6 +7,7 @@ import { PlayerStatGrid, ownershipText } from "@/components/domain/PlayerStats";
 import { formatPrice, cn } from "@/lib/utils";
 import type { Position } from "@/lib/game/config";
 import type { FixtureInfo, PlayerStats } from "@/lib/queries";
+import { flagUrl } from "@/lib/flags";
 
 export type ExplorerPlayer = {
   id: number;
@@ -16,7 +17,7 @@ export type ExplorerPlayer = {
   club: string | null;
   countryId: number;
   countryName: string;
-  flagUrl: string | null;
+  code: string | null;
   eliminatedRound: number | null;
 };
 
@@ -85,10 +86,10 @@ export function PlayerDetailDialog({
         <div className="space-y-4 p-4">
             {/* Header */}
             <div className="flex items-center gap-3">
-              {player.flagUrl ? (
+              {flagUrl(player.code) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={player.flagUrl}
+                  src={flagUrl(player.code)!}
                   alt={player.countryName}
                   width={40}
                   height={28}

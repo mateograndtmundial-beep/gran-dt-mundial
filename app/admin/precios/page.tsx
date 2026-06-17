@@ -43,7 +43,7 @@ export default async function AdminPreciosPage() {
             position: p.position,
             price: p.price,
             countryName: p.countryName,
-            flagUrl: p.flagUrl,
+            code: p.code,
           }))}
         />
       )}
