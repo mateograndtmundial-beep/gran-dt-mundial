@@ -206,6 +206,9 @@ export const entryRounds = pgTable(
     points: doublePrecision('points').notNull().default(0),
     pinsSpent: integer('pins_spent').notNull().default(0),
     changesMade: integer('changes_made').notNull().default(0),
+    // Permite auditar cuándo se guardó/editó la alineación de cada fecha (p.ej. cuándo
+    // un usuario usó su cambio gratis). $onUpdate la refresca en cada UPDATE de saveLineup.
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
   },
   (t) => [
     uniqueIndex('er_entry_round').on(t.entryId, t.roundId),
