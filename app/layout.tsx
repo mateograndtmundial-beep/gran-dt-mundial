@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
 import { Bebas_Neue, Manrope, Archivo_Black } from "next/font/google";
 import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
+import { ChangeReminder } from "@/components/change-reminder";
 import { PostHogProvider } from "./providers";
 import { PostHogIdentify } from "@/components/posthog-identify";
 import { SITE } from "@/lib/site";
@@ -76,6 +78,15 @@ export default async function RootLayout({
       <main className="mx-auto w-full max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 md:pb-10">
         {children}
       </main>
+      {/* Recordatorio de cierre de cambios (popup 24 h). Server-async: corta
+          barato si no aplica. Solo se monta con Clerk activo (necesita sesión).
+          En Suspense para que su lectura de sesión (auth) no fuerce el render
+          dinámico de las páginas estáticas que comparten este layout. */}
+      {clerkEnabled && (
+        <Suspense fallback={null}>
+          <ChangeReminder />
+        </Suspense>
+      )}
       {/* Ata cada replay/evento al usuario logueado (necesita Clerk + PostHog). */}
       {posthogEnabled && clerkEnabled && <PostHogIdentify />}
     </>
