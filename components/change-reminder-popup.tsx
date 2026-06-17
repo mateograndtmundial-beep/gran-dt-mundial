@@ -103,11 +103,9 @@ export function ChangeReminderPopup({
         </div>
 
         <p className="text-sm leading-relaxed text-ink-2">
-          El cierre de la ventana para los cambios de{" "}
-          <strong className="text-ink">{roundWithArticle(roundName)}</strong> es el{" "}
-          <strong className="text-ink">{deadlineLabel}</strong> (hora Argentina). Si querés cambiar tu
-          equipo para esta fecha, hacelo antes — después queda cerrado y el equipo que tenías en ese
-          momento es el que va a sumar tus puntos!
+          Tenés hasta el <strong className="text-ink">{deadlineLabel}</strong> (hora Argentina) para
+          cambiar tu equipo de <strong className="text-ink">{roundWithArticle(roundName)}</strong>.
+          Después se cierra y el que tengas armado es el que va a sumar tus puntos.
         </p>
 
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
