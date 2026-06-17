@@ -183,7 +183,6 @@ export function PlayerDetailDialog({
                     <span className="inline-flex items-center gap-1">
                       <span className="h-1.5 w-1.5 rounded-full bg-danger" />Difícil
                     </span>
-                    <span>· según qué tan fuerte es el rival</span>
                   </div>
                 </div>
               ) : (
