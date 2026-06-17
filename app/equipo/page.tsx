@@ -123,6 +123,7 @@ export default async function EquipoPage({
             initial={initial}
             initialTeamName={initial?.teamName ?? ""}
             deadlineLabel={deadlineLabel}
+            deadline={editable?.deadline?.toISOString() ?? null}
             isAuthed={isAuthed}
             changeContext={changeContext}
             addPlayerId={addPlayerId}

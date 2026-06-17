@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { usePostHog } from "posthog-js/react";
 import { X, GripVertical, ArrowDownUp, ArrowLeftRight } from "lucide-react";
 import {
   FORMATIONS,
@@ -21,6 +22,7 @@ import { normalizeName } from "@/lib/pricing/normalize";
 import { countPlayerChanges, pinsForChanges, freeChangesLeft, pinsDueNow } from "@/lib/game/changes";
 import { roundArticle, roundDisplayName } from "@/lib/game/round-format";
 import { Eyebrow, ValidationCallout, PrimaryButton, PositionChip } from "@/components/editorial";
+import { CloseCountdown } from "@/components/close-countdown";
 import { Pitch, buildSlots, type Slot, type PitchPlayer } from "@/components/pitch";
 import { readDraft, writeDraft, clearDraft, draftDiffers, type LineupDraft } from "@/lib/lineup-draft";
 
@@ -116,6 +118,7 @@ export function FieldBuilder({
   initial,
   initialTeamName = "",
   deadlineLabel = "CERRÁ TU EQUIPO",
+  deadline = null,
   isAuthed = false,
   changeContext = null,
   addPlayerId = null,
@@ -129,10 +132,12 @@ export function FieldBuilder({
   initial?: InitialLineup | null;
   initialTeamName?: string;
   deadlineLabel?: string;
+  deadline?: string | null; // ISO del cierre (kickoff 1er partido) → countdown en vivo
   isAuthed?: boolean;
   changeContext?: ChangeContext | null;
   addPlayerId?: number | null;
 }) {
+  const posthog = usePostHog();
   const hasStats = Object.keys(stats).length > 0;
   const hasOwnership = Object.keys(ownership).length > 0;
   const router = useRouter();
@@ -191,6 +196,18 @@ export function FieldBuilder({
   const pinsDue = limited ? pinsDueNow(pinsTotal, cc!.alreadySpent) : 0;
   const freeLeft = limited ? freeChangesLeft(changesMade, cc!.freeChanges) : 0;
   const notEnoughPins = limited && !cc!.isPremium && pinsDue > cc!.pinBalance;
+
+  // Diff de jugadores para el cartel de confirmación: quiénes salen (estaban en
+  // la fecha anterior y ya no) y quiénes entran. Solo importa en edición limitada.
+  const byId = useMemo(() => new Map(players.map((p) => [p.id, p])), [players]);
+  const baseline = limited ? cc!.baselinePlayerIds! : [];
+  const currentIdSet = new Set(chosen.map((p) => p.id));
+  const baselineSet = new Set(baseline);
+  const leaving = baseline
+    .filter((id) => !currentIdSet.has(id))
+    .map((id) => byId.get(id))
+    .filter((p): p is PlayerRow => p != null);
+  const entering = chosen.filter((p) => !baselineSet.has(p.id));
 
   const starterSlots   = slots.filter((s) => s.isStarter);
   const subSlots       = slots.filter((s) => !s.isStarter);
@@ -553,7 +570,17 @@ export function FieldBuilder({
     }
     if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
     clearDraft(); // guardado OK → el borrador local ya no hace falta
-    router.push("/mi-equipo");
+    posthog?.capture("lineup_saved", {
+      round: cc?.roundName ?? null,
+      changes_made: changesMade,
+      pins_spent: pinsDue,
+      used_free_change: limited && changesMade > 0 && changesMade <= cc!.freeChanges,
+      is_premium: cc?.isPremium ?? false,
+    });
+    // Confirmación en /mi-equipo: pasamos los números por query y ahí mostramos
+    // un cartel de éxito (el armador navega de inmediato, no alcanza un toast acá).
+    const params = new URLSearchParams({ saved: "1", ch: String(changesMade), pins: String(pinsDue) });
+    router.push(`/mi-equipo?${params.toString()}`);
   }
 
   // Auto-guardado: si el equipo se restauró desde un borrador "submitted" (tocaste
@@ -588,7 +615,12 @@ export function FieldBuilder({
       {/* ─── Barra de control compacta ─── */}
       <div className="rounded-[8px] border border-border bg-surface card-shadow px-3 py-2.5">
         <div className="flex items-center justify-between gap-3">
-          <span className="eyebrow text-blue-ink">{deadlineLabel}</span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="eyebrow text-blue-ink">{deadlineLabel}</span>
+            {deadline && (
+              <CloseCountdown deadline={deadline} className="text-[11px] font-semibold text-danger" />
+            )}
+          </span>
           <div className="flex flex-col items-end shrink-0">
             {/* El número grande es lo GASTADO (coincide con la barra, que se llena
                 al gastar); abajo el restante explícito para que no se confunda. */}
@@ -822,6 +854,12 @@ export function FieldBuilder({
                 >
                   ¿Querés más cambios? Comprá pines →
                 </Link>
+              )}
+              {changesMade === 0 && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-ink-3">
+                  La ventana ya está abierta — no esperes a que se publiquen los puntos para hacer
+                  tus cambios.
+                </p>
               )}
             </div>
           )}
@@ -1230,6 +1268,39 @@ export function FieldBuilder({
                   <>Sin costo extra (ya estaban pagos).</>
                 )}
               </p>
+            )}
+
+            {changesMade > 0 && (leaving.length > 0 || entering.length > 0) && (
+              <div className="mt-3 grid grid-cols-2 gap-2 rounded-[8px] border border-border bg-canvas p-2.5">
+                <div className="min-w-0">
+                  <p className="eyebrow mb-1.5 text-danger">Salen</p>
+                  <ul className="space-y-1.5">
+                    {leaving.map((p) => (
+                      <li key={p.id} className="flex items-center gap-1.5">
+                        {p.flagUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.flagUrl} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                        )}
+                        <span className="truncate text-[12px] text-ink-2">{p.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="min-w-0">
+                  <p className="eyebrow mb-1.5 text-success">Entran</p>
+                  <ul className="space-y-1.5">
+                    {entering.map((p) => (
+                      <li key={p.id} className="flex items-center gap-1.5">
+                        {p.flagUrl && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={p.flagUrl} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                        )}
+                        <span className="truncate text-[12px] font-semibold text-ink">{p.name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
             )}
 
             {notEnoughPins && (
