@@ -119,7 +119,8 @@ export default async function Home() {
                 <>
                   El Mundial ya está en juego: armá tu equipo ahora y sumás desde{" "}
                   <strong>{roundShortName}</strong>. Tenés tiempo hasta el{" "}
-                  <strong>{deadlineLabel}</strong> (hora Argentina).
+                  <strong>{deadlineLabel}</strong> (hora Argentina). La ventana ya está
+                  abierta — no esperes a que se publiquen los puntos para hacer tus cambios.
                 </>
               ) : (
                 <>
