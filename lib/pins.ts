@@ -28,9 +28,22 @@ export function pinMovementOps(userId: number, delta: number, roundId: number) {
     ];
   }
   const lock = db.select({ id: users.id }).from(users).where(eq(users.id, userId)).for("update");
+  // Saldo actual del usuario (suma del ledger), como subconsulta reusable.
+  const balance = sql`(select coalesce(sum(${pinTransactions.delta}), 0) from ${pinTransactions} where ${pinTransactions.userId} = ${userId})`;
   const debit = db.insert(pinTransactions).values({
     userId,
-    delta: sql<number>`case when (select coalesce(sum(${pinTransactions.delta}), 0) from ${pinTransactions} where ${pinTransactions.userId} = ${userId}) >= ${delta} then ${-delta} else 1 / 0 end`,
+    // Si el saldo alcanza, debita -delta. Si NO alcanza, fuerza una división por cero
+    // que aborta TODO el batch (no se guarda la alineación sin cobrar ni queda saldo
+    // negativo); saveLineup mapea ese error a "pins".
+    //
+    // ⚠️ El divisor de la rama `else` DEBE depender de una subconsulta (acá `balance -
+    // balance` = 0). NO usar el literal `1 / 0`: Postgres constant-foldea las
+    // expresiones constantes en tiempo de PLANEACIÓN, así que `1 / 0` lanza el error
+    // SIEMPRE —incluso cuando el saldo alcanza y nunca se entra al `else`—, lo que
+    // rompía TODO gasto de pines (ningún débito llegaba a concretarse). Al derivar el
+    // cero de una subconsulta, el planner no puede pre-evaluarlo y el error ocurre
+    // solo en runtime cuando realmente no hay saldo.
+    delta: sql<number>`case when ${balance} >= ${delta} then ${-delta} else ${delta} / (${balance} - ${balance}) end`,
     reason: "transfer",
     roundId,
   });
