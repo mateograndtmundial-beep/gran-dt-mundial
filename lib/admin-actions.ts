@@ -13,6 +13,7 @@ import { clamp, round1 } from "@/lib/pricing/map";
 import { PRICING } from "@/lib/game/config";
 import { notifyRoundPublished, notifyRoundSynced, notifyError } from "@/lib/notify/slack";
 import { postPendingRecaps, postMatchRecap } from "@/lib/stories/recap";
+import { postRoundRecap } from "@/lib/stories/round-recap";
 import { postPendingScoreboards } from "@/lib/stories/scoreboard";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
@@ -164,11 +165,42 @@ export async function publishRoundAction(roundId: number) {
     // No notificamos si la fecha ya estaba publicada (reintento idempotente → 0 equipos).
     if (!("alreadyPublished" in r)) {
       notifyRoundPublished({ roundId, entries: r.entries, players: r.players });
+      // Auto-posteo del carrusel de resumen (aviso + Top 3 + Mejor XI) a #SOCIAL.
+      // Best-effort: un fallo de render/Slack NO marca el publish como fallido
+      // (ya se publicó). Re-postear a mano con el botón si hiciera falta.
+      try {
+        await postRoundRecap(roundId);
+        logAdmin("publishRound:recap", admin.id, { roundId, ok: true });
+      } catch (e) {
+        logAdmin("publishRound:recap", admin.id, { roundId, ok: false, error: (e as Error).message });
+        notifyError({ source: "publishRound:recap", message: (e as Error).message });
+      }
     }
     return { ok: true as const, info: `${r.entries} equipos · ${r.players} jugadores` };
   } catch (e) {
     logAdmin("publishRound", admin.id, { roundId, ok: false, error: (e as Error).message });
     notifyError({ source: "publishRound", message: (e as Error).message });
+    return { ok: false as const, error: (e as Error).message };
+  }
+}
+
+/**
+ * Postea (o re-postea) a #SOCIAL el carrusel de resumen de una fecha publicada:
+ * aviso "ya están los puntos" + Top 3 (fecha + global) + Mejor XI. Disparo manual
+ * desde /admin; el auto-posteo ya corre solo al publicar.
+ */
+export async function postRoundRecapAction(roundId: number) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(roundId) || roundId <= 0) return { ok: false as const, error: "fecha inválida" };
+  try {
+    const ok = await postRoundRecap(roundId);
+    logAdmin("postRoundRecap", admin.id, { roundId, ok });
+    if (!ok) return { ok: false as const, error: "la fecha todavía no tiene puntos publicados" };
+    return { ok: true as const, info: "resumen (3 imágenes) posteado a #SOCIAL" };
+  } catch (e) {
+    logAdmin("postRoundRecap", admin.id, { roundId, ok: false, error: (e as Error).message });
+    notifyError({ source: "postRoundRecap", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
   }
 }

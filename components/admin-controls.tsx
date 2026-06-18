@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check } from "lucide-react";
-import { syncRoundAction, publishRoundAction, unpublishRound, generateRecapsAction, generateScoreboardsAction } from "@/lib/admin-actions";
+import { syncRoundAction, publishRoundAction, unpublishRound, generateRecapsAction, generateScoreboardsAction, postRoundRecapAction } from "@/lib/admin-actions";
 import { Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import {
@@ -184,6 +184,16 @@ export function AdminControls({ rounds }: { rounds: R[] }) {
                     className="rounded-[6px] border border-warning/60 bg-surface px-3 py-2 text-sm font-semibold text-warning hover:bg-surface-2 transition-all disabled:opacity-50"
                   >
                     Despublicar
+                  </button>
+                )}
+                {published && (
+                  <button
+                    disabled={isBusy}
+                    onClick={() => run(r.id, postRoundRecapAction, "Resumen")}
+                    title="Re-postea a #SOCIAL el carrusel de resumen (aviso + Top 3 + Mejor XI). Se postea solo al publicar."
+                    className="rounded-[6px] border border-gold-border bg-surface px-3 py-2 text-sm font-semibold text-gold-ink hover:bg-gold-bg hover:border-gold transition-all disabled:opacity-50"
+                  >
+                    Resumen →
                   </button>
                 )}
                 <button

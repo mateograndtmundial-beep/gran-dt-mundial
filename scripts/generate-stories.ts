@@ -8,6 +8,9 @@ import {
   postPendingRecaps,
   storyFileName,
 } from "../lib/stories/recap";
+import { DEMO_ROUND_RECAP, getRoundRecapData, type RoundRecapData } from "../lib/stories/round-recap-data";
+import { renderRoundRecap, postRoundRecap } from "../lib/stories/round-recap";
+import { roundIdByOrder } from "../lib/stories/scoreboard";
 
 /*
  * Generador de stories "Resumen de partido". Usa los MISMOS módulos que el cron y
@@ -41,6 +44,47 @@ async function toDisk(items: StoryData[]) {
 }
 
 async function main() {
+  // --round-recap <order>: carrusel de resumen de fecha (aviso + Top 3 + Mejor XI).
+  //   --round-recap --demo            → data de prueba a disco (testear el diseño)
+  //   --round-recap 1                 → fecha 1 (ya publicada) a disco
+  //   --round-recap 1 --slack         → postea las 3 imágenes a #SOCIAL
+  if (has("round-recap")) {
+    let data: RoundRecapData | null;
+    if (has("demo")) {
+      data = DEMO_ROUND_RECAP;
+    } else {
+      const order = Number(arg("round-recap"));
+      if (!order) {
+        console.error("Usá: --round-recap <order> [--slack]  |  --round-recap --demo");
+        process.exit(1);
+      }
+      const roundId = await roundIdByOrder(order);
+      if (!roundId) {
+        console.error(`Fecha ${order} no existe.`);
+        process.exit(1);
+      }
+      if (has("slack")) {
+        const ok = await postRoundRecap(roundId);
+        console.log(ok ? "→ #SOCIAL: resumen posteado (3 imágenes)." : "La fecha todavía no tiene puntos publicados.");
+        return;
+      }
+      data = await getRoundRecapData(roundId);
+      if (!data) {
+        console.log("La fecha todavía no tiene puntos publicados.");
+        return;
+      }
+    }
+    const outDir = path.join(process.cwd(), arg("out") ?? "out/stories");
+    await mkdir(outDir, { recursive: true });
+    for (const { buf, filename } of await renderRoundRecap(data)) {
+      const out = path.join(outDir, filename);
+      await writeFile(out, buf);
+      console.log(`✓ ${path.relative(process.cwd(), out)} (${(buf.length / 1024).toFixed(0)} KB)`);
+    }
+    console.log(`\nListo: resumen de fecha → ${path.relative(process.cwd(), outDir)}`);
+    return;
+  }
+
   // --pending: idéntico al cron (postea a #SOCIAL todo lo terminado no posteado).
   if (has("pending")) {
     const r = await postPendingRecaps();
