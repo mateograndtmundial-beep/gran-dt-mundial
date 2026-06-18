@@ -12,11 +12,14 @@ export function LeagueRanking({
   rows,
   currentUserId,
   startRank = 1,
+  mineBadge = false,
 }: {
   rows: RankingRow[];
   currentUserId?: string | null;
   /** Posición del primer registro de `rows` (1-based) — útil para paginar sin perder el ranking real. */
   startRank?: number;
+  /** Muestra un chip "VOS" en la fila del usuario logueado (solo ligas privadas). */
+  mineBadge?: boolean;
 }) {
   if (rows.length === 0) {
     return (
@@ -77,13 +80,20 @@ export function LeagueRanking({
 
               {/* Info */}
               <span className="min-w-0 flex-1">
-                <span
-                  className={cn(
-                    "block truncate font-semibold text-ink",
-                    rank === 1 ? "text-lg" : isTop3 ? "text-base" : "text-sm",
+                <span className="flex items-center gap-1.5">
+                  <span
+                    className={cn(
+                      "min-w-0 truncate font-semibold text-ink",
+                      rank === 1 ? "text-lg" : isTop3 ? "text-base" : "text-sm",
+                    )}
+                  >
+                    {r.username ?? "DT"}
+                  </span>
+                  {isMine && mineBadge && (
+                    <span className="shrink-0 rounded-[4px] bg-blue px-1.5 py-0.5 text-[9px] font-bold uppercase leading-none tracking-wide text-white">
+                      Vos
+                    </span>
                   )}
-                >
-                  {r.username ?? "DT"}
                 </span>
                 <span className="block truncate text-xs text-ink-3">{r.entryName ?? "Sin equipo"}</span>
               </span>

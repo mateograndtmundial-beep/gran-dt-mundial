@@ -82,6 +82,8 @@ export default async function LeaguePage({
       />
 
       <LeagueRanking
+        currentUserId={user?.username ?? null}
+        mineBadge
         startRank={(data.page - 1) * data.pageSize + 1}
         rows={data.rows.map((r, i) => ({
           entryId: (data.page - 1) * data.pageSize + i,
