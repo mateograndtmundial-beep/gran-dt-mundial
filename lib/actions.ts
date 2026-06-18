@@ -169,10 +169,9 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   const pinOps = delta !== 0 ? (pinMovementOps(user.id, delta, round.id) as BatchOp[]) : [];
 
   // Ejecuta el batch mapeando el guard de pines (1/0) a un error "pins" limpio.
-  const runBatch = async (ops: BatchOp[]) => {
-    if (!ops.length) return { pins: false as const };
+  const runBatch = async (ops: [BatchOp, ...BatchOp[]]) => {
     try {
-      await db.batch(ops as [BatchOp, ...BatchOp[]]);
+      await db.batch(ops);
       return { pins: false as const };
     } catch (e) {
       if (isInsufficientPinsError(e)) return { pins: true as const };
@@ -180,46 +179,48 @@ export async function saveLineup(rawInput: SaveLineupInput) {
     }
   };
 
-  if (er0) {
-    // Re-edición: reemplazo de la alineación. El delete + insert + ajuste de pines
-    // deben ser atómicos — si no, un fallo entre medio deja el equipo sin jugadores.
-    // neon-http no soporta transaction(), pero batch() corre todo en una sola
-    // transacción del servidor.
-    const ops: BatchOp[] = [
-      db.update(entryRounds).set(erValues).where(eq(entryRounds.id, er0.id)),
-      db.delete(entryRoundPlayers).where(eq(entryRoundPlayers.entryRoundId, er0.id)),
-    ];
-    if (playerRows.length) {
-      ops.push(
-        db
-          .insert(entryRoundPlayers)
-          .values(playerRows.map((p) => ({ ...p, entryRoundId: er0.id }))),
-      );
-    }
-    ops.push(...pinOps);
-    const r = await runBatch(ops);
-    if (r.pins) return { ok: false as const, error: "pins" as const, needed: delta, balance: await getPinBalance(user.id) };
-  } else {
-    // Primera alineación de la fecha: necesitamos el id generado antes de insertar
-    // los jugadores, así que el insert del entryRound va aparte. No hay delete acá,
-    // por lo que un fallo parcial deja a lo sumo un entryRound sin jugadores
-    // (recuperable re-guardando), no una alineación borrada.
-    const er = (
+  // Aseguramos la fila del entryRound ANTES del batch porque neon-http necesita el
+  // id generado para poder insertar los jugadores. CLAVE: cuando se crea, va con los
+  // defaults de la tabla (pinsSpent=0, changesMade=0). Los valores REALES de pines y
+  // cambios —que tienen que quedar atados al débito del ledger— se escriben SOLO
+  // dentro del batch atómico de abajo. Si el débito falla, el rollback deja a lo sumo
+  // un entryRound vacío y SIN cobro fantasma; nunca un "gasté 1 pin" con pinsSpent>0
+  // pero sin débito en el ledger (el bug que dejaba huérfanos cuando el insert del
+  // entryRound —con pinsSpent ya seteado— vivía fuera del batch).
+  const erId =
+    er0?.id ??
+    (
       await db
         .insert(entryRounds)
-        .values({ entryId: entry.id, roundId: round.id, ...erValues })
-        .returning()
-    )[0];
-    if (!er) throw new Error("No se pudo crear la alineación");
-    const ops: BatchOp[] = [];
-    if (playerRows.length) {
-      ops.push(
-        db.insert(entryRoundPlayers).values(playerRows.map((p) => ({ ...p, entryRoundId: er.id }))),
-      );
-    }
-    ops.push(...pinOps);
-    const r = await runBatch(ops);
-    if (r.pins) return { ok: false as const, error: "pins" as const, needed: delta, balance: await getPinBalance(user.id) };
+        .values({
+          entryId: entry.id,
+          roundId: round.id,
+          formation: input.formation,
+          captainPlayerId: input.captainPlayerId,
+          coachId: input.coachId,
+          budgetUsed,
+        })
+        .returning({ id: entryRounds.id })
+    )[0]?.id;
+  if (erId == null) throw new Error("No se pudo crear la alineación");
+
+  // Batch atómico (1 transacción del servidor): fija pinsSpent/changesMade, reemplaza
+  // el roster completo y debita los pines, todo junto o nada. Si el saldo no alcanza,
+  // el débito (guard 1/0) aborta el batch y se revierte también el seteo de pinsSpent
+  // y el reemplazo del roster — sin estados intermedios persistidos.
+  const ops: [BatchOp, ...BatchOp[]] = [
+    db.update(entryRounds).set(erValues).where(eq(entryRounds.id, erId)),
+    db.delete(entryRoundPlayers).where(eq(entryRoundPlayers.entryRoundId, erId)),
+  ];
+  if (playerRows.length) {
+    ops.push(
+      db.insert(entryRoundPlayers).values(playerRows.map((p) => ({ ...p, entryRoundId: erId }))),
+    );
+  }
+  ops.push(...pinOps);
+  const r = await runBatch(ops);
+  if (r.pins) {
+    return { ok: false as const, error: "pins" as const, needed: delta, balance: await getPinBalance(user.id) };
   }
 
   revalidatePath("/mi-equipo");
