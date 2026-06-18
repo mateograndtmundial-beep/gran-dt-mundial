@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { cn, formatPoints } from "@/lib/utils";
 import { PositionChip } from "@/components/editorial";
@@ -8,7 +8,7 @@ import { getRoundBreakdownAction } from "@/lib/breakdown-actions";
 import type { RoundBreakdown, BreakdownLine, BreakdownChip } from "@/lib/scoring/desglose";
 import { flagUrl } from "@/lib/flags";
 
-type RoundPoints = { id: number; roundName: string; points: number };
+export type RoundPoints = { id: number; roundName: string; points: number };
 
 type CacheEntry = RoundBreakdown | "loading" | "error";
 
@@ -159,25 +159,47 @@ function Detail({ data }: { data: Extract<RoundBreakdown, { published: true }> }
   );
 }
 
-export function PointsBreakdown({ rounds }: { rounds: RoundPoints[] }) {
-  const [openId, setOpenId] = useState<number | null>(null);
+export function PointsBreakdown({
+  rounds,
+  openId: openIdProp,
+  onOpenChange,
+}: {
+  rounds: RoundPoints[];
+  /** Si se pasan, el abierto es controlado (lo maneja el padre, p.ej. MyTeamBoard
+   *  para sincronizar con la cancha). Si no, cae al estado interno. */
+  openId?: number | null;
+  onOpenChange?: (id: number | null) => void;
+}) {
+  const [openIdState, setOpenIdState] = useState<number | null>(null);
+  const controlled = openIdProp !== undefined;
+  const openId = controlled ? openIdProp! : openIdState;
   const [cache, setCache] = useState<Record<number, CacheEntry>>({});
+
+  // El prefetch del detalle al abrir corre aunque el abierto sea controlado (lo
+  // dispara el efecto de abajo); acá solo notificamos el cambio de selección.
+  function setOpen(next: number | null) {
+    if (controlled) onOpenChange?.(next);
+    else setOpenIdState(next);
+  }
+
+  useEffect(() => {
+    if (openId == null || cache[openId] !== undefined) return;
+    let alive = true;
+    setCache((c) => ({ ...c, [openId]: "loading" }));
+    getRoundBreakdownAction(openId)
+      .then((r) => alive && setCache((c) => ({ ...c, [openId]: r ?? "error" })))
+      .catch(() => alive && setCache((c) => ({ ...c, [openId]: "error" })));
+    return () => {
+      alive = false;
+    };
+  }, [openId, cache]);
 
   if (rounds.length === 0) {
     return <p className="py-4 text-sm text-ink-3">Todavía no hay fechas jugadas.</p>;
   }
 
-  async function toggle(id: number) {
-    const next = openId === id ? null : id;
-    setOpenId(next);
-    if (next == null || cache[next] !== undefined) return;
-    setCache((c) => ({ ...c, [next]: "loading" }));
-    try {
-      const r = await getRoundBreakdownAction(next);
-      setCache((c) => ({ ...c, [next]: r ?? "error" }));
-    } catch {
-      setCache((c) => ({ ...c, [next]: "error" }));
-    }
+  function toggle(id: number) {
+    setOpen(openId === id ? null : id);
   }
 
   return (

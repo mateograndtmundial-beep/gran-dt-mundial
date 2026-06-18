@@ -506,6 +506,29 @@ export async function getLineupCoach(entryRoundId: number) {
 }
 
 /**
+ * Alineación (jugadores + técnico) de una fecha cualquiera del usuario, para el
+ * navegador de fechas en /mi-equipo. Valida que la entryRound sea del usuario
+ * (mismo chequeo de pertenencia que getRoundBreakdown) antes de devolver nada.
+ * null = no existe o no es del usuario.
+ */
+export async function getOwnedRoundLineup(entryRoundId: number, userId: number) {
+  const owner = (
+    await db
+      .select({ ownerId: entries.userId })
+      .from(entryRounds)
+      .innerJoin(entries, eq(entryRounds.entryId, entries.id))
+      .where(eq(entryRounds.id, entryRoundId))
+      .limit(1)
+  )[0];
+  if (!owner || owner.ownerId !== userId) return null;
+  const [players, coach] = await Promise.all([
+    getLineupPlayers(entryRoundId),
+    getLineupCoach(entryRoundId),
+  ]);
+  return { players, coach };
+}
+
+/**
  * Fecha editable = la primera no publicada cuyo primer partido todavía no arrancó.
  * Su "deadline" es el kickoff de ese primer partido. Cuando ese partido empieza,
  * la fecha queda bloqueada y la editable pasa a la siguiente. Devuelve null si no
