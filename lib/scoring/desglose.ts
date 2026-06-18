@@ -100,7 +100,20 @@ function chipsFor(bd: PointsBreakdown, raw: BdStatRow | undefined): BreakdownChi
   if (bd.base > 0) chips.push({ label: `Rating ${formatPoints(bd.base)}`, kind: "base" });
   if (bd.goals > 0) {
     const n = raw?.goals ?? 0;
-    chips.push({ label: `${n > 1 ? `${n} goles` : "Gol"} +${formatPoints(bd.goals)}`, kind: "pos" });
+    const pen = raw?.penaltyGoals ?? 0;
+    const open = Math.max(0, n - pen);
+    // Los goles de penal valen distinto (penaltyGoal, fijo) que los de jugada
+    // (por puesto) → se muestran en chips separados para que se entienda el +X.
+    if (pen > 0 && open > 0) {
+      const penPts = pen * SCORING.penaltyGoal;
+      const openPts = bd.goals - penPts;
+      chips.push({ label: `${open > 1 ? `${open} goles` : "Gol"} +${formatPoints(openPts)}`, kind: "pos" });
+      chips.push({ label: `${pen > 1 ? `${pen} goles de penal` : "Gol de penal"} +${formatPoints(penPts)}`, kind: "pos" });
+    } else if (pen > 0) {
+      chips.push({ label: `${pen > 1 ? `${pen} goles de penal` : "Gol de penal"} +${formatPoints(bd.goals)}`, kind: "pos" });
+    } else {
+      chips.push({ label: `${n > 1 ? `${n} goles` : "Gol"} +${formatPoints(bd.goals)}`, kind: "pos" });
+    }
   }
   if (bd.assists > 0) {
     const n = raw?.assists ?? 0;
