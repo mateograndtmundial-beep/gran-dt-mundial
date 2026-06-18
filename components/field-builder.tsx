@@ -222,6 +222,13 @@ export function FieldBuilder({
     .filter((p): p is PlayerRow => p != null);
   const entering = chosen.filter((p) => !baselineSet.has(p.id));
 
+  // Cambio de técnico: NO cuenta como cambio ni cuesta pines (no entra en
+  // countPlayerChanges), pero hay que reflejarlo en el cartel de confirmación
+  // para que el usuario sepa que su cambio de DT se va a guardar.
+  const baselineCoachId = limited ? (initial?.coachId ?? null) : null;
+  const coachChanged = limited && coachId !== baselineCoachId;
+  const prevCoach = baselineCoachId != null ? coaches.find((c) => c.id === baselineCoachId) ?? null : null;
+
   const starterSlots   = slots.filter((s) => s.isStarter);
   const subSlots       = slots.filter((s) => !s.isStarter);
   const startersFilled = starterSlots.every((s) => picks[s.id]);
@@ -1262,9 +1269,15 @@ export function FieldBuilder({
             )}
 
             {changesMade === 0 ? (
-              <p className="mt-2 text-sm text-ink-2">
-                No hiciste cambios: seguís con el mismo equipo y sigue sumando.
-              </p>
+              coachChanged ? (
+                <p className="mt-2 text-sm text-ink-2">
+                  Cambiás tu <strong>técnico</strong>. No usa tu cambio gratis ni cuesta pines.
+                </p>
+              ) : (
+                <p className="mt-2 text-sm text-ink-2">
+                  No hiciste cambios: seguís con el mismo equipo y sigue sumando.
+                </p>
+              )
             ) : cc.isPremium ? (
               <p className="mt-2 text-sm text-ink-2">
                 Estás haciendo <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"}. Tenés cambios{" "}
@@ -1314,6 +1327,31 @@ export function FieldBuilder({
                       </li>
                     ))}
                   </ul>
+                </div>
+              </div>
+            )}
+
+            {coachChanged && (
+              <div className="mt-3 flex items-center gap-2 rounded-[8px] border border-border bg-canvas p-2.5">
+                <span className="eyebrow shrink-0 text-blue">DT</span>
+                <div className="flex min-w-0 flex-1 items-center gap-1.5 text-[12px]">
+                  {prevCoach && (
+                    <span className="flex min-w-0 items-center gap-1 text-ink-3 line-through">
+                      {flagUrl(prevCoach.code) && (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={flagUrl(prevCoach.code)!} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                      )}
+                      <span className="truncate">{prevCoach.name}</span>
+                    </span>
+                  )}
+                  <span className="shrink-0 text-ink-3">→</span>
+                  <span className="flex min-w-0 items-center gap-1 font-semibold text-ink">
+                    {coach && flagUrl(coach.code) && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={flagUrl(coach.code)!} alt="" className="h-3 w-4 shrink-0 rounded-[2px] object-cover" />
+                    )}
+                    <span className="truncate">{coach?.name ?? "—"}</span>
+                  </span>
                 </div>
               </div>
             )}
