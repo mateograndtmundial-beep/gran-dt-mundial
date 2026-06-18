@@ -69,11 +69,22 @@ describe("buildRoundBreakdown", () => {
     if (result.published) expect(result.total).toBe(expected);
   });
 
-  it("auto-sustitución explícita: el SUB_DEF entra por el titular que no jugó", () => {
+  it("auto-sustitución explícita: el SUB_DEF entra (en su sección) por el titular que no jugó", () => {
     if (!result.published) throw new Error("debería estar publicado");
-    const sub = result.starters.find((l) => l.playerId === 7);
+    // El suplente que entró va en SUPLENTES, aporta puntos, con nota "Entró por…".
+    const sub = result.subs.find((l) => l.playerId === 7);
     expect(sub?.note).toBe("Entró por Lesionado");
-    expect(result.starters.some((l) => l.playerId === 3)).toBe(false); // el lesionado no es línea propia
+    expect(sub?.counts).toBe(true);
+    // El titular que no jugó queda en TITULARES, atenuado y sin aportar.
+    const lesionado = result.starters.find((l) => l.playerId === 3);
+    expect(lesionado?.note).toBe("No jugó");
+    expect(lesionado?.counts).toBe(false);
+  });
+
+  it("estructura: 11 titulares y 4 suplentes (orden fijo)", () => {
+    if (!result.published) throw new Error("publicado");
+    expect(result.starters).toHaveLength(5); // este escenario tiene 5 titulares
+    expect(result.subs).toHaveLength(4);
   });
 
   it("capitán: chip ×2 y total con el bonus (base 8 → +8)", () => {
@@ -90,10 +101,12 @@ describe("buildRoundBreakdown", () => {
     expect(result.coach?.points).toBe(2);
   });
 
-  it("suplentes no usados → 'No entró' (el 7 sí entró)", () => {
+  it("suplentes no usados → 'No entró' y no aportan (el 7 sí entró)", () => {
     if (!result.published) throw new Error("publicado");
-    expect(result.benchUnused.map((l) => l.playerId).sort()).toEqual([6, 8, 9]);
-    expect(result.benchUnused.every((l) => l.note === "No entró")).toBe(true);
+    const noEntraron = result.subs.filter((l) => !l.counts);
+    expect(noEntraron.map((l) => l.playerId).sort((a, b) => a - b)).toEqual([6, 8, 9]);
+    expect(noEntraron.every((l) => l.note === "No entró")).toBe(true);
+    expect(result.subs.filter((l) => l.counts).map((l) => l.playerId)).toEqual([7]);
   });
 
   it("amarilla resta y arma chip rojo", () => {
@@ -165,19 +178,23 @@ describe("buildRoundBreakdown — capitán que no jugó (sin transferencia de bo
     if (resultCapOut.published) expect(resultCapOut.total).toBe(expected);
   });
 
-  it("la fila del capitán muestra el chip 'Capitán' sin ×2 (bonus 0, no transferido)", () => {
+  it("la fila del capitán (titular que no jugó) muestra 'Capitán' sin ×2 y no aporta", () => {
     if (!resultCapOut.published) throw new Error("publicado");
+    // La capitanía queda en el titular original, atenuado ("No jugó"), sin ×2.
     const capRow = resultCapOut.starters.find((l) => l.isCaptain)!;
     expect(capRow).toBeDefined();
-    expect(capRow.playerId).toBe(8); // se muestra el suplente que entró
-    expect(capRow.note).toBe("Entró por Capitán");
+    expect(capRow.playerId).toBe(4);
+    expect(capRow.note).toBe("No jugó");
+    expect(capRow.counts).toBe(false);
     expect(capRow.chips.some((c) => c.kind === "cap" && c.label.includes("×2"))).toBe(false);
     expect(capRow.chips.some((c) => c.kind === "cap" && c.label === "Capitán")).toBe(true);
   });
 
-  it("el suplente que entró NO recibe el ×2 sobre su propio rating", () => {
+  it("el suplente que entró (en SUPLENTES) NO recibe el ×2 sobre su propio rating", () => {
     if (!resultCapOut.published) throw new Error("publicado");
-    const subRow = resultCapOut.starters.find((l) => l.playerId === 8)!;
+    const subRow = resultCapOut.subs.find((l) => l.playerId === 8)!;
+    expect(subRow.note).toBe("Entró por Capitán");
+    expect(subRow.counts).toBe(true);
     // Sin ×2: rating 8 + gol de MID (6) = 14
     expect(subRow.total).toBe(14);
   });

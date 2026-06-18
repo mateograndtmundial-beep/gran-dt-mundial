@@ -26,6 +26,9 @@ export type BreakdownLine = {
   total: number;
   chips: BreakdownChip[];
   note: string | null;
+  /** Si el jugador APORTA puntos a la fecha (titular que jugó o suplente que
+   *  entró). false = no jugó / no entró → fila atenuada, no aporta al total. */
+  counts: boolean;
 };
 
 export type CoachLine = {
@@ -41,8 +44,12 @@ export type RoundBreakdown =
   | { published: false }
   | {
       published: true;
+      /** Los 11 titulares ORIGINALES en orden de cancha. El que no jugó queda
+       *  con `counts: false` y nota "No jugó" (lo reemplaza un suplente). */
       starters: BreakdownLine[];
-      benchUnused: BreakdownLine[];
+      /** Los 4 suplentes ORIGINALES en orden. El que entró por un titular queda
+       *  con `counts: true` (aporta) y nota "Entró por X"; el resto `counts: false`. */
+      subs: BreakdownLine[];
       coach: CoachLine | null;
       total: number;
     };
@@ -172,15 +179,14 @@ export function buildRoundBreakdown(input: {
     lineup.map((l) => ({ playerId: l.playerId, isStarter: l.isStarter, slot: l.slot })),
     played,
   );
-  function line(pid: number, isCaptain: boolean, note: string | null): BreakdownLine {
+  function line(pid: number, isCaptain: boolean, note: string | null, counts: boolean): BreakdownLine {
     const info = byId.get(pid)!;
     const bd = bdBy.get(pid) ?? EMPTY_BD;
     const chips = chipsFor(bd, rawBy.get(pid));
     let total = bd.total;
     if (isCaptain) {
       // El bonus de capitán se computa SIEMPRE sobre el rating del capitán
-      // original (captainPlayerId), nunca sobre el del suplente que lo
-      // reemplazó como titular: si el capitán no jugó (>= minMinutes), su
+      // original (captainPlayerId): si el capitán no jugó (>= minMinutes), su
       // baseSum es 0 y el bonus se pierde — igual que computeEntryTotal, así
       // el total mostrado nunca diverge del puntaje real del ranking.
       const baseSum = baseBy.get(captainPlayerId!) ?? 0;
@@ -194,38 +200,45 @@ export function buildRoundBreakdown(input: {
     return {
       playerId: pid, name: info.name, position: info.position, flagUrl: info.flagUrl,
       code: info.code, countryName: info.countryName, eliminated: info.eliminatedRound != null,
-      isCaptain, total: round1(total), chips, note,
+      isCaptain, total: round1(total), chips, note, counts,
     };
   }
 
-  // Titulares (11) en orden de cancha; el contribuyente efectivo (con auto-sub).
+  // Mapa inverso: qué suplente entró por qué titular (para las notas y para
+  // marcar al suplente como aportante en su propia sección).
   const starterRows = lineup
     .filter((l) => l.isStarter)
     .sort((a, b) => rank(a.position) - rank(b.position) || (a.slot ?? "").localeCompare(b.slot ?? ""));
-  const usedSub = new Set<number>();
-  const starters: BreakdownLine[] = starterRows.map((st) => {
+  const subReplaces = new Map<number, number>(); // subId -> starterId al que reemplazó
+  for (const st of starterRows) {
     const eff = effectiveOf.get(st.playerId) ?? st.playerId;
-    // La capitanía NO se transfiere al suplente que entró: marca la fila del
-    // titular cuyo slot es el de capitán (sea él mismo o el suplente que lo
-    // reemplazó), pero el bonus (en `line`) sigue el rating del capitán
-    // original — ver comentario ahí.
+    if (eff !== st.playerId) subReplaces.set(eff, st.playerId);
+  }
+
+  // Titulares (11) ORIGINALES en orden de cancha. El que jugó aporta; el que no
+  // jugó queda atenuado (counts:false) con nota "No jugó" — lo reemplaza un suplente.
+  const starters: BreakdownLine[] = starterRows.map((st) => {
     const isCap = captainPlayerId === st.playerId;
-    if (eff !== st.playerId) {
-      usedSub.add(eff);
-      return line(eff, isCap, `Entró por ${byId.get(st.playerId)?.name ?? "un titular"}`);
-    }
-    return line(st.playerId, isCap, played(st.playerId) ? null : "No jugó");
+    const didPlay = played(st.playerId);
+    return line(st.playerId, isCap, didPlay ? null : "No jugó", didPlay);
   });
 
-  // Suplentes que no entraron (no aportan; se muestran atenuados).
-  const benchUnused: BreakdownLine[] = lineup
-    .filter((l) => !l.isStarter && !usedSub.has(l.playerId))
-    .sort((a, b) => rank(a.position) - rank(b.position))
-    .map((l) => ({
-      playerId: l.playerId, name: l.name, position: l.position, flagUrl: l.flagUrl,
-      code: l.code, countryName: l.countryName, eliminated: l.eliminatedRound != null,
-      isCaptain: false, total: 0, chips: [], note: "No entró",
-    }));
+  // Suplentes (4) ORIGINALES en orden. El que entró por un titular aporta
+  // (counts:true) con nota "Entró por X"; el que no entró queda atenuado.
+  const subs: BreakdownLine[] = lineup
+    .filter((l) => !l.isStarter)
+    .sort((a, b) => rank(a.position) - rank(b.position) || (a.slot ?? "").localeCompare(b.slot ?? ""))
+    .map((l) => {
+      const replaced = subReplaces.get(l.playerId);
+      if (replaced != null) {
+        return line(l.playerId, false, `Entró por ${byId.get(replaced)?.name ?? "un titular"}`, true);
+      }
+      return {
+        playerId: l.playerId, name: l.name, position: l.position, flagUrl: l.flagUrl,
+        code: l.code, countryName: l.countryName, eliminated: l.eliminatedRound != null,
+        isCaptain: false, total: 0, chips: [], note: "No entró", counts: false,
+      };
+    });
 
   // Técnico: resultado de su selección en la fecha (incluye definición por penales).
   let coachLine: CoachLine | null = null;
@@ -249,8 +262,10 @@ export function buildRoundBreakdown(input: {
     };
   }
 
+  // Total = filas que aportan (titulares que jugaron + suplentes que entraron) +
+  // técnico. Equivale a computeEntryTotal/publishRound (mismo conjunto efectivo).
   const total = round1(
-    starters.reduce((s, l) => s + l.total, 0) + (coachLine?.points ?? 0),
+    [...starters, ...subs].reduce((s, l) => s + (l.counts ? l.total : 0), 0) + (coachLine?.points ?? 0),
   );
-  return { published: true, starters, benchUnused, coach: coachLine, total };
+  return { published: true, starters, subs, coach: coachLine, total };
 }

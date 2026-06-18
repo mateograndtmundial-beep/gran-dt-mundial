@@ -37,32 +37,69 @@ function Flag({ code, alt }: { code: string | null; alt: string }) {
   );
 }
 
-function PlayerRow({ line, muted }: { line: BreakdownLine; muted?: boolean }) {
-  return (
-    <div className={cn("flex items-start gap-2.5 py-2", (muted || line.eliminated) && "opacity-50")}>
+/* Fila de jugador. Colapsada = bandera + nombre + puntos (una línea). Si el
+   jugador aportó puntos (counts) y tiene desglose, es clickeable y se expande
+   mostrando los chips. Si no jugó / no entró, queda atenuada con su estado
+   ("No jugó" / "No entró") en lugar del puntaje, y no se expande. */
+function PlayerRow({ line }: { line: BreakdownLine }) {
+  const [open, setOpen] = useState(false);
+  const expandable = line.counts && line.chips.length > 0;
+
+  const head = (
+    <div className="flex items-center gap-2.5 py-2">
       <Flag code={line.code} alt={line.countryName} />
-      <div className="min-w-0 flex-1">
-        <div className="flex flex-wrap items-center gap-1.5">
-          <span className="truncate text-sm font-semibold text-ink">{line.name}</span>
-          <PositionChip position={line.position} />
-          {line.isCaptain && (
-            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-gold font-display text-[9px] leading-none text-gold-ink">
-              C
+      <div className="flex min-w-0 flex-1 items-center gap-1.5">
+        <span className={cn("truncate text-sm font-semibold", line.counts ? "text-ink" : "text-ink-3")}>
+          {line.name}
+        </span>
+        {line.isCaptain && (
+          <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-gold font-display text-[9px] leading-none text-gold-ink">
+            C
+          </span>
+        )}
+      </div>
+      {line.counts ? (
+        <span className={cn("jersey-numeral shrink-0 text-sm leading-none", line.total < 0 ? "text-danger" : "text-ink")}>
+          {formatPoints(line.total)}
+        </span>
+      ) : (
+        <span className="shrink-0 text-[11px] font-medium text-ink-3">{line.note ?? "—"}</span>
+      )}
+      {expandable && (
+        <ChevronDown
+          size={14}
+          className={cn("shrink-0 text-ink-faint transition-transform duration-150", open && "rotate-180")}
+          aria-hidden
+        />
+      )}
+    </div>
+  );
+
+  if (!expandable) {
+    return <div className={cn(!line.counts && "opacity-60")}>{head}</div>;
+  }
+
+  return (
+    <div>
+      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="w-full text-left">
+        {head}
+      </button>
+      {open && (
+        <div className="animate-fade-in pb-2 pl-[34px]">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <PositionChip position={line.position} />
+            <span className="text-[11px] text-ink-3">
+              {line.countryName}
+              {line.note ? ` · ${line.note}` : ""}
             </span>
-          )}
-        </div>
-        {line.note && <p className="mt-0.5 text-[11px] text-ink-3">{line.note}</p>}
-        {line.chips.length > 0 && (
-          <div className="mt-1 flex flex-wrap gap-1">
+          </div>
+          <div className="flex flex-wrap gap-1">
             {line.chips.map((c, i) => (
               <Chip key={i} chip={c} />
             ))}
           </div>
-        )}
-      </div>
-      <span className={cn("jersey-numeral shrink-0 text-sm leading-none", line.total < 0 ? "text-danger" : "text-ink")}>
-        {formatPoints(line.total)}
-      </span>
+        </div>
+      )}
     </div>
   );
 }
@@ -84,6 +121,17 @@ function Detail({ data }: { data: Extract<RoundBreakdown, { published: true }> }
         </div>
       </div>
 
+      {data.subs.length > 0 && (
+        <div>
+          <p className="eyebrow mb-1">Suplentes</p>
+          <div className="divide-y divide-border/60">
+            {data.subs.map((l, i) => (
+              <PlayerRow key={`b-${i}-${l.playerId}`} line={l} />
+            ))}
+          </div>
+        </div>
+      )}
+
       {data.coach && (
         <div>
           <p className="eyebrow mb-1">Técnico</p>
@@ -104,17 +152,6 @@ function Detail({ data }: { data: Extract<RoundBreakdown, { published: true }> }
             >
               {data.coach.points > 0 ? `+${formatPoints(data.coach.points)}` : formatPoints(data.coach.points)}
             </span>
-          </div>
-        </div>
-      )}
-
-      {data.benchUnused.length > 0 && (
-        <div>
-          <p className="eyebrow mb-1">Suplentes (no entraron)</p>
-          <div className="divide-y divide-border/60">
-            {data.benchUnused.map((l, i) => (
-              <PlayerRow key={`b-${i}-${l.playerId}`} line={l} muted />
-            ))}
           </div>
         </div>
       )}
