@@ -28,6 +28,7 @@ export function PlayerStatLine({
   stats,
   ownership,
   ownershipAvailable = false,
+  statsAvailable = false,
   variant = "full",
   className,
 }: {
@@ -36,10 +37,13 @@ export function PlayerStatLine({
   // Hay datos de ownership en el set (la fecha superó MIN_OWNERSHIP_SAMPLE). Con
   // esto, los jugadores sin dueños igual muestran "<1% lo eligió" (nunca blank).
   ownershipAvailable?: boolean;
+  // Ya hay datos del torneo (alguna fecha publicada). Con esto, los jugadores que
+  // todavía no jugaron muestran la leyenda "Sin jugar" en vez de un renglón vacío.
+  statsAvailable?: boolean;
   variant?: "full" | "card";
   className?: string;
 }) {
-  if (!stats && !ownershipAvailable) return null;
+  if (!stats && !ownershipAvailable && !statsAvailable) return null;
 
   const played = !!stats && stats.pj > 0;
   // Abreviado para que ocupe menos en el renglón compacto: "G" (goles) y "Fig"
@@ -54,16 +58,14 @@ export function PlayerStatLine({
   if (variant === "card") {
     // Rendimiento (trunca) a la izquierda; ownership fijo a la derecha → el % que
     // justifica el orden "Más elegidos" siempre se ve, aunque el nombre sea largo.
-    const perf = stats ? (
-      played ? (
-        <>
-          <span className="font-semibold">{formatPoints(stats.ppp)}</span> pts/PJ
-          {goles && <> · {goles}</>}
-          {figuras && <> · {figuras}</>}
-        </>
-      ) : (
-        "Sin jugar"
-      )
+    const perf = played ? (
+      <>
+        <span className="font-semibold">{formatPoints(stats!.ppp)}</span> pts/PJ
+        {goles && <> · {goles}</>}
+        {figuras && <> · {figuras}</>}
+      </>
+    ) : statsAvailable ? (
+      "Sin jugar"
     ) : null;
     return (
       <span className={cn("flex items-center justify-between gap-2 text-[11px] text-ink-3", className)}>
@@ -75,17 +77,15 @@ export function PlayerStatLine({
 
   // full (picker): tokens en línea con separadores "·", con wrap en mobile.
   const tokens: ReactNode[] = [];
-  if (stats) {
-    if (played) {
-      tokens.push(
-        <span key="ppp"><span className="font-semibold">{formatPoints(stats.ppp)}</span> pts/PJ</span>,
-        <span key="pj">{stats.pj} PJ</span>,
-      );
-      if (goles) tokens.push(<span key="g">{goles}</span>);
-      if (figuras) tokens.push(<span key="f">{figuras}</span>);
-    } else {
-      tokens.push(<span key="sj">Sin jugar</span>);
-    }
+  if (played) {
+    tokens.push(
+      <span key="ppp"><span className="font-semibold">{formatPoints(stats!.ppp)}</span> pts/PJ</span>,
+      <span key="pj">{stats!.pj} PJ</span>,
+    );
+    if (goles) tokens.push(<span key="g">{goles}</span>);
+    if (figuras) tokens.push(<span key="f">{figuras}</span>);
+  } else if (statsAvailable) {
+    tokens.push(<span key="sj">Sin jugar</span>);
   }
   if (ownEl) tokens.push(<span key="own" title={ownTitle}>{ownershipLabel(ownership)}</span>);
 

@@ -558,7 +558,16 @@ export function FieldBuilder({
       return;
     }
     if (!res.ok && res.error === "pins") {
-      setMessage(`Necesitás ${res.needed} pin(es) para esos cambios (tenés ${res.balance}).`);
+      // Solo mostramos la falta de pines cuando el saldo realmente no alcanza. Si
+      // el usuario tiene suficientes (saldo ≥ necesarios) pero el guard rechazó por
+      // una carrera, no tiene sentido el cartel contradictorio "necesitás 1, tenés 3":
+      // mostramos un error genérico reintentable.
+      const faltan = res.needed - res.balance;
+      setMessage(
+        faltan > 0
+          ? `Te faltan ${faltan} pin(es) para esos cambios (tenés ${res.balance}).`
+          : "No se pudo guardar. Intentá de nuevo.",
+      );
       return;
     }
     if (!res.ok && res.error === "budget") {
@@ -992,9 +1001,9 @@ export function FieldBuilder({
                   >
                     <option value="price-desc">Precio: mayor a menor</option>
                     <option value="price-asc">Precio: menor a mayor</option>
-                    <option value="name-asc">Nombre: A → Z</option>
-                    {hasStats && <option value="ppp-desc">Puntos por partido</option>}
+                    {hasStats && <option value="ppp-desc">Mejor puntuados</option>}
                     {hasOwnership && <option value="owned-desc">Más elegidos</option>}
+                    <option value="name-asc">Nombre: A → Z</option>
                   </select>
                 </div>
               )}
@@ -1057,7 +1066,7 @@ export function FieldBuilder({
                             {p.countryName}
                             {reason && <span className="text-danger"> · {reason}</span>}
                           </span>
-                          <PlayerStatLine stats={stats[p.id]} ownership={ownership[p.id]} ownershipAvailable={hasOwnership} className="mt-0.5" />
+                          <PlayerStatLine stats={stats[p.id]} ownership={ownership[p.id]} ownershipAvailable={hasOwnership} statsAvailable={hasStats} className="mt-0.5" />
                         </span>
                         <span className={cn("jersey-numeral text-sm shrink-0", selectable ? "text-blue" : "text-danger")}>{formatPrice(p.price)}M</span>
                       </button>

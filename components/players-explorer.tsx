@@ -31,9 +31,9 @@ type SortKey = "price-desc" | "price-asc" | "name-asc" | "ppp-desc" | "owned-des
 const SORT_LABELS: Record<SortKey, string> = {
   "price-desc": "Precio: mayor a menor",
   "price-asc":  "Precio: menor a mayor",
-  "name-asc":   "Nombre: A → Z",
-  "ppp-desc":   "Puntos por partido",
+  "ppp-desc":   "Mejor puntuados",
   "owned-desc": "Más elegidos",
+  "name-asc":   "Nombre: A → Z",
 };
 
 /* Render incremental: pintamos PAGE tarjetas y crecemos con "Mostrar más".
@@ -332,6 +332,7 @@ export function PlayersExplorer({
                 stats={stats[p.id]}
                 ownership={ownership[p.id]}
                 ownershipAvailable={hasOwnership}
+                statsAvailable={hasStats}
                 showStatsSlot={hasStats || hasOwnership}
               />
             </button>

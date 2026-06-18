@@ -20,6 +20,7 @@ export function PlayerCard({
   stats,
   ownership,
   ownershipAvailable = false,
+  statsAvailable = false,
   showStatsSlot = false,
   action,
   className,
@@ -35,6 +36,7 @@ export function PlayerCard({
   stats?: PlayerStats;
   ownership?: number;
   ownershipAvailable?: boolean;
+  statsAvailable?: boolean;
   showStatsSlot?: boolean;
   action?: ReactNode;
   className?: string;
@@ -93,7 +95,7 @@ export function PlayerCard({
             tienen (no se rompe la grilla). Pre-Mundial (sin datos) no se reserva. */}
         {showStatsSlot && (
           <div className="mt-1 min-h-[1rem]">
-            <PlayerStatLine stats={stats} ownership={ownership} ownershipAvailable={ownershipAvailable} variant="card" />
+            <PlayerStatLine stats={stats} ownership={ownership} ownershipAvailable={ownershipAvailable} statsAvailable={statsAvailable} variant="card" />
           </div>
         )}
       </div>
