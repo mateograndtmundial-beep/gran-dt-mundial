@@ -85,6 +85,11 @@ export default async function MiEquipoPage({
     changesStatus = null;
   }
 
+  // Solo las fechas ya PUBLICADAS tienen puntos/datos cargados. Hasta que no se
+  // publique la fecha N (terminan sus partidos), no mostramos esa fecha en
+  // "Puntos por fecha" (evita listar fechas en juego / futuras con 0 pts).
+  const playedRounds = team.rounds.filter((r) => r.status === "published");
+
   // Lineup de la fecha vigente (la más reciente) para la cancha read-only
   const latestRound = team.rounds.length ? team.rounds[team.rounds.length - 1] : null;
   let lineup: Awaited<ReturnType<typeof getLineupPlayers>> = [];
@@ -257,7 +262,7 @@ export default async function MiEquipoPage({
           <p className="mb-3 text-xs text-ink-3">
             Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos.
           </p>
-          <PointsBreakdown rounds={team.rounds} />
+          <PointsBreakdown rounds={playedRounds} />
         </Card>
       </div>
     </div>

@@ -604,6 +604,7 @@ export async function getMyTeam(userId: number) {
       captainPlayerId: entryRounds.captainPlayerId,
       roundName: rounds.name,
       order: rounds.order,
+      status: rounds.status,
     })
     .from(entryRounds)
     .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
