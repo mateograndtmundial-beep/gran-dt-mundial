@@ -8,7 +8,7 @@ import { ChangesStatusChip } from "@/components/changes-status-card";
 import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, type ChangesStatus } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, type ChangesStatus } from "@/lib/queries";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
@@ -85,10 +85,21 @@ export default async function MiEquipoPage({
     changesStatus = null;
   }
 
-  // Solo las fechas ya PUBLICADAS tienen puntos/datos cargados. Hasta que no se
-  // publique la fecha N (terminan sus partidos), no mostramos esa fecha en
-  // "Puntos por fecha" (evita listar fechas en juego / futuras con 0 pts).
-  const playedRounds = team.rounds.filter((r) => r.status === "published");
+  // "Puntos por fecha": mostramos las fechas que YA arrancaron, es decir las
+  // ANTERIORES a la editable (la que se está armando, que aún no empezó). Las
+  // publicadas van con sus puntos; las en juego / sin publicar van con la etiqueta
+  // "Al cierre" (los puntos se liberan recién al publicar). Si no hay fecha
+  // editable (torneo terminado) o falla la query, mostramos todas las del usuario.
+  let editableOrder = Number.POSITIVE_INFINITY;
+  try {
+    const editable = await getEditableRound();
+    if (editable) editableOrder = editable.round.order;
+  } catch {
+    // sin fecha editable / sin DB → no recortamos (mostramos las del usuario)
+  }
+  const breakdownRounds = team.rounds
+    .filter((r) => r.order < editableOrder)
+    .map((r) => ({ id: r.id, roundName: r.roundName, points: r.points, published: r.status === "published" }));
 
   // Lineup de la fecha vigente (la más reciente) para la cancha read-only
   const latestRound = team.rounds.length ? team.rounds[team.rounds.length - 1] : null;
@@ -262,7 +273,7 @@ export default async function MiEquipoPage({
           <p className="mb-3 text-xs text-ink-3">
             Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos.
           </p>
-          <PointsBreakdown rounds={playedRounds} />
+          <PointsBreakdown rounds={breakdownRounds} />
         </Card>
       </div>
     </div>

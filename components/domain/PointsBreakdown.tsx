@@ -8,7 +8,7 @@ import { getRoundBreakdownAction } from "@/lib/breakdown-actions";
 import type { RoundBreakdown, BreakdownLine, BreakdownChip } from "@/lib/scoring/desglose";
 import { flagUrl } from "@/lib/flags";
 
-type RoundPoints = { id: number; roundName: string; points: number };
+type RoundPoints = { id: number; roundName: string; points: number; published: boolean };
 
 type CacheEntry = RoundBreakdown | "loading" | "error";
 
@@ -200,10 +200,19 @@ export function PointsBreakdown({ rounds }: { rounds: RoundPoints[] }) {
                 />
                 <span className="text-sm font-semibold text-ink">{r.roundName}</span>
               </div>
-              <span className="jersey-numeral text-base leading-none tracking-tight text-ink">
-                {formatPoints(r.points)}
-                <span className="ml-0.5 text-xs font-normal text-ink-3">pts</span>
-              </span>
+              {r.published ? (
+                <span className="jersey-numeral text-base leading-none tracking-tight text-ink">
+                  {formatPoints(r.points)}
+                  <span className="ml-0.5 text-xs font-normal text-ink-3">pts</span>
+                </span>
+              ) : (
+                <span
+                  className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-ink-3"
+                  title="Los puntos se publican al cierre de la fecha, cuando terminan todos sus partidos."
+                >
+                  Al cierre
+                </span>
+              )}
             </button>
 
             {isOpen && (
