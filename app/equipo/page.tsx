@@ -1,7 +1,6 @@
 import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
-import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, isEnrolledInGoldenTicket, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
@@ -75,11 +74,11 @@ export default async function EquipoPage({
         }
       : null;
 
-  // Label del deadline: QUÉ fecha estás editando + cuándo cierra (kickoff del
+  // Label del deadline: QUÉ fecha estás editando + cuándo empieza (kickoff del
   // primer partido de esa fecha). La ventana de cambios va desde que arranca una
   // fecha hasta el primer partido de la siguiente.
   const deadlineLabel = editable?.deadline
-    ? `${shortRoundName(editable.round.name).toUpperCase()} · CERRÁ TU EQUIPO ANTES DEL ${editable.deadline
+    ? `${shortRoundName(editable.round.name).toUpperCase()} · EMPIEZA EL ${editable.deadline
         .toLocaleString("es-AR", {
           weekday: "short",
           day: "2-digit",
@@ -114,8 +113,6 @@ export default async function EquipoPage({
         />
       ) : (
         <div className="space-y-3">
-          {/* Aviso: cada fecha se cierra al arrancar su primer partido (cerrable, se recuerda en localStorage) */}
-          <LineupLockNotice variant="compact" />
           <FieldBuilder
             players={players}
             coaches={coaches}

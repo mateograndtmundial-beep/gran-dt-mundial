@@ -3,7 +3,6 @@ import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow, SecondaryButton, PrimaryButton, PositionChip } from "@/components/editorial";
 import { PointsBreakdown } from "@/components/domain/PointsBreakdown";
 import { Pitch, type PitchPlayer } from "@/components/pitch";
-import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { ChangesStatusChip } from "@/components/changes-status-card";
 import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
@@ -144,9 +143,6 @@ export default async function MiEquipoPage({
     <div className="space-y-5">
       {/* Confirmación tras guardar desde el armador (?saved=1) */}
       {justSaved && <SaveConfirmBanner changes={Number(sp.ch ?? 0)} pins={Number(sp.pins ?? 0)} />}
-
-      {/* Aviso: cada fecha se cierra al arrancar su primer partido (cerrable, se recuerda en localStorage) */}
-      <LineupLockNotice />
 
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">

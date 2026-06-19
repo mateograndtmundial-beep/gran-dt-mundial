@@ -8,7 +8,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 const STORAGE_PREFIX = "sampa.deadlineNoticeDismissed";
 
 /**
- * Leyenda del cierre de la fecha editable para /mi-equipo: "{Fecha} cierra en
+ * Leyenda del arranque de la fecha editable para /mi-equipo: "{Fecha} empieza en
  * 20h 18m". Cambia de color según urgencia — ROJA si falta menos de 24 h,
  * AMARILLA si falta más. Solo minutos (sin segundos). Tickea cada 30 s.
  *
@@ -82,7 +82,7 @@ export function DeadlineNotice({
     >
       <Clock size={16} strokeWidth={2.25} className="shrink-0" aria-hidden />
       <p className="text-[13px] font-semibold leading-snug">
-        {roundName} cierra <span className="tabular-nums">{time}</span>
+        {roundName} empieza <span className="tabular-nums">{time}</span>
       </p>
       <button
         type="button"

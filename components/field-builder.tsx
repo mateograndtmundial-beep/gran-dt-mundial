@@ -647,7 +647,7 @@ export function FieldBuilder({
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="eyebrow text-blue-ink">{deadlineLabel}</span>
             {deadline && (
-              <CloseCountdown deadline={deadline} className="text-[11px] font-semibold text-danger" />
+              <CloseCountdown deadline={deadline} prefix="Empieza en" className="text-[11px] font-semibold text-danger" />
             )}
           </span>
           <div className="flex flex-col items-end shrink-0">
