@@ -43,10 +43,10 @@ Por qué es lo correcto:
 ⚠️ **Límites de "ir abriendo más" que hay que tener en cuenta:**
 - **Solo hay 2 copas seedeadas** (`seed:golden-ticket` crea #1 `open` + #2 `draft`). Una **3ra+
   copa requiere seedear más** (pendiente en el checklist).
-- **El deadline 28/06 acota todo**: una copa abierta a horas del cierre **no se llena** → por eso la
-  regla "días + confianza, nunca horas". Copas más allá de lo que entra antes del 28/06
-  **necesitarían arrancar más tarde** (octavos en vez de 16vos → otro `scoringStartRoundId` y otro
-  deadline). **Decisión de producto pendiente** (ver checklist) antes de prometer copas tardías.
+- **El deadline 28/06 acota la oleada 16vos**: una copa abierta a horas del cierre **no se llena** →
+  regla "días + confianza, nunca horas". Si al cerrar el 28/06 **quedan muchos interesados**, se
+  abre una **nueva copa de oleada 8vos** (arranca/cierra más tarde → más tiempo para llenarla).
+  Ver §1.5 (decidido).
 
 ---
 
@@ -76,41 +76,70 @@ plata no gastada queda disponible, no es una pérdida).
 
 ---
 
-## 1.5 Asignación dinámica de ligas (balancear el cupo) — evaluación
-**Premisa que lo habilita:** el usuario **recién ve a sus competidores al kickoff (28/06)**.
-Entonces no hace falta meterlo en una liga puntual al pagar: podés **juntar todas las
-inscripciones y repartirlas al cierre** en la cantidad de ligas que convenga.
+## 1.5 Tamaño de liga y escalado por oleadas (DECIDIDO)
+**Ligas de 100, premio fijo $400.000.** Se descartó balancear la demanda en N ligas parejas (ej.
+220 → 3 de ~73): con premio fijo, **cada liga por debajo de ~80 pagos pierde plata** (break-even
+80), así que 3 ligas de 73 darían **−$100.000**. Ligas de 100 dejan **+$100.000** cada una. Como
+el tamaño es fijo, **no hace falta** el "pool"/reparto al cierre: se llena una liga, se abre la
+siguiente (es lo que ya hace el backend).
 
-**La idea (tu ejemplo):** con 220 anotados, hacer **3 ligas de ~73** en vez de **2 de 100 + 1 de 20**
-(evitar la liga "fea" de 20). El **balanceo parejo** es bueno para la sensación competitiva y la
-óptica. **Pero la economía decide el tamaño, no la prolijidad:**
+**Escalado por oleadas (según round de arranque):**
 
-- Premio **FIJO $400.000 por liga**. **Break-even = 80 pagos/liga** (80 × $5.000 = $400.000).
-- **220 en 3 ligas de ~73** → las tres quedan **por debajo de 80** → **las tres pierden plata**:
-  ingreso 220 × $5.000 = **$1.100.000** vs premio 3 × $400.000 = **$1.200.000** = **−$100.000**.
-  Es *peor* que el problema que querías evitar.
-- **220 en 2 ligas de 100 + 20 afuera**: premio 2 × $400.000 = $800.000, ingreso de los 200 =
-  $1.000.000 → **+$200.000**. Queda resolver qué hacés con los 20 (lista de espera / próxima copa / reembolso).
+| Oleada | Copas | Arranca / rankea desde | Inscripción cierra | Cuándo se abre |
+|---|---|---|---|---|
+| **1 (16vos)** | #1, #2, … | **16vos** (order 4) | **kickoff de 16vos = 28/06** | Se abre la siguiente cuando la anterior llega a 100. |
+| **2 (8vos)** | nuevas | **8vos de Final** (order 5) | **kickoff de 8vos** (unos días después) | **Si al cerrar la oleada 1 quedan muchos interesados.** |
 
-**Regla sana:** balanceá parejo **pero nunca bajes de ~80–100 pagos por liga** (si no, cada liga
-nueva es plata perdida).
+- **Por qué oleadas:** una liga que arranca en 8vos **cierra en el kickoff de 8vos** → da **más días
+  para llenarla**. Resuelve el caso "quedan interesados pero ya no hay tiempo antes del 28/06".
+- **Cierre de inscripciones = manual/discrecional.** El cupo de 100 frena cada liga sola; **abrir
+  una nueva (misma oleada u oleada siguiente) lo decidís vos** mirando demanda y días restantes.
+- **Hook de marketing** que cae redondo y respeta el break-even: **"cada 100 que entran, se abre
+  otra copa de $400.000"**.
+- **El usuario ve a sus rivales recién al kickoff** → no le molesta en qué liga puntual quedó
+  mientras tanto; la inscripción es a "la Copa", la liga concreta es detalle interno.
 
-| Con 220 anotados | Resultado casa | Veredicto |
+> **Dependencia técnica para la oleada 8vos:** el seed hoy crea 2 copas que arrancan en **16vos**
+> (`scoringStartRoundId = r16`). Una copa de **oleada 8vos** necesita `scoringStartRoundId = 8vos`
+> (order 5) y su deadline en el kickoff de 8vos → **seedear copas nuevas con ese parámetro**.
+> Anotado en el checklist.
+
+---
+
+## 1.6 Ángulo central de comunicación: surfear el furor de los prodes (DECIDIDO)
+**Estamos en el pico del Mundial y todo el mundo está en algún prode.** Es el comportamiento
+caliente del momento: grupos de WhatsApp, planillas de Excel, quinielas de oficina. **No competimos
+contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que la gente ya entiende
+→ lo agarramos y mostramos que la Copa es "el prode, pero en serio".
+
+**El gancho:** *"El prode se te termina en fase de grupos. Esto recién empieza."*
+
+| | **Prode / quiniela típica** | **Copa GOLDEN TICKET** |
 |---|---|---|
-| 3 ligas de ~73 ($400k c/u) | −$100.000 | ❌ tres ligas en pérdida |
-| 2 ligas de 100 + 20 en espera | +$200.000 | ✅ recomendado (resolver los 20) |
-| 2 ligas de ~110 (subir capacity) | +$300.000 | ✅ si aceptás ligas de 110 |
-| 3 ligas de ~73 con **premio que escala al tamaño** | ~equilibra | ⚠️ cambia lo prometido ($400k) → B&C + comunicación |
+| Cómo ganás | Adivinar resultados (**suerte**) | Armás y dirigís tu equipo (**skill**, dura todo el Mundial) |
+| Premio | Lo que junta el grupo, **a veces no se paga** | **$400.000 FIJO, lo garantiza la casa** |
+| Confianza | "¿el que organiza va a pagar?" | Premio garantizado + **Bases y Condiciones** |
+| Duración | Se define rápido / se pincha | **Hasta la final** |
+| Entrada | Informal | **$5.000**, transparente |
 
-→ **Recomendación:** mantené **$400k fijo + ligas de ~100 (mínimo ~80)** y repartí los inscriptos
-en **múltiplos cómodos de eso**. Hook de marketing que cae redondo: **"cada 100 que entran, se
-abre otra copa de $400.000"** (coincide con el break-even). Si querés ligas de tamaño libre (73),
-**tenés que pasar a premio que escala con el tamaño** — decisión de producto + legal + marketing,
-no solo de reparto.
+**Mensajes-rampa (usar en HERO y stories):**
+- *"¿Cuántos prodes llenaste ya? Te queda el que importa."*
+- *"Cansado de que el del prode después no aparezca? Acá el premio lo pone la casa: $400.000 asegurados."*
+- *"El prode es de suerte. Esto es de los que saben de fútbol."*
+- *"Tu prode ya está liquidado. Armá tu equipo y jugá por $400.000 hasta la final."*
 
-> **Dependencia técnica (no es lo que hay hoy):** el backend actual **inscribe en una liga FIJA al
-> pagar** (con chequeo de cupo). El balanceo al kickoff = inscribir en un **"pool" y repartir al
-> cierre** → **cambio de ingeniería** + define el desempate/asignación. Anotado en el checklist.
+**Cómo se aplica sin friccionar:**
+- **Posiciona, no insulta:** el que está en un prode es nuestro público ideal, no el enemigo. Tono
+  cómplice ("vos que ya estás jugando…"), nunca despectivo con el prode del grupo de amigos.
+- **Aprovechá el momento de dolor:** cuando los prodes se empiezan a definir/pinchar en la fase de
+  grupos (y la gente queda eliminada), es **el mejor momento** para decir "esto recién arranca, y el
+  premio está garantizado". El calendario (§7) lo explota en la fase de Educación/Prueba.
+- **Retargeting fútbol/fantasy:** el público de prospecting (§1) se solapa con quien busca prodes →
+  el ángulo mejora el CTR de esa partida.
+
+> Cuidado legal: el encuadre "prode pero en serio" no debe prometer nada que no esté en las **Bases y
+> Condiciones**; el premio se comunica siempre como **garantizado por la casa** (no pozo de los
+> inscriptos), que es justo lo que nos diferencia del prode. Ver checklist (legal).
 
 ---
 
@@ -185,6 +214,8 @@ Toda publicación/aviso de la Copa, sin excepción, lleva:
 8. **Legal**: link a **Bases y Condiciones**.
 9. **Un gancho de engagement** (pregunta/encuesta).
 10. **Marca consistente** (paleta dorada premium, Archivo Black — ver `VISUAL-SYSTEM.md`).
+11. **Cuando aplique, el ángulo "prode pero en serio"** (§1.6) como hook de apertura: conecta con lo
+    que la gente ya está haciendo y resalta el diferencial (premio garantizado vs. el prode que no paga).
 
 > Como hay plata real, cuidá el "sin reembolso" y el encuadre del premio → que coincida con las
 > **Bases y Condiciones** (riesgo legal, ver checklist).
@@ -198,10 +229,10 @@ calendario comprimido** según los días que queden cuando se libere.
 
 | Día | Fecha | Fase | Post dedicado (ángulo) | Stories | Pauta (Tramo 1) |
 |---|---|---|---|---|---|
-| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "Llega la Copa GOLDEN TICKET"**: premio $400k garantizado, cupo 100, entrada $5.000, abre HOY. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
-| **D-7** | 21/06 | Educación | **¿Cómo funciona?** Jugás con tu equipo, rankea desde 16vos, 5 cambios gratis para inscriptos. | Tutorial 3 frames + encuesta | HERO 2 (cómo funciona) a retargeting |
+| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "El prode se te termina en fase de grupos. Esto recién empieza."** (§1.6): presenta la Copa, premio $400k garantizado, cupo 100, entrada $5.000, abre HOY. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
+| **D-7** | 21/06 | Educación | **¿Cómo funciona?** Jugás con tu equipo (no es adivinar resultados como el prode), rankea desde 16vos, 5 cambios gratis para inscriptos. | Tutorial 3 frames + encuesta ("¿en cuántos prodes estás?") | HERO 2 (cómo funciona) a retargeting |
 | **D-6** | 22/06 | Educación/Prueba | **La distribución del premio** (gráfico top 10: 1°=$120k…). | Desglose del premio + link | Sigue HERO 1+2 |
-| **D-5** | 23/06 | Prueba/Confianza | **"El premio lo pone la casa, se reparte sí o sí"** (anti-objeción "¿es real?"). | Q&A / FAQ | Cortar el creativo que peor convierte |
+| **D-5** | 23/06 | Prueba/Confianza | **"El premio lo pone la casa, se reparte sí o sí"** (anti-objeción "¿es real?" + "a diferencia del prode que no paga"). | Q&A / FAQ | Cortar el creativo que peor convierte |
 | **D-4** | 24/06 | Escasez | **Cupo en vivo**: "Ya se anotaron X. Quedan Y de 100." | Cupo en vivo | Subir al mejor creativo · **chequear gatillo Tramo 2** |
 | **D-3** | 25/06 | Escasez | **Social proof** / "los equipos que ya están adentro". | Cupo + countdown + encuesta | Empuje si vas atrasado |
 | **D-2** | 26/06 | Urgencia | **"Faltan 2 días"** — recordatorio fuerte con deadline. | Countdown intensivo + link | Empuje final (HERO escasez) |
@@ -227,10 +258,11 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 ---
 
 ## 9. Resumen de decisiones recomendadas
+- **Ángulo central**: **surfear el furor de los prodes** (§1.6) — "el prode pero en serio": skill vs. suerte, dura todo el Mundial, premio **garantizado por la casa** (no el prode que no paga). Rampa de entrada, no rival.
 - **Objetivo**: llenar **1 copa de 100**. Abrir más es **discrecional** (días + confianza, **nunca con horas**).
 - **Budget**: **escalonado, $100k por copa**, liberado por demanda (no $300k de entrada). Sobra → no se gasta / financia la copa siguiente.
-- **Tamaño de liga**: con premio fijo $400k, **mínimo ~80–100 pagos por liga** (break-even 80). Balancear inscriptos parejo **sin** bajar de ahí; ligas chicas (73) solo con **premio que escale al tamaño**. Hook: "cada 100 → otra copa de $400k".
-- **Asignación**: como el usuario ve rivales recién al kickoff, se puede **repartir al cierre** (requiere cambio de backend; hoy asigna a liga fija al pagar).
+- **Tamaño de liga**: **ligas de 100, premio fijo $400k** (decidido). Se descartó balancear en ligas chicas (pierden plata bajo 80). Hook: "cada 100 → otra copa de $400k".
+- **Escalado por oleadas**: oleada 16vos (cierra 28/06); si quedan interesados, **nueva copa que arranca en 8vos** (cierra más tarde → más tiempo). Cierre de inscripciones manual/discrecional.
 - **Posts/día**: 2 scoreboards (con CTA Copa) + **1 post dedicado** + **3–5 stories**.
 - **Stories**: contenido propio (countdown, **cupo en vivo**, engagement) **+** algo de redirección.
 - **Pauta**: por tramo de $100k → **retargeting (45%) > prospecting (35%) > empuje final (15%) > X test (5%)**.

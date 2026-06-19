@@ -30,6 +30,9 @@
 - **Inscripción abre** con la **primera publicación en Instagram** (y quizás Twitter).
 - **Inscripción cierra** con el **kickoff de los 16vos** **o** al llegar a **100 inscriptos** (lo que pase primero).
 - **Payout manual:** publicamos ganadores en **Instagram + mail**; los ganadores se comunican con nosotros para cobrar.
+- **Ligas de 100, premio fijo $400.000** (no se balancea en ligas chicas: bajo ~80 pagos pierden plata). Se llena una y se abre la siguiente.
+- **Escalado por oleadas:** oleada **16vos** (cierra 28/06); si quedan muchos interesados, se abre una **nueva copa que arranca en 8vos** (cierra en el kickoff de 8vos → más días para llenarla). **Cierre de inscripciones manual/discrecional** (el cupo 100 frena cada liga sola).
+- **`MAX_PER_COUNTRY` en 16avos** (`lib/actions.ts`): Quiero que el tope de 3 jugadores por país se libere desde 16avos (32 selecciones vivas) y pase a 5 jugadores por pais. Este tope de 5 por pais ya permite tener equipos 100% funcionales hasta la ultima instancia (4 selecciones vivas. 20 jugadores posibles sobre 15 totales.). El anterior de 3, no.
 
 ---
 
@@ -45,6 +48,7 @@
 - [ ] **Retención de impuestos** sobre premios, si corresponde. *(agregado)*
 
 ### Producto / técnico
+- [ ] **Tope por país en playoffs = 5 (regla GENERAL, aplica a TODOS los usuarios, no solo la Copa).** Hoy (`lib/actions.ts:77`) el tope de **3 por país rige solo en grupos** y en playoffs queda **sin límite**. Cambiarlo: desde **16vos** (`round.type === "knockout"`, order ≥ 4, 32 selecciones vivas) el tope pasa a **5 por país** (en vez de ilimitado). Razón: 5 por país ya permite equipos 100% funcionales hasta la última instancia (4 selecciones vivas → 20 jugadores posibles sobre 15 titulares+suplentes); con 3 no alcanzaba. Implica: `MAX_PER_COUNTRY_KNOCKOUT = 5` en `lib/game/config.ts`, aplicar el cap también en la rama `knockout` de `saveLineup`, mensaje de error con el `max` correcto, y **aclararlo en `/como-funciona`** (la regla la ve cualquier usuario, no es exclusiva de la Copa). *(agregado — decisión cerrada)*
 - [ ] **UI completa** (ver [`COPA-UI-INSCRIPCION-PLAN.md`](./COPA-UI-INSCRIPCION-PLAN.md)): inscripción, cupo en vivo, layout premium del ranking. *(scaffold dejado como plan, sin construir)*
 - [ ] **Aplicar migración `0014` a la DB de prod ANTES de deployar.** Si se mergea sin esto, `/equipo` y `saveLineup` se rompen para **todos** (consultan `leagues.kind`). La migración tiene `DEFAULT` → aplicarla sola es inocua y retrocompatible. *(aún no)*
 - [ ] **Merge a `main` + deploy** con build verde. *(aún no)*
@@ -53,9 +57,8 @@
 - [ ] **Cierre de inscripción por tiempo**: hoy **no se cierra solo**. `createEntryOrder` valida `status === "open"` y cupo, pero **nadie pasa la copa a `closed` al kickoff de 16vos**. Falta un mecanismo (cron o acción admin) que la cierre al deadline. *(agregado — la decisión 7 lo exige)*
 - [ ] **Overflow / pago-sin-lugar**: `createEntryOrder` chequea cupo al crear la orden, pero la inscripción final ocurre en el **webhook** (`creditOrder`). Dos personas pueden pasar el check, pagar, y superar 100 → `creditOrder` rechaza al que sobra **pero ya pagó**. Definir: ¿reembolso al que quedó afuera? ¿lista de espera? Hoy "sin reembolso" choca con este caso. *(agregado — importante)*
 - [ ] **Reconciliación de órdenes pagas no inscriptas**: detectar y resolver órdenes `paid` que no inscribieron (cupo lleno, error). *(agregado)*
-- [ ] **Activación de la copa #2**: definir el trigger (manual) y la acción admin/script para pasar `draft → open` cuando la 1ra llene. *(agregado)*
-- [ ] **Asignación dinámica / balanceo de ligas**: hoy el backend **inscribe en una liga FIJA al pagar** (con chequeo de cupo). Para repartir a los inscriptos en N ligas parejas **al kickoff** (posible porque el usuario recién ve rivales al inicio) hace falta inscribir en un **"pool" y distribuir al cierre** → cambio de ingeniería + criterio de asignación. *(agregado — ver `social/LANZAMIENTO-COPA.md §1.5`)*
-- [ ] **Tamaño mínimo de liga vs premio**: con premio fijo $400k, una liga **por debajo de ~80 pagos pierde plata** (break-even 80). Definir regla: ligas de ~100 (mín ~80) **o** premio que **escale al tamaño** (cambia lo prometido → B&C + comunicación). *(agregado)*
+- [ ] **Activación de copas (misma oleada):** la copa #2 ya está seedeada en `draft`; falta la acción admin/script para `draft → open` cuando la anterior llene. *(agregado)*
+- [ ] **Copas de oleada 8vos:** el seed actual crea copas que arrancan en **16vos** (`scoringStartRoundId = r16`). Una copa que arranque en **8vos** (order 5) necesita seedearse con ese `scoringStartRoundId` y su deadline en el kickoff de 8vos. **Falta parametrizar el seed** para generar copas por oleada. *(agregado — decisión: si quedan interesados al 28/06, se abre oleada 8vos)*
 - [ ] **Desempates** para los puestos del premio (top 10): definir criterio si dos equipos terminan con los mismos puntos. *(agregado)*
 - [ ] **Momento de corte del ranking** para premiar (snapshot tras la final). *(agregado)*
 - [ ] **Reembolsos / contracargos** de MP: política y manejo operativo. *(aún no)*
