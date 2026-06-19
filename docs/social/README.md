@@ -12,6 +12,7 @@
 | [`VISUAL-SYSTEM.md`](./VISUAL-SYSTEM.md) | **Núcleo estético**: paleta, tipografía (Archivo Black), iconografía de eventos, lenguaje de componentes (sombra dura, pills, header), reglas de layout, do/don't. | Vas a diseñar o tocar una placa. **Empezá acá.** |
 | [`FORMATS.md`](./FORMATS.md) | Tamaños por plataforma (carrusel 1080×1350, story 1080×1920, X), qué template usa cada pieza y con qué comando se genera, y el auto-posteo a Slack. | Vas a generar imágenes o adaptar a otro formato/red. |
 | [`COPY-VOICE.md`](./COPY-VOICE.md) | Voz de marca, estructura de caption, hashtags, CTAs y estrategia por red (IG/FB/X/Stories). | Vas a escribir el texto de una publicación. |
+| [`LANZAMIENTO-COPA.md`](./LANZAMIENTO-COPA.md) | **Plan de comunicación del lanzamiento de la Copa GOLDEN TICKET**: cadencia, stories, reparto de budget ($300k), IG vs X, calendario día por día y anatomía de cada pieza. | Vas a comunicar/promocionar la Copa en redes. |
 
 ## Cómo usarlo
 

@@ -6,6 +6,7 @@
 >
 > Doc de propuesta y decisiones de negocio: [`MONETIZACION.md`](./MONETIZACION.md).
 > Plan de la UI de inscripción: [`COPA-UI-INSCRIPCION-PLAN.md`](./COPA-UI-INSCRIPCION-PLAN.md).
+> Plan de comunicación en redes: [`social/LANZAMIENTO-COPA.md`](./social/LANZAMIENTO-COPA.md).
 >
 > Fecha clave: **16vos arranca ~28/06** (la Copa rankea desde ahí).
 
