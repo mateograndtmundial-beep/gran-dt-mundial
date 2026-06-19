@@ -626,7 +626,8 @@ export function FieldBuilder({
   function openSlot(s: Slot) {
     setSearch("");
     setModalCountry("ALL");
-    setModalSort("price-desc");
+    // No reseteamos modalSort: el filtro de orden ("Mejor puntuados", etc.)
+    // se mantiene entre aperturas del modal para no tener que re-elegirlo cada vez.
     setModalShown(MODAL_PAGE);
     setModal({ type: "player", slot: s });
   }
