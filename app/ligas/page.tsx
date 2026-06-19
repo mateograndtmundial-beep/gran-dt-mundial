@@ -3,8 +3,10 @@ import { ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyLeagues } from "@/lib/queries";
+import { getMyLeagues, getGoldenTicketCopas, type CopaStatus } from "@/lib/queries";
 import { LeagueActions } from "@/components/league-actions";
+import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
+import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -12,13 +14,23 @@ export const dynamic = "force-dynamic";
 export default async function LigasPage() {
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let leagues: Awaited<ReturnType<typeof getMyLeagues>> = [];
+  let copas: CopaStatus[] = [];
   let error = false;
   try {
     user = await getCurrentUser();
-    if (user) leagues = await getMyLeagues(user.id);
+    if (user) [leagues, copas] = await Promise.all([getMyLeagues(user.id), getGoldenTicketCopas(user.id)]);
   } catch {
     error = true;
   }
+
+  // Copas en las que ya está inscripto (fila premium arriba de las privadas) y la copa
+  // abierta a la que se puede sumar (una sola card de promo, la de menor cupo restante).
+  const enrolledCopas = copas.filter((c) => c.isEnrolled);
+  const promoCopa = copas
+    .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0)
+    .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
+  // Las copas no se listan como ligas privadas (se muestran como fila premium aparte).
+  const privateLeagues = leagues.filter((l) => l.kind !== "golden_ticket");
 
   return (
     <div className="space-y-6">
@@ -34,6 +46,9 @@ export default async function LigasPage() {
       ) : (
         <>
           <LeagueActions />
+
+          {/* Copa premium (GOLDEN TICKET) — card de promo solo si hay una abierta y no estás dentro */}
+          {promoCopa && <CopaPromoCard copa={promoCopa} />}
 
           {/* Liga global */}
           <div>
@@ -51,14 +66,19 @@ export default async function LigasPage() {
                 <ChevronRight size={16} className="text-blue shrink-0" aria-hidden />
               </Link>
 
+              {/* Copa(s) premium inscripta(s) — arriba de las privadas, destacadas en dorado */}
+              {enrolledCopas.map((c) => (
+                <CopaLeagueRow key={c.id} copa={c} />
+              ))}
+
               {/* Ligas privadas */}
-              {leagues.length === 0 ? (
+              {privateLeagues.length === 0 ? (
                 <div className="px-4 py-5 text-center">
                   <p className="text-sm text-ink-3">Todavía no estás en ninguna liga privada.</p>
                 </div>
               ) : (
                 <ul className="divide-y divide-border">
-                  {leagues.map((l) => (
+                  {privateLeagues.map((l) => (
                     <li key={l.id}>
                       <Link
                         href={`/ligas/${l.code}`}

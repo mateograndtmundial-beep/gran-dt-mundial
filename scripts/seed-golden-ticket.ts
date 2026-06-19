@@ -90,6 +90,13 @@ async function main() {
       console.log(`↻ Copa ya existía: ${copa.name} (league ${leagueId}) — parámetros actualizados`);
     }
 
+    // ⚠️ Producto de entrada creado INACTIVO (active=false) a propósito. Mientras la
+    // rama no esté deployada, prod corre `main`, cuyo getActiveProducts NO filtra los
+    // productos de entrada → si estuviera activo, aparecería como un pack raro de "0
+    // pines · $5.000" en /pines para todos los usuarios. Inactivo, main no lo devuelve
+    // (filtra active=true) y queda invisible. Al go-live (rama deployada + visto legal),
+    // activarlo a mano. createEntryOrder exige active=true, así que esto también gatea la
+    // inscripción hasta la activación explícita.
     await db
       .insert(products)
       .values({
@@ -98,13 +105,13 @@ async function main() {
         pins: 0,
         priceArs: ENTRY_FEE_ARS,
         priceUsd: null,
-        active: true,
+        active: false,
         unlimited: false,
         entryLeagueId: leagueId,
       })
       .onConflictDoUpdate({
         target: products.sku,
-        set: { name: copa.name, priceArs: ENTRY_FEE_ARS, entryLeagueId: leagueId, active: true },
+        set: { name: copa.name, priceArs: ENTRY_FEE_ARS, entryLeagueId: leagueId },
       });
     console.log(`✅ Producto de entrada: ${copa.sku} → league ${leagueId}`);
   }

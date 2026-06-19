@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
+import { CopaPrizeHeader } from "@/components/copa/CopaPrizeHeader";
 import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
 import { LeagueJoinCTA } from "@/components/league-join-cta";
@@ -73,13 +74,25 @@ export default async function LeaguePage({
         </div>
       </div>
 
-      <LeagueJoinCTA
-        code={data.league.code}
-        leagueName={data.league.name}
-        isMember={isMember}
-        isAuthed={!!user}
-        isOnboarded={!!user?.username}
-      />
+      {data.league.kind === "golden_ticket" && (
+        <CopaPrizeHeader
+          prizeArs={data.league.prizeArs}
+          entryFeeArs={data.league.entryFeeArs}
+          capacity={data.league.capacity}
+          enrolled={data.total}
+        />
+      )}
+
+      {/* Las copas premium no se unen con código (inscripción paga por el webhook) → sin CTA de join. */}
+      {data.league.kind !== "golden_ticket" && (
+        <LeagueJoinCTA
+          code={data.league.code}
+          leagueName={data.league.name}
+          isMember={isMember}
+          isAuthed={!!user}
+          isOnboarded={!!user?.username}
+        />
+      )}
 
       <LeagueRanking
         currentUserId={user?.username ?? null}

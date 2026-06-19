@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { and, asc, desc, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, lt, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import {
@@ -862,6 +862,7 @@ export async function getMyLeagues(userId: number) {
       name: leagues.name,
       code: leagues.code,
       isPublic: leagues.isPublic,
+      kind: leagues.kind,
     })
     .from(leagueMembers)
     .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.id))
@@ -1140,5 +1141,12 @@ export async function getRoundBreakdown(
 }
 
 export async function getActiveProducts() {
-  return db.select().from(products).where(eq(products.active, true)).orderBy(asc(products.pins));
+  // Solo packs de pines: se excluyen los productos de ENTRADA a copas premium
+  // (entryLeagueId != null), que no van en la tienda de pines (/pines) — esos se
+  // pagan desde la inscripción a la Copa (createEntryOrder), no acreditan pines.
+  return db
+    .select()
+    .from(products)
+    .where(and(eq(products.active, true), isNull(products.entryLeagueId)))
+    .orderBy(asc(products.pins));
 }

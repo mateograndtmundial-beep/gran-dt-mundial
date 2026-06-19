@@ -37,8 +37,13 @@ export function LeagueActions() {
     try {
       const r = await joinLeague(code);
       if (!r.ok && r.error === "auth") return router.push("/sign-in");
+      if (!r.ok && r.error === "premium") {
+        // Copa premium: no se entra con código, la inscripción es paga.
+        setMsg("Esa es una Copa premium: se entra inscribiéndote, no con código.");
+        return;
+      }
       if (!r.ok) {
-        // joinLeague hoy sólo devuelve "auth" o "not-found" además de ok.
+        // joinLeague devuelve "auth" | "premium" | "not-found" además de ok.
         setMsg("No se encontró ninguna liga con ese código.");
         return;
       }

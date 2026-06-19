@@ -270,6 +270,10 @@ export async function joinLeague(code: string) {
     await db.select().from(leagues).where(eq(leagues.code, clean)).limit(1)
   )[0];
   if (!league) return { ok: false as const, error: "not-found" as const };
+  // Las copas premium (GOLDEN TICKET) NO se unen con el código: la inscripción es paga y
+  // la hace el webhook al confirmarse el pago (ver createEntryOrder / creditOrder). Sin
+  // este guard, cualquiera con el código entraría gratis salteando la entrada.
+  if (league.kind === "golden_ticket") return { ok: false as const, error: "premium" as const };
   await db.insert(leagueMembers).values({ leagueId: league.id, userId: user.id }).onConflictDoNothing();
   revalidatePath("/ligas");
   return { ok: true as const, code: league.code };
