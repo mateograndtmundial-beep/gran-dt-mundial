@@ -150,6 +150,9 @@ export async function updatePlayerPrice(playerId: number, price: number) {
   revalidatePath("/admin/precios");
   revalidatePath("/jugadores");
   revalidatePath("/equipo");
+  // El plantel está cacheado (getPlayersWithCountry, tag `players`); revalidatePath
+  // no invalida el Data Cache, así que el precio nuevo quedaría stale sin esto.
+  revalidateTag("players", "max");
   return { ok: true as const, price: p };
 }
 

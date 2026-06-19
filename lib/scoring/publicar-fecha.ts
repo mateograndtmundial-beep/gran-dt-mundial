@@ -268,6 +268,11 @@ export async function publishRound(roundId: number) {
   revalidateTag("player-stats", "max");
   // El ownership pasa a contar la fecha siguiente (nueva editable) → invalidar.
   revalidateTag("player-ownership", "max");
+  // La tabla global cacheada (getGlobalLeaderboard) usa los totales recién recalculados.
+  revalidateTag("leaderboard", "max");
+  // El plantel cacheado (getPlayersWithCountry) trae countries.eliminatedRound,
+  // que se acaba de marcar en playoffs.
+  revalidateTag("players", "max");
   // /jugadores es ISR (revalidate=60): revalidar el tag invalida la función
   // cacheada pero no el HTML prerenderizado, que tiene su propio reloj. Forzamos
   // el re-render para que las stats nuevas aparezcan al instante, no hasta 60s

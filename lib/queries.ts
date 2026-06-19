@@ -35,7 +35,7 @@ export type CoachRow = Awaited<ReturnType<typeof getCoaches>>[number];
  * contra Transfermarkt depende de los nombres en inglés. La UI usa
  * getPlayersWithCountry (en español).
  */
-export async function getPlayersWithCountryRaw() {
+function selectPlayersWithCountry() {
   return db
     .select({
       id: players.id,
@@ -57,8 +57,29 @@ export async function getPlayersWithCountryRaw() {
     .orderBy(desc(players.price));
 }
 
+/**
+ * Variante SIN cachear: la usan los scripts de pricing (necesitan datos frescos
+ * de la DB). La UI usa getPlayersWithCountry (cacheada).
+ */
+export async function getPlayersWithCountryRaw() {
+  return selectPlayersWithCountry();
+}
+
+/**
+ * Plantel completo (1248 jugadores) leído en /jugadores y /equipo (las páginas
+ * más calientes). Cacheado con el Data Cache (tag `players`): solo cambia al
+ * editar un precio (`updatePlayerPrice`) o al publicar una fecha (marca
+ * `countries.eliminatedRound`); ambos invalidan el tag. TTL como red de
+ * seguridad. countryEs() queda fuera del caché (JS puro, no toca la DB).
+ */
+const getPlayersCached = unstable_cache(
+  () => selectPlayersWithCountry(),
+  ["players-with-country"],
+  { tags: ["players"], revalidate: 3600 },
+);
+
 export async function getPlayersWithCountry() {
-  const rows = await getPlayersWithCountryRaw();
+  const rows = await getPlayersCached();
   return rows.map((p) => ({ ...p, countryName: countryEs(p.countryName) }));
 }
 
@@ -467,20 +488,31 @@ export async function getRoundsToSync(now: Date = new Date(), windowHours = 72):
     .map((r) => r.id);
 }
 
+/**
+ * Técnicos (48) leídos en /equipo. Cacheado: solo cambia con el seed → el TTL
+ * alcanza (sin invalidación on-demand). countryEs() queda fuera del caché.
+ */
+const getCoachesCached = unstable_cache(
+  () =>
+    db
+      .select({
+        id: coaches.id,
+        name: coaches.name,
+        photoUrl: coaches.photoUrl,
+        price: coaches.price,
+        countryId: coaches.countryId,
+        countryName: countries.name,
+        flagUrl: countries.flagUrl,
+        code: countries.code,
+      })
+      .from(coaches)
+      .innerJoin(countries, eq(coaches.countryId, countries.id)),
+  ["coaches"],
+  { tags: ["coaches"], revalidate: 3600 },
+);
+
 export async function getCoaches() {
-  const rows = await db
-    .select({
-      id: coaches.id,
-      name: coaches.name,
-      photoUrl: coaches.photoUrl,
-      price: coaches.price,
-      countryId: coaches.countryId,
-      countryName: countries.name,
-      flagUrl: countries.flagUrl,
-      code: countries.code,
-    })
-    .from(coaches)
-    .innerJoin(countries, eq(coaches.countryId, countries.id));
+  const rows = await getCoachesCached();
   return rows.map((c) => ({ ...c, countryName: countryEs(c.countryName) }));
 }
 
@@ -554,20 +586,31 @@ export async function isRankingsVisible(): Promise<boolean> {
   return r?.status === "published";
 }
 
-export async function getGlobalLeaderboard(limit = 100, offset = 0) {
-  return db
-    .select({
-      entryId: entries.id,
-      name: entries.name,
-      totalPoints: entries.totalPoints,
-      username: users.username,
-    })
-    .from(entries)
-    .innerJoin(users, eq(entries.userId, users.id))
-    .orderBy(desc(entries.totalPoints), asc(entries.id))
-    .limit(Math.max(1, Math.min(limit, 200)))
-    .offset(Math.max(0, offset));
-}
+/**
+ * Tabla global (top N) leída en /ranking. Cacheada con el Data Cache (tag
+ * `leaderboard`): los `entries.totalPoints` solo cambian al publicar una fecha
+ * (`publishRound` invalida el tag). Los args (limit/offset) entran en la key del
+ * caché, así que el uso con limit=3 (round-recap) se cachea por separado. TTL
+ * corto como red de seguridad.
+ */
+export const getGlobalLeaderboard = unstable_cache(
+  async (limit = 100, offset = 0) => {
+    return db
+      .select({
+        entryId: entries.id,
+        name: entries.name,
+        totalPoints: entries.totalPoints,
+        username: users.username,
+      })
+      .from(entries)
+      .innerJoin(users, eq(entries.userId, users.id))
+      .orderBy(desc(entries.totalPoints), asc(entries.id))
+      .limit(Math.max(1, Math.min(limit, 200)))
+      .offset(Math.max(0, offset));
+  },
+  ["global-leaderboard"],
+  { tags: ["leaderboard"], revalidate: 300 },
+);
 
 /**
  * Posición global de un entry: 1 + cantidad de entries con más puntos.
