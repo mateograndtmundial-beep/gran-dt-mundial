@@ -54,6 +54,8 @@
 - [ ] **Overflow / pago-sin-lugar**: `createEntryOrder` chequea cupo al crear la orden, pero la inscripción final ocurre en el **webhook** (`creditOrder`). Dos personas pueden pasar el check, pagar, y superar 100 → `creditOrder` rechaza al que sobra **pero ya pagó**. Definir: ¿reembolso al que quedó afuera? ¿lista de espera? Hoy "sin reembolso" choca con este caso. *(agregado — importante)*
 - [ ] **Reconciliación de órdenes pagas no inscriptas**: detectar y resolver órdenes `paid` que no inscribieron (cupo lleno, error). *(agregado)*
 - [ ] **Activación de la copa #2**: definir el trigger (manual) y la acción admin/script para pasar `draft → open` cuando la 1ra llene. *(agregado)*
+- [ ] **Asignación dinámica / balanceo de ligas**: hoy el backend **inscribe en una liga FIJA al pagar** (con chequeo de cupo). Para repartir a los inscriptos en N ligas parejas **al kickoff** (posible porque el usuario recién ve rivales al inicio) hace falta inscribir en un **"pool" y distribuir al cierre** → cambio de ingeniería + criterio de asignación. *(agregado — ver `social/LANZAMIENTO-COPA.md §1.5`)*
+- [ ] **Tamaño mínimo de liga vs premio**: con premio fijo $400k, una liga **por debajo de ~80 pagos pierde plata** (break-even 80). Definir regla: ligas de ~100 (mín ~80) **o** premio que **escale al tamaño** (cambia lo prometido → B&C + comunicación). *(agregado)*
 - [ ] **Desempates** para los puestos del premio (top 10): definir criterio si dos equipos terminan con los mismos puntos. *(agregado)*
 - [ ] **Momento de corte del ranking** para premiar (snapshot tras la final). *(agregado)*
 - [ ] **Reembolsos / contracargos** de MP: política y manejo operativo. *(aún no)*
