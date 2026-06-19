@@ -99,9 +99,16 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 - **Seed:** `npm run seed:golden-ticket` crea las 2 copas (1 `open`, 1 `draft`) + sus
   productos de entrada. Idempotente.
 
+**Datos listos para la UI:**
+- `getGoldenTicketCopas(userId?)` (lectura, server component) y `getCopasStatus()` (server
+  action, para refrescar el cupo en vivo / polling). Devuelven cada copa con: `code`, `name`,
+  `status`, `capacity`, `enrolled`, `spotsLeft`, `entryFeeArs`, `prizeArs`, `entrySku`,
+  `isEnrolled`. Tipo exportado: `CopaStatus`.
+- `createEntryOrder(entrySku)` → crea la orden y devuelve `{ url }` para redirigir al checkout.
+
 **Falta — UI (lo del compañero):**
-- Sección de inscripción (botón → `createEntryOrder(sku)` → redirige a `url`).
-- Mostrar cupo (inscriptos/100), entrada y premio.
+- Sección de inscripción (botón → `createEntryOrder(entrySku)` → redirige a `url`).
+- Mostrar cupo (`enrolled`/`capacity`), entrada y premio; si `isEnrolled`, estado "ya estás dentro".
 - Ranking de la Copa: `/ligas/[code]` ya muestra el ranking; falta el layout premium
   (entrada/premio/cupo + distribución al top 10).
 
