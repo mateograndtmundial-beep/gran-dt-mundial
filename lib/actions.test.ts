@@ -15,7 +15,7 @@ const h = vi.hoisted(() => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn(), revalidateTag: vi.fn() }));
 
 vi.mock("@/lib/auth", () => ({ getCurrentUser: vi.fn() }));
-vi.mock("@/lib/queries", () => ({ getEditableRound: vi.fn() }));
+vi.mock("@/lib/queries", () => ({ getEditableRound: vi.fn(), isEnrolledInGoldenTicket: vi.fn() }));
 
 vi.mock("@/lib/pins", () => ({
   getPinBalance: vi.fn(),

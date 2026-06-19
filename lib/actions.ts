@@ -5,7 +5,7 @@ import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
-import { getEditableRound } from "@/lib/queries";
+import { getEditableRound, isEnrolledInGoldenTicket } from "@/lib/queries";
 import { getPinBalance, pinMovementOps, isInsufficientPinsError } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound, type Position } from "@/lib/game/config";
 import { validateLineupShape } from "@/lib/game/lineup";
@@ -132,10 +132,11 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   // Cupo gratis por fecha + pines por los extra, sobre el ACUMULADO de la fecha
   // (`priorChanges + newChanges`). El total es monótono creciente → `delta` nunca
   // es negativo y nunca se reembolsan pines. Fórmula en lib/game/changes.ts.
+  const inCopa = await isEnrolledInGoldenTicket(user.id);
   const tally = roundTally({
     priorChanges,
     newChanges,
-    freeChanges: getFreeChangesForRound(round.order),
+    freeChanges: getFreeChangesForRound(round.order, inCopa),
     isPremium: user.isPremium,
     alreadySpent: er0?.pinsSpent ?? 0,
   });

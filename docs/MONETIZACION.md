@@ -46,9 +46,11 @@ Entrada $5.000 · premio fijo $400.000 · cupo 100. A cupo lleno la casa deja **
 9. **Alta automática** tras el pago vía **webhook de MP** (reusa la infra de pines): pagó
    GOLDEN TICKET → queda inscripto en la copa. *(Patrón similar al pack `unlimited`, que en
    vez de acreditar pines marca al usuario; acá inscribe en la copa.)*
-10. **16vos: 4 cambios gratis para todos** (los premium conservan su pack ilimitado), para
-    emparejar cuentas nuevas y viejas. Se reinician al arrancar la fecha (no se acumulan).
-    *(Hoy `FREE_CHANGES_PER_ROUND = 1` es constante global → hay que volverla por-ronda.)*
+10. **16vos: 5 cambios gratis SOLO para los inscriptos en la Copa** (los premium conservan
+    su pack ilimitado), para emparejar cuentas nuevas y viejas que entran a la Copa. El resto
+    de los usuarios sigue con 1 cambio gratis. Se reinician al arrancar la fecha (no se
+    acumulan). *(`getFreeChangesForRound(order, inCopa)` en config.ts; la inscripción se
+    chequea con `isEnrolledInGoldenTicket`.)*
 
 ---
 
@@ -95,7 +97,8 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
   `creditOrder` → al pagar, inscribe en la copa (idempotente, control de cupo, aviso a Slack
   si está llena) en vez de acreditar pines. El webhook actual ya enruta solo.
 - **Ranking desde 16vos:** reusa `scoringStartRoundId` (sin código nuevo).
-- **4 cambios gratis en 16vos para todos:** `getFreeChangesForRound` (config.ts).
+- **5 cambios gratis en 16vos solo para inscriptos:** `getFreeChangesForRound(order, inCopa)`
+  (config.ts) + `isEnrolledInGoldenTicket` (queries.ts).
 - **Seed:** `npm run seed:golden-ticket` crea las 2 copas (1 `open`, 1 `draft`) + sus
   productos de entrada. Idempotente.
 
@@ -127,5 +130,5 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 - **El negocio son los pines**; la entrada es secundaria.
 - **Cobro por MP** con **alta automática** por webhook. **Único bloqueante: visto legal antes
   de cobrar.**
-- En 16vos, **4 cambios gratis para todos** (premium conservan ventaja).
+- En 16vos, **5 cambios gratis solo para los inscriptos en la Copa** (premium conservan ventaja).
 </content>

@@ -2,7 +2,7 @@ import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
 import { LineupLockNotice } from "@/components/lineup-lock-notice";
-import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
+import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, isEnrolledInGoldenTicket, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound } from "@/lib/game/config";
@@ -28,6 +28,7 @@ export default async function EquipoPage({
   let editContext: Awaited<ReturnType<typeof getEditContext>> | null = null;
   let pinBalance = 0;
   let isPremium = false;
+  let inCopa = false;
   let isAuthed = false;
   let error = false;
   try {
@@ -47,9 +48,10 @@ export default async function EquipoPage({
       initial = await getEditableLineup(user.id);
       // Contexto de cambios solo si hay fecha editable (si no, no hay nada que contar/cobrar).
       if (editable) {
-        [editContext, pinBalance] = await Promise.all([
+        [editContext, pinBalance, inCopa] = await Promise.all([
           getEditContext(user.id, editable.round.id, editable.round.order),
           getPinBalance(user.id),
+          isEnrolledInGoldenTicket(user.id),
         ]);
       }
     }
@@ -67,7 +69,7 @@ export default async function EquipoPage({
           alreadySpent: editContext.alreadySpentThisRound,
           pinBalance,
           isPremium,
-          freeChanges: getFreeChangesForRound(editable.round.order),
+          freeChanges: getFreeChangesForRound(editable.round.order, inCopa),
           roundName: shortRoundName(editable.round.name),
           roundStarted: editable.round.order > 1,
         }

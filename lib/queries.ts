@@ -802,7 +802,11 @@ export async function getChangesStatus(userId: number, isPremium: boolean): Prom
   // El cupo gratis restante sale de los cambios YA acumulados en la fecha
   // (`priorChanges`), no de un diff recalculado: el baseline es el equipo
   // confirmado, así que un diff daría siempre 0.
-  const freeLeft = freeChangesLeft(editContext.priorChanges, getFreeChangesForRound(editable.round.order));
+  const inCopa = await isEnrolledInGoldenTicket(userId);
+  const freeLeft = freeChangesLeft(
+    editContext.priorChanges,
+    getFreeChangesForRound(editable.round.order, inCopa),
+  );
   const pinBalance = await getPinBalance(userId);
   return { state: "limited", roundName, deadline, freeLeft, pinBalance };
 }
@@ -862,6 +866,22 @@ export async function getMyLeagues(userId: number) {
     .from(leagueMembers)
     .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.id))
     .where(eq(leagueMembers.userId, userId));
+}
+
+/**
+ * ¿El usuario está inscripto en alguna copa premium (GOLDEN TICKET)? Define el cupo
+ * de cambios gratis extra de los 16vos (ver getFreeChangesForRound en game/config).
+ */
+export async function isEnrolledInGoldenTicket(userId: number): Promise<boolean> {
+  const row = (
+    await db
+      .select({ id: leagueMembers.id })
+      .from(leagueMembers)
+      .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.id))
+      .where(and(eq(leagueMembers.userId, userId), eq(leagues.kind, "golden_ticket")))
+      .limit(1)
+  )[0];
+  return !!row;
 }
 
 export type CopaStatus = Awaited<ReturnType<typeof getGoldenTicketCopas>>[number];
