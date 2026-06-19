@@ -87,10 +87,29 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 
 ---
 
-## Pendiente de definir
-- **Cómo se muestra en la app** (entrada/sección, copy, cupo en vivo, ranking de la Copa).
-- **Construcción técnica** (schema de la copa: entrada/cupo/estado, inscripción por webhook,
-  ranking desde 16vos reusando `scoringStartRoundId`, los 4 cambios gratis por-ronda).
+## Estado técnico (rama `feat/copa-golden-ticket`)
+**Hecho (backend) — build + tests verdes:**
+- **Schema:** `leagues` + `kind`/`status`/`capacity`/`entryFeeArs`/`prizeArs`; `products` +
+  `entryLeagueId`. Migración `drizzle/0014` **generada, NO aplicada**.
+- **Inscripción:** `createEntryOrder` (cobra la entrada por Mercado Pago) + branch en
+  `creditOrder` → al pagar, inscribe en la copa (idempotente, control de cupo, aviso a Slack
+  si está llena) en vez de acreditar pines. El webhook actual ya enruta solo.
+- **Ranking desde 16vos:** reusa `scoringStartRoundId` (sin código nuevo).
+- **4 cambios gratis en 16vos para todos:** `getFreeChangesForRound` (config.ts).
+- **Seed:** `npm run seed:golden-ticket` crea las 2 copas (1 `open`, 1 `draft`) + sus
+  productos de entrada. Idempotente.
+
+**Falta — UI (lo del compañero):**
+- Sección de inscripción (botón → `createEntryOrder(sku)` → redirige a `url`).
+- Mostrar cupo (inscriptos/100), entrada y premio.
+- Ranking de la Copa: `/ligas/[code]` ya muestra el ranking; falta el layout premium
+  (entrada/premio/cupo + distribución al top 10).
+
+## Cómo activar (gated por OK + visto legal) 🔒
+1. Aplicar la migración a la DB (`npm run db:migrate`) — leé `docs/PRODUCCION.md §2` antes.
+2. Seedear copas + productos (`npm run seed:golden-ticket`) — requiere un admin y el torneo seedeado.
+3. Crear el producto/preferencia GOLDEN TICKET en Mercado Pago (el adapter ya arma el checkout).
+4. Mergear la rama a `main` (recién **acá** se toca producción).
 
 ---
 
