@@ -19,7 +19,7 @@ import {
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
-import { FREE_CHANGES_PER_ROUND, SCORING } from "@/lib/game/config";
+import { getFreeChangesForRound, SCORING } from "@/lib/game/config";
 import { round1 } from "@/lib/pricing/map";
 import { shortRoundName } from "@/lib/game/round-format";
 import { freeChangesLeft } from "@/lib/game/changes";
@@ -802,7 +802,7 @@ export async function getChangesStatus(userId: number, isPremium: boolean): Prom
   // El cupo gratis restante sale de los cambios YA acumulados en la fecha
   // (`priorChanges`), no de un diff recalculado: el baseline es el equipo
   // confirmado, así que un diff daría siempre 0.
-  const freeLeft = freeChangesLeft(editContext.priorChanges, FREE_CHANGES_PER_ROUND);
+  const freeLeft = freeChangesLeft(editContext.priorChanges, getFreeChangesForRound(editable.round.order));
   const pinBalance = await getPinBalance(userId);
   return { state: "limited", roundName, deadline, freeLeft, pinBalance };
 }

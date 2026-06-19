@@ -3,7 +3,18 @@
 export const BUDGET = 700; // presupuesto para armar el equipo (15 jugadores + DT)
 export const SQUAD = { STARTERS: 11, SUBS: 4, TOTAL: 15 } as const;
 export const MAX_PER_COUNTRY = 3;
-export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha; los extra cuestan pines
+export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha (default); los extra cuestan pines
+
+// 16vos de Final (order 4) arranca con cambios gratis extra para emparejar cuentas
+// nuevas y viejas al entrar a la Copa GOLDEN TICKET (ver docs/MONETIZACION.md). El
+// resto de las fechas sigue en FREE_CHANGES_PER_ROUND. El cupo es por-fecha y no se
+// acumula (se reinicia al arrancar cada fecha).
+export const FREE_CHANGES_R16 = 4;
+
+/** Cambios gratis de una fecha según su `order` (1-based, como en ROUNDS). */
+export function getFreeChangesForRound(roundOrder: number): number {
+  return roundOrder === 4 ? FREE_CHANGES_R16 : FREE_CHANGES_PER_ROUND;
+}
 
 // Pricing de jugadores: precio continuo derivado del valor de mercado (Transfermarkt).
 // Ver lib/pricing/map.ts y scripts/price-players.ts. Todo tuneable post-seed.

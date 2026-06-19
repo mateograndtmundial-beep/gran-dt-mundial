@@ -7,7 +7,7 @@ import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds
 import { getCurrentUser } from "@/lib/auth";
 import { getEditableRound } from "@/lib/queries";
 import { getPinBalance, pinMovementOps, isInsufficientPinsError } from "@/lib/pins";
-import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND, type Position } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound, type Position } from "@/lib/game/config";
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
 import { round1 } from "@/lib/pricing/map";
@@ -135,7 +135,7 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   const tally = roundTally({
     priorChanges,
     newChanges,
-    freeChanges: FREE_CHANGES_PER_ROUND,
+    freeChanges: getFreeChangesForRound(round.order),
     isPremium: user.isPremium,
     alreadySpent: er0?.pinsSpent ?? 0,
   });

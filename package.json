@@ -15,6 +15,7 @@
     "db:studio": "drizzle-kit studio",
     "seed": "tsx scripts/seed.ts",
     "seed:products": "tsx scripts/seed-products.ts",
+    "seed:golden-ticket": "tsx scripts/seed-golden-ticket.ts",
     "make-admin": "tsx scripts/make-admin.ts",
     "prices:fetch": "tsx scripts/fetch-market-values.ts",
     "prices:apply": "tsx scripts/price-players.ts",

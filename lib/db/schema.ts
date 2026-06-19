@@ -242,6 +242,17 @@ export const leagues = pgTable('leagues', {
   // total global). null = desde el inicio (Fecha 1, cuenta todo). El dueño la elige
   // y puede cambiarla en cualquier momento (ver setLeagueScoringStart).
   scoringStartRoundId: integer('scoring_start_round_id').references(() => rounds.id),
+  // ---- Copa premium (GOLDEN TICKET, ver docs/MONETIZACION.md). Las ligas privadas
+  // normales quedan en los defaults de abajo y no usan estos campos. ----
+  // 'private' = liga privada normal (todas las actuales) | 'golden_ticket' = copa con
+  // entrada y premio en plata.
+  kind: text('kind').notNull().default('private'),
+  // Estado de la copa: 'draft' = creada pero inactiva (la 2da copa hasta que se llena la
+  // 1ra) | 'open' = admite inscripciones | 'full' = cupo lleno | 'closed' = cerrada.
+  status: text('status').notNull().default('open'),
+  capacity: integer('capacity'), // cupo máximo de inscriptos (null = sin tope; las privadas)
+  entryFeeArs: integer('entry_fee_ars'), // entrada en ARS (solo golden_ticket)
+  prizeArs: integer('prize_ars'), // premio total garantizado en ARS, para mostrar (solo golden_ticket)
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -281,6 +292,10 @@ export const products = pgTable('products', {
   active: boolean('active').notNull().default(true),
   // Pack "ilimitado": no acredita pines, marca al usuario como premium (ver lib/payments/credit.ts)
   unlimited: boolean('unlimited').notNull().default(false),
+  // Si no es null, este producto es una ENTRADA a esa copa premium: al pagarse, el
+  // webhook inscribe al usuario en la liga en vez de acreditar pines (ver
+  // lib/payments/credit.ts y createEntryOrder). Patrón análogo a `unlimited`.
+  entryLeagueId: integer('entry_league_id').references(() => leagues.id),
 });
 
 export const orders = pgTable(

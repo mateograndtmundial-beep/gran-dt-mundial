@@ -5,7 +5,7 @@ import { LineupLockNotice } from "@/components/lineup-lock-notice";
 import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
-import { BUDGET, MAX_PER_COUNTRY, FREE_CHANGES_PER_ROUND } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound } from "@/lib/game/config";
 import { shortRoundName } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
@@ -67,7 +67,7 @@ export default async function EquipoPage({
           alreadySpent: editContext.alreadySpentThisRound,
           pinBalance,
           isPremium,
-          freeChanges: FREE_CHANGES_PER_ROUND,
+          freeChanges: getFreeChangesForRound(editable.round.order),
           roundName: shortRoundName(editable.round.name),
           roundStarted: editable.round.order > 1,
         }
