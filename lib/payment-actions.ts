@@ -6,6 +6,7 @@ import { products, orders, leagues, leagueMembers } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getProvider, providerForCountry, isProviderConfigured } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
+import { getGoldenTicketCopas } from "@/lib/queries";
 import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
 import { headers } from "next/headers";
 
@@ -208,4 +209,14 @@ export async function getOrderStatus(orderId: number) {
   )[0];
   if (!o || o.userId !== user.id) return null;
   return { status: o.status, pins: o.pins };
+}
+
+/**
+ * Estado en vivo de las copas GOLDEN TICKET (cupo, inscripción del usuario), para que
+ * el front lo muestre y lo refresque (polling). Devuelve el array de copas visibles con
+ * su cupo actual; `isEnrolled` marca si el usuario logueado ya está dentro.
+ */
+export async function getCopasStatus() {
+  const user = await getCurrentUser();
+  return getGoldenTicketCopas(user?.id);
 }

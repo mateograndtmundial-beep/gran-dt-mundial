@@ -864,6 +864,47 @@ export async function getMyLeagues(userId: number) {
     .where(eq(leagueMembers.userId, userId));
 }
 
+export type CopaStatus = Awaited<ReturnType<typeof getGoldenTicketCopas>>[number];
+
+/**
+ * Estado de las copas premium (GOLDEN TICKET) visibles —todas menos las 'draft'—,
+ * para la UI de inscripción y el cupo en vivo: inscriptos/capacity, cuántos lugares
+ * quedan, entrada, premio, el sku del producto de entrada (para createEntryOrder) y
+ * si el usuario ya está dentro. Ordenadas por id (la copa 1 primero).
+ */
+export async function getGoldenTicketCopas(userId?: number) {
+  const rows = await db
+    .select({
+      id: leagues.id,
+      code: leagues.code,
+      name: leagues.name,
+      status: leagues.status,
+      capacity: leagues.capacity,
+      entryFeeArs: leagues.entryFeeArs,
+      prizeArs: leagues.prizeArs,
+      entrySku: products.sku,
+      enrolled: sql<number>`(select count(*) from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id})`,
+      isEnrolled:
+        userId != null
+          ? sql<boolean>`exists (select 1 from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id} and ${leagueMembers.userId} = ${userId})`
+          : sql<boolean>`false`,
+    })
+    .from(leagues)
+    .leftJoin(products, eq(products.entryLeagueId, leagues.id))
+    .where(and(eq(leagues.kind, "golden_ticket"), ne(leagues.status, "draft")))
+    .orderBy(asc(leagues.id));
+
+  return rows.map((r) => {
+    const enrolled = Number(r.enrolled);
+    return {
+      ...r,
+      enrolled,
+      // Lugares libres (nunca negativo); null si la copa no tiene cupo.
+      spotsLeft: r.capacity != null ? Math.max(0, r.capacity - enrolled) : null,
+    };
+  });
+}
+
 export const LEAGUE_RANKING_PAGE_SIZE = 50;
 
 /**
