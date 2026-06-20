@@ -6,8 +6,6 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
 import { ChangeReminder } from "@/components/change-reminder";
-import { PostHogProvider } from "./providers";
-import { PostHogIdentify } from "@/components/posthog-identify";
 import { SITE } from "@/lib/site";
 
 /* ─── Fuentes (next/font/google → CSS variables) ─── */
@@ -69,8 +67,6 @@ export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   const fontVars = [bebasNeue.variable, manrope.variable, archivoBlack.variable].join(" ");
-  // PostHog (analytics + session replay) se activa sólo si hay key configurada.
-  const posthogEnabled = !!process.env.NEXT_PUBLIC_POSTHOG_KEY;
 
   const content = (
     <>
@@ -87,16 +83,12 @@ export default async function RootLayout({
           <ChangeReminder />
         </Suspense>
       )}
-      {/* Ata cada replay/evento al usuario logueado (necesita Clerk + PostHog). */}
-      {posthogEnabled && clerkEnabled && <PostHogIdentify />}
     </>
   );
 
   const tree = (
     <html lang="es" className={fontVars}>
-      <body className="min-h-screen antialiased">
-        {posthogEnabled ? <PostHogProvider>{content}</PostHogProvider> : content}
-      </body>
+      <body className="min-h-screen antialiased">{content}</body>
     </html>
   );
 

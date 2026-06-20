@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     "Cómo Los 11 de Sampa recopila, usa y protege tus datos personales, y cuáles son tus derechos.",
 };
 
-const UPDATED = "7 de junio de 2026";
+const UPDATED = "20 de junio de 2026";
 
 function Mailto() {
   return (
@@ -67,16 +67,11 @@ export default function PrivacidadPage() {
               estado y el monto de la orden para acreditarte los pines.
             </li>
             <li>
-              <strong>Datos de uso y analítica:</strong> usamos PostHog para entender cómo se usa la
-              app. Incluye eventos de navegación, clics y grabaciones de sesión (ver más abajo).
-            </li>
-            <li>
               <strong>Datos técnicos:</strong> dirección IP, tipo de dispositivo y navegador, y país
               aproximado, a través de nuestro proveedor de hosting (Vercel).
             </li>
             <li>
-              <strong>Cookies:</strong> usamos cookies necesarias para mantener tu sesión (Clerk) y
-              para la analítica (PostHog).
+              <strong>Cookies:</strong> usamos cookies necesarias para mantener tu sesión (Clerk).
             </li>
           </ul>
         </Section>
@@ -101,7 +96,6 @@ export default function PrivacidadPage() {
             <li><strong>Clerk</strong> — autenticación e identidad.</li>
             <li><strong>Neon</strong> — base de datos.</li>
             <li><strong>Vercel</strong> — hosting e infraestructura.</li>
-            <li><strong>PostHog</strong> — analítica y grabación de sesiones.</li>
             <li><strong>Mercado Pago</strong> y <strong>dLocal</strong> — procesamiento de pagos.</li>
             <li>
               <strong>Slack</strong> — recibimos notificaciones operativas internas (por ejemplo,
@@ -109,15 +103,6 @@ export default function PrivacidadPage() {
             </li>
           </ul>
           <p>También podemos divulgar información si una ley o autoridad competente lo requiere.</p>
-        </Section>
-
-        <Section title="Grabación de sesiones (session replay)">
-          <p>
-            Para mejorar la experiencia y resolver problemas, registramos sesiones de uso con
-            PostHog. Estas grabaciones reconstruyen tu navegación (movimientos, clics y pantallas),
-            pero <strong>enmascaran por defecto el contenido de los campos de texto y los datos
-            sensibles</strong>. No accedemos a tu cámara ni a tu micrófono.
-          </p>
         </Section>
 
         <Section title="Cuánto tiempo conservamos los datos">

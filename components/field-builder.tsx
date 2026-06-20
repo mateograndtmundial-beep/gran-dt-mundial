@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { usePostHog } from "posthog-js/react";
 import { X, GripVertical, ArrowDownUp, ArrowLeftRight } from "lucide-react";
 import {
   FORMATIONS,
@@ -139,7 +138,6 @@ export function FieldBuilder({
   changeContext?: ChangeContext | null;
   addPlayerId?: number | null;
 }) {
-  const posthog = usePostHog();
   const hasStats = Object.keys(stats).length > 0;
   const hasOwnership = Object.keys(ownership).length > 0;
   const router = useRouter();
@@ -599,13 +597,6 @@ export function FieldBuilder({
     }
     if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
     clearDraft(); // guardado OK → el borrador local ya no hace falta
-    posthog?.capture("lineup_saved", {
-      round: cc?.roundName ?? null,
-      changes_made: changesMade,
-      pins_spent: pinsDue,
-      used_free_change: freeUsedNow > 0,
-      is_premium: cc?.isPremium ?? false,
-    });
     // Confirmación en /mi-equipo: pasamos los números por query y ahí mostramos
     // un cartel de éxito (el armador navega de inmediato, no alcanza un toast acá).
     const params = new URLSearchParams({ saved: "1", ch: String(changesMade), pins: String(pinsDue) });

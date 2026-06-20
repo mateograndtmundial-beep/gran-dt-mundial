@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { usePostHog } from "posthog-js/react";
 import { Clock } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { PrimaryButton } from "@/components/editorial";
@@ -30,8 +29,6 @@ export function ChangeReminderPopup({
 }) {
   const [show, setShow] = useState(false);
   const router = useRouter();
-  const posthog = usePostHog();
-  const trackedShown = useRef(false);
   const storageKey = `${STORAGE_PREFIX}.${roundId}`;
 
   // Lectura diferida a rAF: evita el flash y no toca localStorage en SSR.
@@ -44,22 +41,16 @@ export function ChangeReminderPopup({
         visible = true;
       }
       setShow(visible);
-      // Solo lo contamos como "mostrado" cuando efectivamente se ve (una vez).
-      if (visible && !trackedShown.current) {
-        trackedShown.current = true;
-        posthog?.capture("change_reminder_shown", { round_id: roundId });
-      }
     });
     return () => cancelAnimationFrame(raf);
-  }, [storageKey, posthog, roundId]);
+  }, [storageKey]);
 
-  function dismiss(via: "close" | "ahora_no" = "close") {
+  function dismiss() {
     try {
       localStorage.setItem(storageKey, "1");
     } catch {
       /* ignore */
     }
-    posthog?.capture("change_reminder_dismissed", { round_id: roundId, via });
     setShow(false);
   }
 
@@ -69,7 +60,6 @@ export function ChangeReminderPopup({
     } catch {
       /* ignore */
     }
-    posthog?.capture("change_reminder_cta_click", { round_id: roundId });
     setShow(false);
     router.push("/equipo");
   }
@@ -111,7 +101,7 @@ export function ChangeReminderPopup({
         <div className="mt-1 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
           <button
             type="button"
-            onClick={() => dismiss("ahora_no")}
+            onClick={() => dismiss()}
             className="rounded-[6px] px-3 py-2.5 text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
           >
             Ahora no
