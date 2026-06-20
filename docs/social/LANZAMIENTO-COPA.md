@@ -589,11 +589,20 @@ constante de la semana.
 
 ### 7 · D-2 · viernes 26/06 — Urgencia: "faltan 2 días"
 **Objetivo:** 🏆 Liga Premium. Le habla al interesado tibio que venía postergando.
-**Formato:** placa única (countdown) o carrusel 2.
+**Formato:** carrusel 2 slides, generado: `scripts/generate-copa-7.ts` → `out/copa-7/copa-7_01..02.png`.
+**Estado:** GENERADO (con **placeholder** de cupo). Figura por slide: **countdown** (numeral gigante
+"2 DÍAS" + timeline VIE 26 / SÁB 27 / DOM 28 cierra) → **cupo en vivo (barra)** + recap oferta + CTA.
+
+> ⚠️ **El cupo es REAL.** Igual que la #5: sacá los anotados de `getCopasStatus` y regenerá con
+> `--enrolled <N>` antes de publicar (el default es solo para previsualizar; el script avisa). Nunca inflar.
 
 **Slides:**
-1. **Portada:** "Faltan **2 días**. La Liga Premium cierra el 28/06."
-2. *(opcional)* "Quedan [Y] de 100. $400.000 al top 10. los11desampa.com/copa"
+1. **Portada (countdown):** "Faltan **2 días**." + cuenta regresiva al cierre (timeline de los últimos
+   días, 28/06 marcado en dorado). "La inscripción cierra el 28/06, antes de 16vos. No hay repechaje."
+2. **Cupo + recap:** "Quedan **[Y]** lugares" + **barra de cupo** (X/100, %) + recap ($400.000 al top
+   10 / entrada $5.000 / cierra 28/06) + CTA "Entrá antes del cierre".
+
+**Regenerar:** `npx tsx scripts/generate-copa-7.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-7/`, gitignored).
 
 **Qué dice (caption):**
 > ⏳ **Faltan 2 días.** La inscripción a la Liga Premium cierra el **28/06**, justo antes del primer
@@ -617,11 +626,20 @@ constante de la semana.
 
 ### 8 · D-1 · sábado 27/06 — Urgencia: "última chance, cierra mañana"
 **Objetivo:** 🏆 Liga Premium. Le habla al que ya decidió pero no se anotó todavía.
-**Formato:** placa única (countdown fuerte).
+**Formato:** carrusel 2 slides, generado: `scripts/generate-copa-8.ts` → `out/copa-8/copa-8_01..02.png`.
+**Estado:** GENERADO (con **placeholder** de cupo). Más intensa que la #7 (rojo dominante). Figura por
+slide: hero **"1 DÍA"** (anillo gigante dorado + campanita + recap de la oferta) → cupo en vivo (barra) + CTA.
+
+> ⚠️ **El cupo es REAL.** Igual que la #5/#7: sacá los anotados de `getCopasStatus` y regenerá con
+> `--enrolled <N>` antes de publicar (el default es solo para previsualizar; el script avisa). Nunca inflar.
 
 **Slides:**
-1. **Portada:** "Última chance. **Cierra MAÑANA.**"
-2. *(opcional)* "Quedan [Y] lugares. $400.000 al top 10. los11desampa.com/copa"
+1. **Portada (hero "1 día"):** "Cierra **MAÑANA**." + anillo gigante **1 DÍA** "para entrar" + recap
+   ($400.000 al top 10 · [Y] de 100 libres · entrada $5.000). "No se reabre."
+2. **Cupo + CTA:** "Entrá hoy, mañana no." + **barra de cupo** (X/100, %) + recap (no se reabre /
+   $400.000 / entrada $5.000) + CTA "Último día para anotarte".
+
+**Regenerar:** `npx tsx scripts/generate-copa-8.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-8/`, gitignored).
 
 **Qué dice (caption):**
 > 🚨 **Última chance.** Mañana cierra la inscripción a la Liga Premium y no se reabre.
@@ -645,12 +663,24 @@ escasez antes del cierre.
 ### 9 · D-0 · domingo 28/06 — 🔔 Último llamado + rescate al general
 **Objetivo:** 🏆🎮 Ambos. Cierra la Liga Premium **a la mañana** y, para los que no llegaron, los
 invita a jugar **gratis** igual (no perder el lead).
-**Formato:** carrusel 2 slides.
+**Formato:** carrusel 2 slides, generado: `scripts/generate-copa-9.ts` → `out/copa-9/copa-9_01..02.png`.
+**Estado:** GENERADO (con **placeholder** de cupo). Cada slide cambia de **footer/acento**: s1 premium
+(`/COPA`, rojo/dorado) → s2 general gratis (`los11desampa.com`, "Jugá gratis", verde). El puente lo
+arma la barra inferior de la s1 ("¿No llegás a la Premium? Igual jugás gratis").
+
+> ⚠️ **El cupo es REAL.** Igual que la #5/#7/#8: regenerá con `--enrolled <N>` de `getCopasStatus`
+> antes de publicar (default solo para previsualizar; el script avisa). Nunca inflar.
+>
+> ⚠️ **Operativo:** una vez **cerrada la inscripción**, frenar el CTA de pago (slide 1 / footer
+> `/COPA`); a partir de ahí dejar solo el de **jugar gratis** (slide 2). Cerrar también la pauta.
 
 **Slides:**
-1. **Portada (mañana):** "**CIERRA HOY.** Antes del primer partido de 16vos."
-2. **Rescate:** "¿No llegaste a la Premium? Igual podés jugar **gratis** todo lo que queda del
-   Mundial. Armá tu 11 en los11desampa.com"
+1. **Portada (cierra hoy):** "**CIERRA HOY**." + hero dark "**ÚLTIMAS HORAS** para jugar por $400.000"
+   (campanita roja) + recap ($400.000 / [Y] de 100 libres / $5.000). Footer premium `/COPA`.
+2. **Rescate (gratis):** "Jugá **gratis** igual." + 3 cards verdes (armá tu 11 gratis / ranking global
+   / liga con amigos) + CTA "La pelota no espera · los11desampa.com". Footer general "Jugá gratis".
+
+**Regenerar:** `npx tsx scripts/generate-copa-9.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-9/`, gitignored).
 
 **Qué dice (caption):**
 > 🔔 **Hoy cierra la Liga Premium.** Antes de que ruede la pelota en 16vos. Últimas horas para entrar
@@ -724,7 +754,7 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
 
 ---
 
-## ANEXO B — Captions listas para IG (#1 → #6)
+## ANEXO B — Captions listas para IG (#1 → #9)
 
 > **Para copiar y pegar tal cual** al subir cada carrusel. Bloques limpios (sin `>` ni formato), en
 > el orden de publicación. Antes de pegar, repasar: link en bio apunta a `los11desampa.com/copa`
@@ -820,4 +850,44 @@ Es el prode del grupo, pero bien hecho. Y si después quieren jugar fuerte, ahí
 Armá la liga gratis en los11desampa.com — etiquetá a los 3 que NO pueden faltar 👇
 
 #Los11DeSampa #FantasyFutbol #Mundial2026 #LigaConAmigos #Prode
+```
+
+### #7 · 26/06 — Urgencia: faltan 2 días
+> ⚠️ Completar `[Y]` con el número real de `getCopasStatus` (lugares libres), igual que en la placa (`--enrolled`). **Nunca inflar.**
+```text
+⏳ Faltan 2 días. La inscripción a la Liga Premium cierra el 28/06, justo antes del primer partido de 16vos.
+
+Después no hay repechaje: o estás adentro jugando por $400.000, o lo mirás de afuera. Quedan [Y] de 100 lugares.
+
+💵 $5.000 · 🔗 bio · los11desampa.com/copa
+
+¿Lo dejás para último momento otra vez? 👇 (Bases y Condiciones en bio.)
+
+#LigaPremium #Mundial2026 #Los11DeSampa #UltimosDias #FantasyFutbol
+```
+
+### #8 · 27/06 — Urgencia: última chance, cierra mañana
+> ⚠️ Completar `[Y]` con el número real de `getCopasStatus` (lugares libres), igual que en la placa (`--enrolled`). **Nunca inflar.**
+```text
+🚨 Última chance. Mañana cierra la inscripción a la Liga Premium y no se reabre.
+
+Si venías pensándolo: es ahora. $400.000 garantizados al top 10, cupo 100, entrada $5.000. Quedan [Y] lugares.
+
+🔗 bio 👉 los11desampa.com/copa
+
+Etiquetá al amigo indeciso antes de que sea tarde 👇 (Bases y Condiciones en bio.)
+
+#LigaPremium #UltimaChance #Mundial2026 #Los11DeSampa #FantasyFutbol
+```
+
+### #9 · 28/06 — Último llamado + rescate al modo gratis
+> ⚠️ Subir **a la mañana**. Una vez cerrada la inscripción, **editar la caption** quitando el CTA de pago y dejando solo el de jugar gratis (la slide 2 ya lo sostiene).
+```text
+🔔 Hoy cierra la Liga Premium. Antes de que ruede la pelota en 16vos. Últimas horas para entrar y jugar por $400.000. 🔗 bio · los11desampa.com/copa
+
+¿No llegás a tiempo o no es lo tuyo lo de la plata? No pasa nada: el juego sigue gratis. Armá tu equipo, metete en el ranking global y jugá con tus amigos hasta la final.
+
+🎮 los11desampa.com — la pelota no espera 👇
+
+#LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
 ```
