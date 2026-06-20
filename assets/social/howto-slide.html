@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<!--
+  TEMPLATE — Slide del carrusel "CÓMO SE JUEGA (gratis)" · Los 11 de Sampa
+  Lienzo: 1080 x 1350 (carrusel IG/FB, 4:5). Render: Playwright/Chromium, device_scale_factor=2.
+
+  Plantilla parametrica (un solo HTML para los 3 tipos de slide). Reusa el "chrome" de marca
+  de assets/stories/scoreboard-cover.html (header, ghost numeral, page pill, textura, URL pill).
+
+  KIND:
+    - "cover"  → portada: badge GRATIS + título grande + bajada + barra "DESLIZÁ »»".
+    - "shot"   → paso: eyebrow + título + screenshot real enmarcado en "card teléfono" + bajada.
+    - "cta"    → cierre: título grande + CTA al sitio.
+
+  PLACEHOLDERS:
+    {{LOGO_B64}}        base64 del logo badge (PNG)
+    {{TITLE_FONT_CSS}}  @font-face de Archivo Black ('TitleHeavy') embebida
+    {{PAGINA}} {{TOTAL}}  "01" / "06"
+    {{EYEBROW}}         eyebrow chico sobre el título (vacío en cover/cta)
+    {{TITLE_HTML}}      título grande (Archivo Black). Puede traer <span> azul de acento.
+    {{TITLE_SIZE}}      font-size del título (px)
+    {{BODY_HTML}}       bajada/cuerpo (Poppins)
+    {{BADGE}}           texto del badge (ej. "GRATIS"); vacío = sin badge
+    {{SHOT_B64}}        screenshot real (PNG base64); vacío = sin imagen
+    {{SHOT_BLOCK}}      "1" para mostrar el marco de teléfono, "" para ocultarlo
+    {{DESLIZA}}         "1" para mostrar la barra "DESLIZÁ »»", "" para ocultarla
+    {{CTA_BLOCK}}       "1" para mostrar la pastilla CTA grande (cta), "" para ocultar
+-->
+<html lang="es"><head><meta charset="UTF-8"><style>
+  :root{--blue:#1B4FD8;--gold:#C8A24B;--ink:#111827;--bg:#F0F2F0;}
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif;}
+  .wrap{position:relative;width:1080px;height:1350px;background:var(--bg);overflow:hidden;padding:0 60px;}
+  .texture{position:absolute;inset:0;pointer-events:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");}
+  .ghost{position:absolute;right:46px;top:-26px;font-family:'TitleHeavy',sans-serif;font-size:300px;color:#111827;opacity:0.04;letter-spacing:-0.06em;line-height:1;}
+  .hd{display:flex;align-items:center;gap:14px;padding-top:54px;position:relative;z-index:2;}
+  .hd .lg{width:62px;height:62px;border-radius:50%;border:3px solid var(--blue);overflow:hidden;background:#fff;box-shadow:3px 3px 0 rgba(17,24,39,0.18);}
+  .hd .lg img{width:100%;height:100%;display:block;}
+  .hd .wm{font-weight:800;font-size:27px;text-transform:uppercase;}
+  .hd .wm span{color:var(--blue);}
+  .page{position:absolute;right:60px;top:58px;font-weight:800;font-size:15px;letter-spacing:0.1em;color:#9CA3AF;background:#fff;border:2px solid var(--ink);border-radius:6px;padding:8px 13px;box-shadow:3px 3px 0 rgba(17,24,39,0.2);z-index:3;}
+  .page b{color:var(--ink);}
+  .url{background:var(--ink);color:#fff;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;border-radius:6px;display:inline-block;}
+  .eyebrow{font-weight:800;font-size:26px;letter-spacing:0.18em;text-transform:uppercase;color:#9CA3AF;}
+  .title{font-family:'TitleHeavy',sans-serif;line-height:0.94;letter-spacing:0.005em;color:var(--ink);text-transform:uppercase;}
+  .title span{color:var(--blue);}
+  .body{font-weight:600;font-size:30px;line-height:1.32;color:#374151;}
+  .body b{color:var(--ink);font-weight:800;}
+  .badge{display:inline-block;background:var(--blue);color:#fff;font-family:'TitleHeavy',sans-serif;font-size:34px;letter-spacing:0.02em;padding:10px 26px;border-radius:12px;box-shadow:6px 6px 0 var(--ink);transform:rotate(-2deg);}
+  /* "card teléfono" que enmarca el screenshot real */
+  .phone{border:3px solid var(--ink);border-radius:30px;background:#fff;box-shadow:12px 12px 0 rgba(17,24,39,0.85);overflow:hidden;}
+  .phone img{display:block;width:100%;height:100%;object-fit:cover;object-position:top center;}
+  {{TITLE_FONT_CSS}}
+</style></head><body>
+<div class="wrap">
+  <div class="texture"></div>
+  <div class="ghost">11</div>
+  <div class="hd"><div class="lg"><img src="data:image/png;base64,{{LOGO_B64}}"></div><div class="wm">LOS <span>11</span> DE SAMPA</div></div>
+  <div class="page"><b>{{PAGINA}}</b> / {{TOTAL}}</div>
+
+  <!-- Encabezado de texto -->
+  <div style="margin-top:64px;position:relative;z-index:2;">
+    {{BADGE_BLOCK}}
+    <div class="eyebrow" style="{{EYEBROW_STYLE}}">{{EYEBROW}}</div>
+    <div class="title" style="font-size:{{TITLE_SIZE}}px;margin-top:14px;">{{TITLE_HTML}}</div>
+    <div class="body" style="margin-top:22px;max-width:920px;">{{BODY_HTML}}</div>
+  </div>
+
+  <!-- Screenshot real enmarcado (KIND=shot) -->
+  <div style="{{SHOT_WRAP_STYLE}}">
+    <div class="phone" style="width:560px;height:700px;">
+      <img src="data:image/png;base64,{{SHOT_B64}}">
+    </div>
+  </div>
+
+  <!-- Barra "DESLIZÁ »»" (KIND=cover) -->
+  <div style="{{DESLIZA_STYLE}}">
+    <div style="position:absolute;left:60px;right:60px;bottom:118px;background:#101726;border-radius:14px;padding:30px 38px;display:flex;align-items:center;justify-content:space-between;box-shadow:6px 6px 0 rgba(17,24,39,0.5);">
+      <div style="color:#fff;font-weight:800;font-size:36px;letter-spacing:-0.02em;line-height:1.05;">Te lo contamos<br>en 4 pasos</div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:2px;margin-left:24px;flex:0 0 auto;">
+        <div style="color:#9AA6BF;font-weight:800;font-size:16px;letter-spacing:0.2em;text-transform:uppercase;">Deslizá</div>
+        <div style="color:#FFD34D;font-weight:800;font-size:50px;line-height:0.7;letter-spacing:-0.04em;">&raquo;&raquo;</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pastilla CTA grande (KIND=cta) -->
+  <div style="{{CTA_STYLE}}">
+    <div style="position:absolute;left:60px;right:60px;bottom:150px;background:var(--blue);border-radius:18px;padding:46px 44px;text-align:center;box-shadow:10px 10px 0 var(--ink);">
+      <div style="color:#fff;font-weight:800;font-size:30px;letter-spacing:0.02em;">Armá tu 11, gratis, en</div>
+      <div style="color:#fff;font-family:'TitleHeavy',sans-serif;font-size:64px;letter-spacing:0.01em;margin-top:6px;">LOS11DESAMPA.COM</div>
+    </div>
+  </div>
+
+  <!-- Footer marca -->
+  <div style="position:absolute;left:60px;right:60px;bottom:48px;display:flex;align-items:center;justify-content:space-between;z-index:2;">
+    <div class="url"><span style="display:inline-block;padding:14px 22px;font-size:20px;">LOS11DESAMPA.COM</span></div>
+    <div style="font-weight:800;text-transform:uppercase;letter-spacing:0.08em;font-size:18px;color:#9CA3AF;">El juego de los DT</div>
+  </div>
+</div>
+</body></html>
