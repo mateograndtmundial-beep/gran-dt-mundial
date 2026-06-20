@@ -1,7 +1,10 @@
-# Plan — UI de inscripción a la Copa GOLDEN TICKET
+# Plan — UI de inscripción a la Liga Premium
 
 > **Scaffold como plan (no construido todavía).** Diseño de la UI de inscripción para
 > que el compañero la implemente. El backend y las lecturas ya existen y están probados.
+>
+> **Nombre:** la feature es **Liga Premium** de cara al usuario; **"GOLDEN TICKET"** queda
+> solo como rótulo del cobro en Mercado Pago.
 >
 > Contexto/decisiones: [`MONETIZACION.md`](./MONETIZACION.md) · Checklist: [`COPA-CHECKLIST.md`](./COPA-CHECKLIST.md).
 > Reglas de UI: **100% responsive, mobile-first** (ver [`ui/UI-DIRECTION.md`](./ui/UI-DIRECTION.md)).
@@ -16,7 +19,7 @@
 - **`/ligas` es la superficie principal in-app de la Copa.** Ahí se integra como una sección más:
   - **Inscripto (pagó):** su Copa aparece **en su lista de ligas**, con estilo premium (dorado), y
     linkea al ranking de la copa (`/ligas/[code]`). Es "una liga más" pero destacada.
-  - **No inscripto:** aparece **una sola card de promoción/CTA** ("Sumate a la Copa GOLDEN TICKET")
+  - **No inscripto:** aparece **una sola card de promoción/CTA** ("Sumate a la Liga Premium")
     que abre el flujo de inscripción → pasarela de **Mercado Pago**.
 - **`/copa` se mantiene SOLO como landing de campaña** (el link `los11desampa.com/copa` que usan las
   piezas de redes). **No va en la nav**; se llega desde la card de `/ligas`, el banner in-app, o el

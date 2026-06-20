@@ -3,7 +3,7 @@
 import { PrimaryButton } from "@/components/editorial";
 
 /**
- * CTA de inscripción a la Copa GOLDEN TICKET.
+ * CTA de inscripción a la Liga Premium (el cobro en Mercado Pago aparece como "GOLDEN TICKET").
  *
  * ⚠️ PAGO PENDIENTE (TODO): por ahora el botón queda DESHABILITADO ("Próximamente").
  * El backend ya tiene `createEntryOrder(entrySku)` listo (devuelve `{ ok, url }`); cuando

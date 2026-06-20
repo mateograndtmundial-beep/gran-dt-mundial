@@ -47,7 +47,7 @@ export default async function LigasPage() {
         <>
           <LeagueActions />
 
-          {/* Copa premium (GOLDEN TICKET) — card de promo solo si hay una abierta y no estás dentro */}
+          {/* Liga Premium — card de promo solo si hay una abierta y no estás dentro */}
           {promoCopa && <CopaPromoCard copa={promoCopa} />}
 
           {/* Liga global */}

@@ -1,8 +1,12 @@
-# Copa GOLDEN TICKET — checklist para salir LIVE
+# Liga Premium — checklist para salir LIVE
 
 > **Archivo guía de la feature de ligas premium.** Estado vivo de lo que falta
-> definir/hacer para que la Copa GOLDEN TICKET salga a producción. Vive en la rama
+> definir/hacer para que la **Liga Premium** salga a producción. Vive en la rama
 > `feat/copa-golden-ticket`.
+>
+> **Nombre público:** la feature es **Liga Premium** (copas "Liga Premium I"/"Liga Premium II").
+> **"GOLDEN TICKET"** es solo el rótulo del cobro en Mercado Pago; el codename interno
+> (`golden_ticket`, sku, rama) no cambia.
 >
 > Doc de propuesta y decisiones de negocio: [`MONETIZACION.md`](./MONETIZACION.md).
 > Plan de la UI de inscripción: [`COPA-UI-INSCRIPCION-PLAN.md`](./COPA-UI-INSCRIPCION-PLAN.md).

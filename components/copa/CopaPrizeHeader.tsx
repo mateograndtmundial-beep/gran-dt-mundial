@@ -3,8 +3,8 @@ import { Eyebrow } from "@/components/editorial";
 import { formatArs } from "./format";
 
 /**
- * Header premium del ranking de una Copa GOLDEN TICKET en `/ligas/[code]`. Marca la liga
- * como Copa y muestra premio / entrada / cupo. Sin tabla de distribución (decisión del
+ * Header premium del ranking de una Liga Premium en `/ligas/[code]`. Marca la liga
+ * como premium y muestra premio / entrada / cupo. Sin tabla de distribución (decisión del
  * dueño). El ranking de los inscriptos se renderiza debajo con el LeagueRanking normal.
  */
 export function CopaPrizeHeader({
@@ -29,7 +29,7 @@ export function CopaPrizeHeader({
     <div className="rounded-[10px] border-2 border-gold-border bg-gold-bg p-4 card-shadow">
       <div className="flex items-center gap-2">
         <Trophy size={16} className="text-gold shrink-0" aria-hidden />
-        <Eyebrow className="text-gold-ink">Copa GOLDEN TICKET · premio para el top 10</Eyebrow>
+        <Eyebrow className="text-gold-ink">Liga Premium · premio para el top 10</Eyebrow>
       </div>
       <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {stats.map((s) => (

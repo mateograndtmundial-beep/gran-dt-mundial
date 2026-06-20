@@ -4,7 +4,7 @@ import type { CopaStatus } from "@/lib/queries";
 import { formatArs } from "./format";
 
 /**
- * Fila premium dorada de una Copa GOLDEN TICKET en la que el usuario YA está inscripto.
+ * Fila premium dorada de una Liga Premium en la que el usuario YA está inscripto.
  * Va dentro de la Card de ligas de `/ligas`, arriba de las privadas. Linkea al ranking
  * (`/ligas/[code]`). Mismo patrón que la fila de Liga Global, en clave dorada.
  */

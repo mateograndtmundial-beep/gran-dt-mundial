@@ -23,9 +23,16 @@ const R16_ORDER = 4; // 16vos de Final en ROUNDS (lib/game/config.ts)
 
 // La 1ra copa arranca 'open' (admite inscripciones); la 2da queda 'draft' (inactiva)
 // y se habilita a mano si la 1ra llena los 100.
+//
+// Nombres desacoplados a propósito:
+// - `name`         = nombre PÚBLICO de la liga, el que se ve en la app ("Liga Premium").
+// - `productName`  = nombre del PRODUCTO de entrada, el único que ve el usuario en la
+//                    interfaz de Mercado Pago al pagar ("GOLDEN TICKET"). Así el cobro no
+//                    deja explícito que es una liga premium. GOLDEN TICKET es el codename
+//                    interno (kind, sku) y el rótulo del cobro, no la marca de la feature.
 const COPAS = [
-  { name: "Copa GOLDEN TICKET", sku: "golden_ticket_1", status: "open" },
-  { name: "Copa GOLDEN TICKET #2", sku: "golden_ticket_2", status: "draft" },
+  { name: "Liga Premium I", productName: "GOLDEN TICKET I", sku: "golden_ticket_1", status: "open" },
+  { name: "Liga Premium II", productName: "GOLDEN TICKET II", sku: "golden_ticket_2", status: "draft" },
 ];
 
 async function main() {
@@ -80,6 +87,7 @@ async function main() {
       await db
         .update(leagues)
         .set({
+          name: copa.name,
           kind: "golden_ticket",
           capacity: CAPACITY,
           entryFeeArs: ENTRY_FEE_ARS,
@@ -101,7 +109,9 @@ async function main() {
       .insert(products)
       .values({
         sku: copa.sku,
-        name: copa.name,
+        // El nombre del PRODUCTO es lo que el usuario ve en Mercado Pago al pagar:
+        // "GOLDEN TICKET", no "Liga Premium" (ver nota en COPAS).
+        name: copa.productName,
         pins: 0,
         priceArs: ENTRY_FEE_ARS,
         priceUsd: null,
@@ -111,7 +121,7 @@ async function main() {
       })
       .onConflictDoUpdate({
         target: products.sku,
-        set: { name: copa.name, priceArs: ENTRY_FEE_ARS, entryLeagueId: leagueId },
+        set: { name: copa.productName, priceArs: ENTRY_FEE_ARS, entryLeagueId: leagueId },
       });
     console.log(`✅ Producto de entrada: ${copa.sku} → league ${leagueId}`);
   }

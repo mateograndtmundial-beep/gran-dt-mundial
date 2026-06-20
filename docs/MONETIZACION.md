@@ -1,12 +1,18 @@
-# Copa GOLDEN TICKET — alineación rápida
+# Liga Premium — alineación rápida
 
 > Doc para que **el compañero** entienda la propuesta: decisiones tomadas, lo que queda por
 > definir y los **riesgos que asumimos**. Hoy 18/06; **16vos arranca ~28/06**.
 >
 > Se trabaja en la rama `feat/copa-golden-ticket`; se mergea a `main` cuando lo decidamos.
+>
+> **Nombres:** la feature se llama **Liga Premium** de cara al usuario (es el nombre público,
+> el que se ve en la app — copas **"Liga Premium I"** y **"Liga Premium II"**). **"GOLDEN
+> TICKET"** es **solo** el rótulo del producto en la interfaz de Mercado Pago al pagar, para
+> que el cobro **no deje explícito** que es una liga premium paga. Internamente el codename
+> sigue siendo `golden_ticket` (kind, sku, nombre de la rama y de los scripts).
 
 ## La idea en 3 líneas
-**Copa GOLDEN TICKET** = liga de **cupo fijo (100)**, **entrada $5.000**, **premio FIJO
+**Liga Premium** = liga de **cupo fijo (100)**, **entrada $5.000**, **premio FIJO
 garantizado de $400.000** repartido entre los **10 primeros**. Arranca en **16vos**, se compite
 con el **equipo de siempre** (1 por usuario). El premio lo **pone la casa** (no es pozo
 redistribuido) y se reparte **sí o sí**. Vamos a **llenar los 100** (hay tiempo de promo).
@@ -42,7 +48,8 @@ Entrada $5.000 · premio fijo $400.000 · cupo 100. A cupo lleno la casa deja **
 6. **Arranca en 16vos.** Rankea desde 16vos en adelante (grupos no cuenta). → técnicamente
    `leagues.scoringStartRoundId` apuntando a 16vos (infra ya existe y probada en prod).
 7. **Un equipo por usuario.** Es un ranking sobre el equipo actual, no un equipo nuevo.
-8. **Cobro por Mercado Pago**, producto **"GOLDEN TICKET"** (es el nombre real del torneo).
+8. **Cobro por Mercado Pago**, producto **"GOLDEN TICKET"** (rótulo del cobro a propósito: el
+   usuario ve "GOLDEN TICKET" en MP, no "Liga Premium", para no explicitar que es premium paga).
 9. **Alta automática** tras el pago vía **webhook de MP** (reusa la infra de pines): pagó
    GOLDEN TICKET → queda inscripto en la copa. *(Patrón similar al pack `unlimited`, que en
    vez de acreditar pines marca al usuario; acá inscribe en la copa.)*
@@ -124,7 +131,7 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 ---
 
 ## Resumen
-- **Copa GOLDEN TICKET** en **16vos**, **cupo 100**, **2 copas iguales** (1 activa + 1 reserva
+- **Liga Premium** en **16vos**, **cupo 100**, **2 copas iguales** (1 activa + 1 reserva
   manual), **entrada $5.000**, **premio FIJO $400.000** al **top 10**, **se reparte sí o sí**.
 - **No es pozo**: lo pone la casa. Vamos a **llenar los 100**; si no, la casa cubre.
 - **El negocio son los pines**; la entrada es secundaria.

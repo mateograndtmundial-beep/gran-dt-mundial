@@ -6,7 +6,7 @@ import { formatArs } from "./format";
 import { EnrollButton } from "./EnrollButton";
 
 /**
- * Card de promoción de la Copa GOLDEN TICKET para usuarios NO inscriptos, insertada en
+ * Card de promoción de la Liga Premium para usuarios NO inscriptos, insertada en
  * `/ligas` encima de las ligas privadas. Muestra premio garantizado, entrada y cupo en
  * vivo (estático, del server). El CTA está en TODO (ver EnrollButton). Mobile-first:
  * stack vertical en celular, fila en desktop.
