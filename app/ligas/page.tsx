@@ -45,8 +45,6 @@ export default async function LigasPage() {
         />
       ) : (
         <>
-          <LeagueActions />
-
           {/* Liga Premium — card de promo solo si hay una abierta y no estás dentro */}
           {promoCopa && <CopaPromoCard copa={promoCopa} />}
 
@@ -104,6 +102,9 @@ export default async function LigasPage() {
               )}
             </Card>
           </div>
+
+          {/* Crear o unirse a una liga — acción secundaria, debajo del listado */}
+          <LeagueActions />
         </>
       )}
     </div>

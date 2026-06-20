@@ -3,15 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createLeague, joinLeague } from "@/lib/actions";
-import { Card } from "@/components/ui";
-import { Eyebrow, PrimaryButton } from "@/components/editorial";
+import { PrimaryButton } from "@/components/editorial";
+
+type Mode = "idle" | "create" | "join";
 
 export function LeagueActions() {
   const router = useRouter();
+  const [mode, setMode] = useState<Mode>("idle");
   const [name, setName] = useState("");
   const [code, setCode] = useState("");
   const [msg,  setMsg]  = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  function reset(next: Mode) {
+    setMode(next);
+    setMsg(null);
+  }
 
   async function onCreate() {
     setBusy(true);
@@ -57,41 +64,85 @@ export function LeagueActions() {
 
   return (
     <div className="space-y-3">
-    <div className="grid gap-3 md:grid-cols-2">
-      {/* Crear liga */}
-      <Card className="p-4 space-y-3">
-        <Eyebrow>Crear liga</Eyebrow>
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre de la liga"
-          className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
-        />
-        <PrimaryButton onClick={onCreate} disabled={busy || !name.trim()} className="w-full justify-center">
-          {busy ? "Creando…" : "CREAR LIGA →"}
-        </PrimaryButton>
-      </Card>
+      {/* Estado colapsado: el camino principal es CREAR; unirse con código es secundario
+          (lo normal es entrar por el link compartido, que ya tiene su propio CTA). */}
+      {mode === "idle" && (
+        <div className="space-y-3">
+          <PrimaryButton onClick={() => reset("create")} className="w-full justify-center">
+            + CREAR LIGA
+          </PrimaryButton>
+          <p className="text-center text-sm text-ink-3">
+            ¿Tenés un código de invitación?{" "}
+            <button
+              onClick={() => reset("join")}
+              className="font-semibold text-blue underline-offset-2 hover:underline"
+            >
+              Unite →
+            </button>
+          </p>
+        </div>
+      )}
 
-      {/* Unirse */}
-      <Card className="p-4 space-y-3">
-        <Eyebrow>Unirme con código</Eyebrow>
-        <input
-          value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="Ej: ABC123"
-          maxLength={6}
-          className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink uppercase outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors font-mono tracking-widest"
-        />
-        <button
-          onClick={onJoin}
-          disabled={busy || code.length < 4}
-          className="w-full rounded-[6px] border border-gold-border bg-gold-bg text-gold-ink font-display text-base px-6 py-3 hover:bg-gold hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-        >
-          UNIRME
-        </button>
-      </Card>
-    </div>
-    {msg && <p className="text-xs font-semibold text-danger">{msg}</p>}
+      {/* Crear: nombre + confirmar/cancelar */}
+      {mode === "create" && (
+        <div className="rounded-[10px] border border-border bg-surface p-4 space-y-3 animate-fade-in">
+          <label className="eyebrow block text-ink-3">Nombre de la liga</label>
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && name.trim() && !busy && onCreate()}
+            placeholder="Ej: Los cracks del barrio"
+            className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
+          />
+          <div className="flex gap-2">
+            <PrimaryButton onClick={onCreate} disabled={busy || !name.trim()} className="flex-1 justify-center">
+              {busy ? "Creando…" : "Crear liga"}
+            </PrimaryButton>
+            <button
+              onClick={() => reset("idle")}
+              disabled={busy}
+              className="rounded-[6px] border border-border px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors disabled:opacity-40"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Unirse con código (secundario) */}
+      {mode === "join" && (
+        <div className="rounded-[10px] border border-border bg-surface p-4 space-y-3 animate-fade-in">
+          <label className="eyebrow block text-ink-3">Código de invitación</label>
+          <input
+            autoFocus
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            onKeyDown={(e) => e.key === "Enter" && code.length >= 4 && !busy && onJoin()}
+            placeholder="Ej: ABC123"
+            maxLength={6}
+            className="w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink uppercase outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors font-mono tracking-widest"
+          />
+          <div className="flex gap-2">
+            <button
+              onClick={onJoin}
+              disabled={busy || code.length < 4}
+              className="flex-1 rounded-[6px] border border-gold-border bg-gold-bg text-gold-ink font-display text-base px-6 py-3 hover:bg-gold hover:text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {busy ? "Uniéndote…" : "UNIRME"}
+            </button>
+            <button
+              onClick={() => reset("idle")}
+              disabled={busy}
+              className="rounded-[6px] border border-border px-4 py-3 text-sm font-semibold text-ink-2 hover:bg-surface-2 transition-colors disabled:opacity-40"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
+      {msg && <p className="text-xs font-semibold text-danger">{msg}</p>}
     </div>
   );
 }
