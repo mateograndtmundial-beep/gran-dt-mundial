@@ -193,7 +193,7 @@ export default async function MiEquipoPage({
               {user.username && (
                 <>
                   <span className="h-3 w-px shrink-0 bg-border-strong" aria-hidden />
-                  <span className="truncate text-[11px] font-semibold text-ink-2" title="Tu nombre de DT">
+                  <span className="truncate text-[13px] leading-none font-semibold text-ink-2" title="Tu nombre de DT">
                     @{user.username}
                   </span>
                 </>
