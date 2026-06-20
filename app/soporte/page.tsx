@@ -25,7 +25,10 @@ export default function SoportePage() {
         </h2>
         <p className="mt-2.5 text-[15px] leading-relaxed text-ink-2">
           Mandanos un mail contándonos qué te pasa: si es sobre tu cuenta, un pago o el juego,
-          cuantos más detalles nos des, más rápido te ayudamos. Te respondemos lo antes posible.
+          cuantos más detalles nos des, más rápido te ayudamos. Incluí el{" "}
+          <strong>email registrado en tu cuenta</strong> y tu{" "}
+          <strong>nombre de usuario (DT)</strong> para que podamos encontrarte. Te respondemos lo
+          antes posible.
         </p>
         <a
           href={`mailto:${SITE.contactEmail}`}

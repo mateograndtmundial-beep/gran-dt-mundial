@@ -5,6 +5,7 @@ import "./globals.css";
 import { ClerkProvider } from "@clerk/nextjs";
 import { esES } from "@clerk/localizations";
 import { SiteNav } from "@/components/site-nav";
+import { SiteFooter } from "@/components/site-footer";
 import { ChangeReminder } from "@/components/change-reminder";
 import { SITE } from "@/lib/site";
 
@@ -71,9 +72,10 @@ export default async function RootLayout({
   const content = (
     <>
       <SiteNav />
-      <main className="mx-auto w-full max-w-5xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-5 md:pb-10">
-        {children}
-      </main>
+      {/* El pb inferior de mobile (despeje de la barra de nav fija) vive en el footer,
+          no acá, para que el footer no quede tapado. En desktop main mantiene su pb. */}
+      <main className="mx-auto w-full max-w-5xl px-4 pt-5 md:pb-10">{children}</main>
+      <SiteFooter />
       {/* Recordatorio de cierre de cambios (popup 24 h). Server-async: corta
           barato si no aplica. Solo se monta con Clerk activo (necesita sesión).
           En Suspense para que su lectura de sesión (auth) no fuerce el render
