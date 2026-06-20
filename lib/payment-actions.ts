@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getProvider, providerForCountry, isProviderConfigured } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
 import { getGoldenTicketCopas } from "@/lib/queries";
+import { isCopaPastDeadline } from "@/lib/copa/lifecycle";
 import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
 import { headers } from "next/headers";
 
@@ -116,6 +117,9 @@ export async function createEntryOrder(productSku: string) {
   )[0];
   if (!league) return { ok: false as const, error: "product" as const };
   if (league.status !== "open") return { ok: false as const, error: "closed" as const };
+  // Cierre por tiempo: no se vende después del kickoff de los 16vos (deadline de la
+  // fecha de arranque de la copa), aunque el status siga en `open`.
+  if (await isCopaPastDeadline(league)) return { ok: false as const, error: "closed" as const };
 
   // ¿Ya inscripto? (no se paga dos veces la misma copa)
   const already = (

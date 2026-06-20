@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState } from "@/components/ui";
-import { Eyebrow } from "@/components/editorial";
+import { Eyebrow, ValidationCallout } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { CopaPrizeHeader } from "@/components/copa/CopaPrizeHeader";
 import { LeagueManagement } from "@/components/league-management";
@@ -19,10 +19,10 @@ export default async function LeaguePage({
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; status?: string }>;
 }) {
   const { code } = await params;
-  const { page: pageParam } = await searchParams;
+  const { page: pageParam, status } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
 
   let data: Awaited<ReturnType<typeof getLeagueRanking>> = null;
@@ -73,6 +73,20 @@ export default async function LeaguePage({
           <LeagueShare code={data.league.code} leagueName={data.league.name} />
         </div>
       </div>
+
+      {/* Retorno del pago de la entrada (Mercado Pago redirige a /ligas/{code}?status=). */}
+      {data.league.kind === "golden_ticket" && status === "success" && (
+        <ValidationCallout type="success">
+          ¡Pago recibido! Te sumamos a la Liga Premium en cuanto se confirme el pago (puede tardar unos
+          segundos). Si no aparecés en el ranking, recargá en un rato.
+        </ValidationCallout>
+      )}
+      {data.league.kind === "golden_ticket" && status === "failure" && (
+        <ValidationCallout type="danger">El pago no se completó. Podés intentar la inscripción de nuevo.</ValidationCallout>
+      )}
+      {data.league.kind === "golden_ticket" && status === "pending" && (
+        <ValidationCallout type="warning">Estamos confirmando tu pago. Esto puede demorar unos minutos.</ValidationCallout>
+      )}
 
       {data.league.kind === "golden_ticket" && (
         <CopaPrizeHeader

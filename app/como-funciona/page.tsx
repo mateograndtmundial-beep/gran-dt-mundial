@@ -181,10 +181,11 @@ export default function ComoFuncionaPage() {
               <strong>automáticamente</strong> el primer suplente de su misma posición que sí haya
               jugado, y puntúa en su lugar (no tenés que hacer nada vos).
             </RuleItem>
-            <RuleItem icon={<Users size={22} strokeWidth={1.5} />} title="Máximo 3 por país">
-              No podés tener más de 3 jugadores de la misma selección durante la{" "}
-              <strong>fase de grupos</strong>. Desde los <strong>16avos de final</strong> en
-              adelante (playoffs) ese tope se libera. El técnico nunca cuenta para este límite.
+            <RuleItem icon={<Users size={22} strokeWidth={1.5} />} title="Máximo por país">
+              En la <strong>fase de grupos</strong> no podés tener más de{" "}
+              <strong>3 jugadores</strong> de la misma selección. Desde los{" "}
+              <strong>16avos de final</strong> en adelante (playoffs) el tope pasa a{" "}
+              <strong>5 por país</strong>. El técnico nunca cuenta para este límite.
             </RuleItem>
             <RuleItem icon={<Crown size={22} strokeWidth={1.5} />} title="Capitán y técnico">
               Elegí 1 capitán entre tus titulares (duplica su puntaje base) y 1 técnico, atado a

@@ -7,7 +7,7 @@ import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds
 import { getCurrentUser } from "@/lib/auth";
 import { getEditableRound, isEnrolledInGoldenTicket } from "@/lib/queries";
 import { getPinBalance, pinMovementOps, isInsufficientPinsError } from "@/lib/pins";
-import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound, type Position } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY, MAX_PER_COUNTRY_KNOCKOUT, getFreeChangesForRound, type Position } from "@/lib/game/config";
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
 import { round1 } from "@/lib/pricing/map";
@@ -72,14 +72,14 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   if (budgetUsed > BUDGET + 0.05) {
     return { ok: false as const, error: "budget" as const, used: budgetUsed, budget: BUDGET };
   }
-  // El tope por nacionalidad rige solo en fase de grupos; en playoffs quedan
-  // pocas selecciones vivas y mantenerlo lo haría imposible.
-  if (round.type === "group") {
-    const perCountry = new Map<number, number>();
-    for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
-    if ([...perCountry.values()].some((n) => n > MAX_PER_COUNTRY)) {
-      return { ok: false as const, error: "country" as const, max: MAX_PER_COUNTRY };
-    }
+  // Tope por nacionalidad: 3 en fase de grupos, 5 desde los 16vos (playoffs). No
+  // se libera del todo: 5 por país alcanza para equipos funcionales hasta la final
+  // (4 selecciones vivas → 20 posibles sobre 15). Regla general, todos los usuarios.
+  const countryCap = round.type === "group" ? MAX_PER_COUNTRY : MAX_PER_COUNTRY_KNOCKOUT;
+  const perCountry = new Map<number, number>();
+  for (const p of pr) perCountry.set(p.countryId, (perCountry.get(p.countryId) ?? 0) + 1);
+  if ([...perCountry.values()].some((n) => n > countryCap)) {
+    return { ok: false as const, error: "country" as const, max: countryCap };
   }
 
   let entry = (await db.select().from(entries).where(eq(entries.userId, user.id)).limit(1))[0];
@@ -394,4 +394,10 @@ export async function leaveLeague(leagueId: number) {
   revalidatePath(`/ligas/${league.code}`);
   revalidatePath("/ligas");
   return { ok: true as const };
+}
+
+/** Nombre de DT (username) del usuario logueado, para mostrarlo en el header. null si no tiene. */
+export async function getMyUsername(): Promise<string | null> {
+  const user = await getCurrentUser();
+  return user?.username ?? null;
 }

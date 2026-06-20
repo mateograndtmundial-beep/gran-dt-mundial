@@ -4,7 +4,7 @@ import { FieldBuilder } from "@/components/field-builder";
 import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, isEnrolledInGoldenTicket, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
-import { BUDGET, MAX_PER_COUNTRY, getFreeChangesForRound } from "@/lib/game/config";
+import { BUDGET, MAX_PER_COUNTRY, MAX_PER_COUNTRY_KNOCKOUT, getFreeChangesForRound } from "@/lib/game/config";
 import { shortRoundName } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
@@ -119,7 +119,13 @@ export default async function EquipoPage({
             stats={stats}
             ownership={ownership}
             budget={BUDGET}
-            maxPerCountry={editable?.round.type === "group" ? MAX_PER_COUNTRY : null}
+            maxPerCountry={
+              editable == null
+                ? null
+                : editable.round.type === "group"
+                  ? MAX_PER_COUNTRY
+                  : MAX_PER_COUNTRY_KNOCKOUT
+            }
             initial={initial}
             initialTeamName={initial?.teamName ?? ""}
             deadlineLabel={deadlineLabel}

@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { getCurrentUser } from "@/lib/auth";
-import { getAllRounds } from "@/lib/queries";
+import { getAllRounds, getCopasForAdmin, getOrphanedEntryOrders } from "@/lib/queries";
 import { AdminControls } from "@/components/admin-controls";
+import { AdminCopaControls } from "@/components/admin-copa-controls";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminPage() {
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let rounds: Awaited<ReturnType<typeof getAllRounds>> = [];
+  let copas: Awaited<ReturnType<typeof getCopasForAdmin>> = [];
+  let orphans: Awaited<ReturnType<typeof getOrphanedEntryOrders>> = [];
   try {
     user = await getCurrentUser();
     rounds = await getAllRounds();
+    copas = await getCopasForAdmin();
+    orphans = await getOrphanedEntryOrders();
   } catch {
     // sin DB / sin auth -> acceso restringido
   }
@@ -45,6 +50,7 @@ export default async function AdminPage() {
       ) : (
         <AdminControls rounds={rounds.map((r) => ({ id: r.id, name: r.name, status: r.status }))} />
       )}
+      <AdminCopaControls copas={copas} orphans={orphans} />
     </div>
   );
 }

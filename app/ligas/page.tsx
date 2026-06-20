@@ -7,6 +7,7 @@ import { getMyLeagues, getGoldenTicketCopas, type CopaStatus } from "@/lib/queri
 import { LeagueActions } from "@/components/league-actions";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
+import { CopaSoldOutCard } from "@/components/copa/CopaSoldOutCard";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -27,8 +28,11 @@ export default async function LigasPage() {
   // abierta a la que se puede sumar (una sola card de promo, la de menor cupo restante).
   const enrolledCopas = copas.filter((c) => c.isEnrolled);
   const promoCopa = copas
-    .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0)
+    .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
     .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
+  // Cupos agotados: hay copas premium visibles pero ninguna abierta para sumarse y el
+  // usuario no está dentro de ninguna → mostramos la invitación a escribir por Instagram.
+  const soldOut = !promoCopa && enrolledCopas.length === 0 && copas.length > 0;
   // Las copas no se listan como ligas privadas (se muestran como fila premium aparte).
   const privateLeagues = leagues.filter((l) => l.kind !== "golden_ticket");
 
@@ -45,8 +49,9 @@ export default async function LigasPage() {
         />
       ) : (
         <>
-          {/* Liga Premium — card de promo solo si hay una abierta y no estás dentro */}
+          {/* Liga Premium — card de promo si hay una abierta, o "cupos agotados" si no */}
           {promoCopa && <CopaPromoCard copa={promoCopa} />}
+          {soldOut && <CopaSoldOutCard />}
 
           {/* Liga global */}
           <div>

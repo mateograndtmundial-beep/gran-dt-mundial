@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { orders, products, users, leagues, leagueMembers } from "@/lib/db/schema";
 import { addPins, isUniqueViolation } from "@/lib/pins";
 import { notifyPaymentPaid, notifyError } from "@/lib/notify/slack";
+import { isCopaPastDeadline, markCopaFullAndActivateNext } from "@/lib/copa/lifecycle";
 
 /**
  * Acredita los pines de una orden pagada. Idempotente: solo transiciona si la
@@ -57,9 +58,13 @@ export async function creditOrder(orderId: number, providerRef?: string): Promis
 /**
  * Inscribe a un usuario en una copa premium al confirmarse el pago de su entrada.
  * Idempotente (si el webhook se repite, el chequeo de "ya inscripto" + el
- * onConflictDoNothing evitan duplicar) y respeta el cupo: si la copa ya está llena
- * (carrera por el último lugar), NO mete al usuario a la fuerza y avisa para
- * resolverlo a mano (reembolso o alta en la copa de reserva). Ver docs/MONETIZACION.md.
+ * onConflictDoNothing evitan duplicar) y respeta el cupo y el cierre por tiempo.
+ *
+ * Si el usuario pagó pero NO entra (copa llena por la carrera del último lugar, o el
+ * pago llegó después del kickoff de los 16vos), la orden se marca `refunded` y se avisa
+ * a Slack para REEMBOLSAR a mano en Mercado Pago (ver markOrderForRefund + la vista de
+ * reconciliación en /admin). Al inscribir al último cupo, marca la copa `full` y activa
+ * la copa de reserva. Ver docs/MONETIZACION.md.
  */
 async function enrollInLeague(userId: number, leagueId: number, orderId: number) {
   const existing = (
@@ -72,24 +77,65 @@ async function enrollInLeague(userId: number, leagueId: number, orderId: number)
   if (existing) return; // webhook repetido: ya estaba inscripto
 
   const league = (
-    await db.select({ capacity: leagues.capacity }).from(leagues).where(eq(leagues.id, leagueId)).limit(1)
+    await db
+      .select({ capacity: leagues.capacity, scoringStartRoundId: leagues.scoringStartRoundId })
+      .from(leagues)
+      .where(eq(leagues.id, leagueId))
+      .limit(1)
   )[0];
   if (!league) {
     notifyError({ source: "golden_ticket", message: `Orden ${orderId}: copa ${leagueId} inexistente` });
     return;
   }
+
+  // Cierre por tiempo: si el pago llegó después del kickoff de los 16vos, no se inscribe.
+  if (await isCopaPastDeadline(league)) {
+    await markOrderForRefund(orderId, leagueId, userId, "pagó fuera de término (inscripción cerrada por tiempo)");
+    return;
+  }
+
   if (league.capacity != null) {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(leagueMembers)
       .where(eq(leagueMembers.leagueId, leagueId));
     if (Number(count) >= league.capacity) {
-      notifyError({
-        source: "golden_ticket_full",
-        message: `Orden ${orderId}: copa ${leagueId} LLENA, user ${userId} pagó sin lugar → reembolsar o mover a la copa de reserva`,
-      });
+      await markOrderForRefund(orderId, leagueId, userId, "copa LLENA (carrera por el último lugar)");
       return;
     }
   }
+
   await db.insert(leagueMembers).values({ leagueId, userId }).onConflictDoNothing();
+
+  // ¿Esta inscripción llenó la copa? → marcarla `full` y activar la de reserva.
+  if (league.capacity != null) {
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(leagueMembers)
+      .where(eq(leagueMembers.leagueId, leagueId));
+    if (Number(count) >= league.capacity) await markCopaFullAndActivateNext(leagueId);
+  }
+}
+
+/**
+ * Marca una orden de entrada como `refunded` (el usuario pagó pero no entró) y avisa a
+ * Slack con todos los datos para ejecutar el reembolso a mano en Mercado Pago. El
+ * reembolso automático vía API de MP queda como follow-up; hoy es manual.
+ */
+async function markOrderForRefund(orderId: number, leagueId: number, userId: number, reason: string) {
+  const o = (
+    await db
+      .select({ amount: orders.amount, currency: orders.currency, providerRef: orders.providerRef })
+      .from(orders)
+      .where(eq(orders.id, orderId))
+      .limit(1)
+  )[0];
+  await db.update(orders).set({ status: "refunded" }).where(eq(orders.id, orderId));
+  notifyError({
+    source: "golden_ticket_full",
+    message:
+      `Orden ${orderId}: ${reason}. user ${userId}, copa ${leagueId}, ` +
+      `${o?.amount ?? "?"} ${o?.currency ?? ""} (ref ${o?.providerRef ?? "?"}). ` +
+      `Marcada 'refunded' → REEMBOLSAR a mano en Mercado Pago. Ver reconciliación en /admin.`,
+  });
 }

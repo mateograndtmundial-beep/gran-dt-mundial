@@ -3,6 +3,12 @@
 export const BUDGET = 700; // presupuesto para armar el equipo (15 jugadores + DT)
 export const SQUAD = { STARTERS: 11, SUBS: 4, TOTAL: 15 } as const;
 export const MAX_PER_COUNTRY = 3;
+// Desde los 16vos de Final (playoffs) el tope por país se afloja a 5 (en vez de
+// liberarse): con 32 selecciones vivas no aprieta, y en la última instancia (4
+// selecciones vivas) 5 por país da 20 jugadores posibles sobre 15 → alcanza para
+// armar equipos 100% funcionales. Con 3 no alcanzaba. Regla GENERAL (todos los
+// usuarios), no exclusiva de la Copa.
+export const MAX_PER_COUNTRY_KNOCKOUT = 5;
 export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha (default); los extra cuestan pines
 
 // En los 16vos de Final (order 4) los inscriptos en la Copa GOLDEN TICKET arrancan

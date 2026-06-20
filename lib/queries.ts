@@ -16,6 +16,7 @@ import {
   leagueMembers,
   users,
   products,
+  orders,
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
@@ -904,6 +905,10 @@ export async function getGoldenTicketCopas(userId?: number) {
       entryFeeArs: leagues.entryFeeArs,
       prizeArs: leagues.prizeArs,
       entrySku: products.sku,
+      // Cierre por tiempo: la inscripción cierra en el kickoff de la fecha de arranque
+      // (deadline del scoringStartRound). Lo exponemos para que la UI no invite a una
+      // copa que ya no admite inscripciones (aunque el status siga 'open').
+      closesAt: rounds.deadline,
       enrolled: sql<number>`(select count(*) from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id})`,
       isEnrolled:
         userId != null
@@ -912,6 +917,7 @@ export async function getGoldenTicketCopas(userId?: number) {
     })
     .from(leagues)
     .leftJoin(products, eq(products.entryLeagueId, leagues.id))
+    .leftJoin(rounds, eq(rounds.id, leagues.scoringStartRoundId))
     .where(and(eq(leagues.kind, "golden_ticket"), ne(leagues.status, "draft")))
     .orderBy(asc(leagues.id));
 
@@ -922,8 +928,93 @@ export async function getGoldenTicketCopas(userId?: number) {
       enrolled,
       // Lugares libres (nunca negativo); null si la copa no tiene cupo.
       spotsLeft: r.capacity != null ? Math.max(0, r.capacity - enrolled) : null,
+      // ¿Ya cerró por tiempo? (pasó el kickoff de los 16vos).
+      deadlinePassed: r.closesAt != null && Date.now() >= new Date(r.closesAt).getTime(),
     };
   });
+}
+
+/**
+ * Reconciliación de entradas a copas: órdenes de entrada (productos con entryLeagueId)
+ * que están `paid` o `refunded` pero cuyo usuario NO figura en la copa. Son los casos
+ * de "pagó sin lugar" (overflow / fuera de término): el dueño las usa para reembolsar a
+ * mano en Mercado Pago. Ver lib/payments/credit.ts (markOrderForRefund) y /admin.
+ */
+export async function getOrphanedEntryOrders() {
+  return db
+    .select({
+      orderId: orders.id,
+      status: orders.status,
+      userId: orders.userId,
+      username: users.username,
+      amount: orders.amount,
+      currency: orders.currency,
+      providerRef: orders.providerRef,
+      paidAt: orders.paidAt,
+      copaId: leagues.id,
+      copaName: leagues.name,
+    })
+    .from(orders)
+    .innerJoin(products, eq(products.id, orders.productId))
+    .innerJoin(leagues, eq(leagues.id, products.entryLeagueId))
+    .innerJoin(users, eq(users.id, orders.userId))
+    .where(
+      and(
+        inArray(orders.status, ["paid", "refunded"]),
+        sql`not exists (select 1 from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id} and ${leagueMembers.userId} = ${orders.userId})`,
+      ),
+    )
+    .orderBy(desc(orders.paidAt));
+}
+
+/**
+ * Todas las copas premium (incluidas las `draft`), con su cupo, para el panel de
+ * admin: abrir/cerrar a mano y ver el snapshot. A diferencia de getGoldenTicketCopas,
+ * NO oculta las `draft`.
+ */
+export async function getCopasForAdmin() {
+  return db
+    .select({
+      id: leagues.id,
+      code: leagues.code,
+      name: leagues.name,
+      status: leagues.status,
+      capacity: leagues.capacity,
+      enrolled: sql<number>`(select count(*) from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id})`,
+    })
+    .from(leagues)
+    .where(eq(leagues.kind, "golden_ticket"))
+    .orderBy(asc(leagues.id));
+}
+
+/**
+ * Posiciones finales de una copa (sin paginar), ordenadas con el MISMO desempate que
+ * getLeagueRanking (puntos totales → mejor pico de fecha → inscripción más temprana).
+ * La usa snapshotCopaRanking para congelar el ranking tras la Final. Devuelve los
+ * userId en orden de puesto (1°, 2°, ...).
+ */
+export async function getCopaStanding(leagueId: number) {
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league) return null;
+  let startOrder = 1;
+  if (league.scoringStartRoundId != null) {
+    const sr = (
+      await db.select({ order: rounds.order }).from(rounds).where(eq(rounds.id, league.scoringStartRoundId)).limit(1)
+    )[0];
+    if (sr) startOrder = sr.order;
+  }
+  const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} else 0 end), 0)`;
+  const bestRoundExpr = sql<number>`coalesce(max(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} end), -1000000)`;
+  const rows = await db
+    .select({ userId: leagueMembers.userId, totalPoints: pointsExpr })
+    .from(leagueMembers)
+    .leftJoin(entries, eq(entries.userId, leagueMembers.userId))
+    .leftJoin(entryRounds, eq(entryRounds.entryId, entries.id))
+    .leftJoin(rounds, eq(rounds.id, entryRounds.roundId))
+    .where(eq(leagueMembers.leagueId, leagueId))
+    .groupBy(leagueMembers.userId, leagueMembers.joinedAt)
+    .orderBy(desc(pointsExpr), desc(bestRoundExpr), asc(leagueMembers.joinedAt));
+  return { league, rows };
 }
 
 export const LEAGUE_RANKING_PAGE_SIZE = 50;
@@ -969,6 +1060,11 @@ export async function getLeagueRanking(code: string, page = 1) {
   // Suma por miembro de los puntos de sus fechas desde startOrder en adelante.
   // Miembro sin entry o sin fechas en rango → 0.
   const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} else 0 end), 0)`;
+  // Desempate (decisión del dueño, ver docs/legal/BASES-Y-CONDICIONES.md): a igualdad
+  // de puntos totales gana quien tuvo el MEJOR puntaje en una sola fecha dentro de la
+  // ventana de la liga; si siguen iguales, la inscripción más temprana (joinedAt).
+  // `else null` excluye fechas fuera de rango; sentinela bajo para que el null ordene último.
+  const bestRoundExpr = sql<number>`coalesce(max(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} end), -1000000)`;
   const rows = await db
     .select({
       userId: leagueMembers.userId,
@@ -982,8 +1078,8 @@ export async function getLeagueRanking(code: string, page = 1) {
     .leftJoin(entryRounds, eq(entryRounds.entryId, entries.id))
     .leftJoin(rounds, eq(rounds.id, entryRounds.roundId))
     .where(eq(leagueMembers.leagueId, league.id))
-    .groupBy(leagueMembers.userId, users.username, entries.name)
-    .orderBy(desc(pointsExpr), asc(leagueMembers.userId))
+    .groupBy(leagueMembers.userId, users.username, entries.name, leagueMembers.joinedAt)
+    .orderBy(desc(pointsExpr), desc(bestRoundExpr), asc(leagueMembers.joinedAt))
     .limit(LEAGUE_RANKING_PAGE_SIZE)
     .offset(offset);
 

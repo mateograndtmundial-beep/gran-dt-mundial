@@ -1,10 +1,11 @@
 "use server";
 
 import { revalidatePath, revalidateTag } from "next/cache";
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { players, matches, playerMatchStats, countries, rounds } from "@/lib/db/schema";
+import { players, matches, playerMatchStats, countries, rounds, leagues, leagueMembers } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
+import { getCopaStanding } from "@/lib/queries";
 import { syncRound, syncMatch } from "@/lib/api-football/sync";
 import { publishRound } from "@/lib/scoring/publicar-fecha";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
@@ -381,4 +382,61 @@ export async function unpublishRound(roundId: number) {
   // La fecha sale de "published" → ya no cuenta en las stats acumuladas; invalidar.
   revalidateTag("player-stats", "max");
   return { ok: true as const, info: "Fecha despublicada. Revisá y volvé a publicar." };
+}
+
+// ---------- Copas premium (GOLDEN TICKET) ----------
+
+const COPA_STATUSES = ["draft", "open", "full", "closed"] as const;
+type CopaStatus = (typeof COPA_STATUSES)[number];
+
+/**
+ * Abre/cierra una copa premium a mano (fallback de la auto-activación: abrir la copa
+ * de reserva, cerrar por tiempo, o reabrir un cupo). El flujo normal (llenarse →
+ * activar la siguiente) es automático en enrollInLeague; esto es el control manual.
+ */
+export async function setCopaStatus(leagueId: number, status: string) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(leagueId) || leagueId <= 0) return { ok: false as const, error: "copa inválida" };
+  if (!COPA_STATUSES.includes(status as CopaStatus)) return { ok: false as const, error: "estado inválido" };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league || league.kind !== "golden_ticket") return { ok: false as const, error: "no es una copa premium" };
+
+  await db.update(leagues).set({ status }).where(eq(leagues.id, leagueId));
+  logAdmin("setCopaStatus", admin.id, { leagueId, status });
+  revalidatePath("/admin");
+  revalidatePath("/ligas");
+  revalidatePath("/copa");
+  return { ok: true as const, info: `Copa ${league.name} → ${status}` };
+}
+
+/**
+ * Congela el ranking final de una copa para el payout: recalcula las posiciones con el
+ * desempate oficial (mejor pico de fecha → inscripción más temprana) y las escribe en
+ * leagueMembers.currentRank. Se corre UNA vez, después de publicar la Final. Ver
+ * docs/legal/BASES-Y-CONDICIONES.md (momento de corte).
+ */
+export async function snapshotCopaRanking(leagueId: number) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(leagueId) || leagueId <= 0) return { ok: false as const, error: "copa inválida" };
+  const standing = await getCopaStanding(leagueId);
+  if (!standing) return { ok: false as const, error: "copa no existe" };
+  if (standing.league.kind !== "golden_ticket") return { ok: false as const, error: "no es una copa premium" };
+
+  const ops = standing.rows.map((row, i) =>
+    db
+      .update(leagueMembers)
+      .set({ currentRank: i + 1 })
+      .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, row.userId))),
+  ) as unknown as BatchOp[];
+  if (ops.length) await runChunked(ops);
+
+  logAdmin("snapshotCopaRanking", admin.id, { leagueId, members: standing.rows.length });
+  notifyError({
+    source: "golden_ticket",
+    message: `Snapshot del ranking de la copa ${leagueId} congelado: ${standing.rows.length} puestos. Revisá el top 10 para el payout.`,
+  });
+  revalidatePath("/admin");
+  return { ok: true as const, info: `${standing.rows.length} puestos congelados` };
 }

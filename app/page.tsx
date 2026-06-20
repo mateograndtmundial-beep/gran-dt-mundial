@@ -3,10 +3,12 @@ import Link from "next/link";
 import { Shirt, Calculator, Trophy } from "lucide-react";
 import { Countdown } from "@/components/countdown";
 import { WelcomeBanner } from "@/components/welcome-banner";
+import { CopaHomeBanner } from "@/components/copa/CopaHomeBanner";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
-import { getEditableRound } from "@/lib/queries";
+import { getEditableRound, getGoldenTicketCopas } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 import { InstagramIcon, XIcon } from "@/components/icons";
 
@@ -74,6 +76,23 @@ export default async function Home() {
   } catch {
     // sin DB: el hero cae al countdown estático del arranque del Mundial
   }
+
+  // Promo SUTIL de la Liga Premium: solo si hay una copa abierta con cupo y el usuario
+  // no está inscripto en ninguna. Best-effort: si falla, no mostramos el banner.
+  let copaBannerPrize: number | null = null;
+  try {
+    const user = await getCurrentUser();
+    if (user) {
+      const copas = await getGoldenTicketCopas(user.id);
+      const open = copas.find(
+        (c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed,
+      );
+      const enrolledAny = copas.some((c) => c.isEnrolled);
+      if (open && !enrolledAny) copaBannerPrize = open.prizeArs ?? 400000;
+    }
+  } catch {
+    // sin DB / sin auth: sin banner
+  }
   const started = editable != null && editable.round.order > 1;
   const roundShortName = editable?.round.name.split("—")[0]!.trim();
   const deadlineLabel = editable?.deadline.toLocaleString("es-AR", {
@@ -87,7 +106,11 @@ export default async function Home() {
   });
 
   return (
-    <div className="space-y-12">
+    <>
+      {/* Banner de la Copa fuera del rhythm de space-y-12 para que quede pegado arriba
+          (su propio mb-4) y no deje el hueco de 3rem antes del hero en mobile. */}
+      {copaBannerPrize != null && <CopaHomeBanner prizeArs={copaBannerPrize} />}
+      <div className="space-y-12">
       <WelcomeBanner />
 
       {/* ─── HERO ─── */}
@@ -211,6 +234,7 @@ export default async function Home() {
           handle={SITE.twitter.handle}
         />
       </section>
-    </div>
+      </div>
+    </>
   );
 }

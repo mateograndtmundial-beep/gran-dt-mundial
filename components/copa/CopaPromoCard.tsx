@@ -1,9 +1,9 @@
 import { Trophy } from "lucide-react";
 import { Eyebrow } from "@/components/editorial";
 import type { CopaStatus } from "@/lib/queries";
-import { cn } from "@/lib/utils";
 import { formatArs } from "./format";
 import { EnrollButton } from "./EnrollButton";
+import { CupoLive } from "./CupoLive";
 
 /**
  * Card de promoción de la Liga Premium para usuarios NO inscriptos, insertada en
@@ -13,7 +13,6 @@ import { EnrollButton } from "./EnrollButton";
  */
 export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
   const capacity = copa.capacity ?? 100;
-  const pct = Math.min(100, Math.round((copa.enrolled / capacity) * 100));
 
   return (
     <div className="rounded-[10px] border-2 border-gold-border bg-gold-bg p-5 card-shadow">
@@ -36,22 +35,9 @@ export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
         </div>
       </div>
 
-      {/* Barra de cupo (estática, del server) */}
+      {/* Barra de cupo EN VIVO (arranca con el valor del server, refresca por polling) */}
       <div className="mt-4">
-        <div className="flex items-baseline justify-between">
-          <Eyebrow className="text-ink-3">Cupo</Eyebrow>
-          <span className="jersey-numeral text-sm text-gold-ink">
-            {copa.enrolled}
-            <span className="text-ink-3">/{capacity}</span>
-          </span>
-        </div>
-        <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-gold-border/40">
-          <div
-            className={cn("h-full rounded-full bg-gold transition-all")}
-            style={{ width: `${pct}%` }}
-            aria-hidden
-          />
-        </div>
+        <CupoLive copaId={copa.id} initialEnrolled={copa.enrolled} capacity={capacity} />
       </div>
 
       <div className="mt-4">
