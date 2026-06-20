@@ -22,7 +22,7 @@ Valores reales (de `app/globals.css :root` y `lib/stories/recap-data.ts`).
 | Surface | `#FFFFFF` | Cartas, chips |
 | Ink | `#111827` | Texto principal, bordes, sombras |
 | Azul (primario/CTA) | `#1B4FD8` | Acentos, caja de grupo, pastilla de nota, link |
-| Dorado | `#C8A24B` | Figura ★, top-3, capitán |
+| Dorado | `#C8A24B` | Figura ★, top-3, capitán, **premios / Liga Premium** (acento de las piezas de la Copa) |
 | Verde pitch | `#16713F` | Solo cancha / victoria |
 | Oscuro (barras) | `#101726` | Barras inferiores, header de marcador |
 
@@ -53,7 +53,16 @@ Reglas de título:
   `lib/stories/scoreboard-data.ts`): ~112px (≤7) / 82px (≤11) / 64px (más largos).
 - El gancho/título principal va arriba (sobrevive al crop de X).
 
-## Iconografía de eventos
+## Iconografía
+
+**Dos familias distintas, no mezclar:**
+- **Íconos de UI / chrome** (trofeo, escudo, ticket, usuarios, reloj, pin, check, x, flechas): **SVG de
+  Lucide**, con los paths **oficiales del paquete** `lucide-react` (ya instalado). **NUNCA dibujados a
+  mano** (se notan generados por IA). Patrón `lucide()` + de dónde sacar los `d=`: ver
+  [`PLACAS-GUIDELINES.md`](./PLACAS-GUIDELINES.md) §1.5.
+- **Glyphs de evento** (los de abajo, para los scoreboards): PNG procesados con `sharp`. Es otra cosa.
+
+### Glyphs de evento (scoreboards)
 
 Glyph por evento. **Regla de oro: fondo transparente, sin recuadro blanco, sin watermark.**
 Los PNG se procesan en runtime con `sharp` (`processIcon` en `lib/stories/scoreboard.ts`): recorta
@@ -91,6 +100,9 @@ Lo que hace que todo "sea de la misma familia":
 - **Header** (todas las placas): logo badge circular 62px (borde azul) + wordmark
   **"LOS 11 DE SAMPA"** (el "11" en azul) + **page counter** pill (`01 / 06`).
 - **Pills**: URL `LOS11DESAMPA.COM` (fondo ink, texto blanco) abajo a la izquierda.
+- **Variante de chrome "Liga Premium"** (piezas de la Copa, `generate-copa-N.ts`): mismo header, pero
+  footer con `LOS11DESAMPA.COM/COPA` (izq) + tag **"Liga Premium"** (der), y **acento dorado** como
+  color de marca de la pieza. El verde/rojo solo si aparecen cancha o un contraste ✓/✗.
 - **Flag chips**: bandera real con borde fino y sombrita.
 - **Barra "DESLIZÁ »»"**: en portadas de carrusel, invita a deslizar (es una publicación, no un botón
   → `»»`, nunca un `→` que parezca "siguiente/tap").
@@ -109,7 +121,7 @@ Lo que hace que todo "sea de la misma familia":
 **Do**
 - Mantener el header, la URL pill y el page counter en todas las placas.
 - Títulos en Archivo Black, anchos, en mayúsculas.
-- Íconos transparentes, sin recuadro blanco; dedupe con `×N`.
+- **Íconos de UI con Lucide** (paths del paquete); glyphs de evento transparentes, dedupe con `×N`.
 - Un solo acento de color por título.
 
 **Don't**
@@ -118,3 +130,4 @@ Lo que hace que todo "sea de la misma familia":
 - No usar el `→` de "siguiente" en una publicación (usar `»»` "deslizá").
 - No inventar colores fuera de la paleta (especialmente para posiciones/estados).
 - No pegar PNGs con fondo blanco o watermark — pasarlos por `processIcon`.
+- **No dibujar íconos a mano** (SVG "a ojo"): usar los paths de Lucide.

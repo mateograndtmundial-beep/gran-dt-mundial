@@ -127,14 +127,19 @@ contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que 
 | | **Prode / quiniela típica** | **Liga Premium** |
 |---|---|---|
 | Cómo ganás | Adivinar resultados (**suerte**) | Armás y dirigís tu equipo (**skill**, dura todo el Mundial) |
-| Premio | Lo que junta el grupo, **a veces no se paga** | **$400.000 FIJO, lo garantiza la casa** |
+| Pago del premio | Lo que junten — y **a veces no se paga** (el que organiza desaparece) | **$400.000 asegurados, se reparten sí o sí** (nadie se baja) |
 | Confianza | "¿el que organiza va a pagar?" | Premio garantizado + **Bases y Condiciones** |
 | Duración | Se define rápido / se pincha | **Hasta la final** |
 | Entrada | Informal | **$5.000**, transparente |
 
+> ⚠️ **No vender "premio fijo, no pozo" como ventaja.** Un pozo de 100×$5.000 = **$500.000**, **mayor**
+> que los $400.000 → comparar por ahí es perder. El diferencial real es doble: **se paga seguro**
+> (nadie se baja, garantizado + B&C) **y es skill** (estrategia + criterio de presupuesto, no azar).
+> Nunca "lo pone la casa". (Aplicado en la publicación #4.)
+
 **Mensajes-rampa (usar en HERO y stories):**
 - *"En el prode adivinás resultados. Acá armás y dirigís tu equipo."*
-- *"Cansado de que el del prode después no aparezca? Acá el premio lo pone la casa: $400.000 asegurados."*
+- *"Cansado de que el del prode después no aparezca? Acá el premio se reparte sí o sí: $400.000 asegurados."*
 - *"El prode es de suerte. Esto es de los que saben de fútbol."*
 - *"Dejá de adivinar resultados. Armá tu equipo y jugá por $400.000 hasta la final."*
 
@@ -149,8 +154,9 @@ contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que 
   el ángulo mejora el CTR de esa partida.
 
 > Cuidado legal: el encuadre "prode pero en serio" no debe prometer nada que no esté en las **Bases y
-> Condiciones**; el premio se comunica siempre como **garantizado por la casa** (no pozo de los
-> inscriptos), que es justo lo que nos diferencia del prode. Ver checklist (legal).
+> Condiciones**; el premio se comunica siempre como **garantizado y repartido sí o sí** (no pozo de
+> los inscriptos, se reparte aunque no se llenen los 100), que es justo lo que nos diferencia del
+> prode. **No usar el rótulo "lo pone la casa"** (es obvio que sale de las entradas). Ver checklist (legal).
 
 ---
 
@@ -215,7 +221,7 @@ que peor convierte acá).
 
 ## 6. Qué debe tener CADA pieza (anatomía obligatoria)
 Toda publicación/aviso de la Copa, sin excepción, lleva:
-1. **La oferta clara**: premio **FIJO $400.000 garantizado** al **top 10** (no es pozo, lo pone la casa).
+1. **La oferta clara**: premio **FIJO $400.000 garantizado** al **top 10** (no es pozo; **se reparte sí o sí, aunque no se llenen los 100**).
 2. **Entrada $5.000.**
 3. **Escasez**: **cupo 100** (y, cuando aplique, "quedan X").
 4. **Deadline**: **cierra el 28/06** (kickoff de 16vos) o al llenarse.
@@ -240,10 +246,10 @@ calendario comprimido** según los días que queden cuando se libere.
 
 | Día | Fecha | Fase | Post dedicado (ángulo) | Stories | Pauta (Tramo 1) |
 |---|---|---|---|---|---|
-| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "El prode lo gana la suerte. Esto, los que saben de fútbol."** (§1.6): presenta la Liga Premium, premio $400k garantizado, cupo 100, entrada $5.000, abre HOY. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
-| **D-7** | 21/06 | Educación | **¿Cómo funciona?** Jugás con tu equipo (no es adivinar resultados como el prode), rankea desde 16vos, 5 cambios gratis para inscriptos. | Tutorial 3 frames + encuesta ("¿en cuántos prodes estás?") | HERO 2 (cómo funciona) a retargeting |
+| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "Llegó la Liga Premium"**: lanzamiento (antes gratis entre amigos → ahora por premios). Premio $400k al top 10, cupo 100, entrada $5.000, abre HOY, **desde 16vos**, te sumás **hasta 28/06**. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
+| **D-7** | 21/06 | Educación/Acción | **Cómo entrás a la Liga Premium (3 pasos)**: armá tu equipo (gratis) → entrá a /copa ($5.000) → rankeás desde 16vos por $400.000. Remite al fijado *¿Qué es?* para el "cómo se juega". | Los 3 pasos + link a `/copa` + link al fijado | Sigue HERO 1 (lanzamiento) a retargeting + prospecting |
 | **D-6** | 22/06 | Educación/Prueba | **La distribución del premio** (gráfico top 10: 1°=$120k…). | Desglose del premio + link | Sigue HERO 1+2 |
-| **D-5** | 23/06 | Prueba/Confianza | **"El premio lo pone la casa, se reparte sí o sí"** (anti-objeción "¿es real?" + "a diferencia del prode que no paga"). | Q&A / FAQ | Cortar el creativo que peor convierte |
+| **D-5** | 23/06 | Prueba/Confianza | **"El premio se reparte sí o sí"** (anti-objeción "¿es real?": repartimos los $400.000 aunque no se llenen los 100 + B&C). | Q&A / FAQ | Cortar el creativo que peor convierte |
 | **D-4** | 24/06 | Escasez | **Cupo en vivo**: "Ya se anotaron X. Quedan Y de 100." | Cupo en vivo | Subir al mejor creativo · **chequear gatillo Tramo 2** |
 | **D-3** | 25/06 | Escasez | **Social proof** / "los equipos que ya están adentro". | Cupo + countdown + encuesta | Empuje si vas atrasado |
 | **D-2** | 26/06 | Urgencia | **"Faltan 2 días"** — recordatorio fuerte con deadline. | Countdown intensivo + link | Empuje final (HERO escasez) |
@@ -269,7 +275,7 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 ---
 
 ## 9. Resumen de decisiones recomendadas
-- **Ángulo central**: **surfear el furor de los prodes** (§1.6) — "el prode pero en serio": skill vs. suerte, dura todo el Mundial, premio **garantizado por la casa** (no el prode que no paga). Rampa de entrada, no rival.
+- **Ángulo central**: **surfear el furor de los prodes** (§1.6) — "el prode pero en serio": skill vs. suerte, dura todo el Mundial, premio **garantizado y repartido sí o sí** (no el prode que no paga). Rampa de entrada, no rival. **Excepción:** la **publicación #1 abre con ángulo de lanzamiento** ("llegó la Liga Premium", antes gratis entre amigos → ahora por premios), no con el prode.
 - **Objetivo**: llenar **1 copa de 100**. Abrir más es **discrecional** (días + confianza, **nunca con horas**).
 - **Budget**: **escalonado, $100k por copa**, liberado por demanda (no $300k de entrada). Sobra → no se gasta / financia la copa siguiente.
 - **Tamaño de liga**: **ligas de 100, premio fijo $400k** (decidido). Se descartó balancear en ligas chicas (pierden plata bajo 80). Hook: "cada 100 → otra copa de $400k".
@@ -304,111 +310,144 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 
 | # | Día · Fecha | Fase | Ángulo | Objetivo | CTA principal |
 |---|---|---|---|---|---|
-| 1 | D-8 · 20/06 | 🚀 Lanzamiento | "El prode lo gana la suerte. Esto, los que saben de fútbol." | 🏆 Liga Premium | Sumate: los11desampa.com/copa |
-| 2 | D-7 · 21/06 | Educación | ¿Cómo se juega? (gratis) → subí a la Liga Premium | 🏆🎮 Ambos | Armá tu 11 gratis / Subí a la Liga Premium |
+| 1 | D-8 · 20/06 | 🚀 Lanzamiento | "Llegó la Liga Premium" — antes gratis entre amigos, ahora por premios (desde 16vos, hasta 28/06) | 🏆 Liga Premium | Sumate: los11desampa.com/copa |
+| 2 | D-7 · 21/06 | Educación/Acción | Cómo entrás a la Liga Premium (en 3 pasos; paso 1 gratis) | 🏆🎮 Ambos | Armá tu equipo / Entrá a la Copa |
 | 3 | D-6 · 22/06 | Educación/Prueba | La distribución del premio (top 10, transparente) | 🏆 Liga Premium | Anotate antes que se llene |
-| 4 | D-5 · 23/06 | Confianza | "El premio lo pone la casa, se reparte sí o sí" | 🏆 Liga Premium | Sumate con confianza |
+| 4 | D-5 · 23/06 | Confianza | "El premio se reparte sí o sí" (aunque no se llenen los 100) | 🏆 Liga Premium | Sumate con confianza |
 | 5 | D-4 · 24/06 | Escasez | Cupo en vivo: quedan Y de 100 | 🏆 Liga Premium | Asegurá tu lugar |
 | 6 | D-3 · 25/06 | Prueba/General | "Jugá gratis con tus amigos" (el prode del grupo, bien hecho) | 🎮 General | Creá tu liga con amigos |
 | 7 | D-2 · 26/06 | Urgencia | "Faltan 2 días" | 🏆 Liga Premium | Entrá antes del cierre |
 | 8 | D-1 · 27/06 | Urgencia | "Última chance, cierra mañana" | 🏆 Liga Premium | Último día para anotarte |
 | 9 | D-0 · 28/06 | 🔔 Último llamado | "Cierra HOY" + jugá gratis igual | 🏆🎮 Ambos | Cierra hoy / Jugá gratis igual |
 
-> **Reparto de objetivos:** posts **2, 6 y 9** abren a usuario general (jugar gratis); el resto
-> sostiene el foco premium. Posts **1 y 4** explotan el prode de lleno; **2, 3 y 6** lo usan como
-> contraste suave. La idea: que la campaña **también** deje jugadores nuevos gratis (LTV de pines),
-> no solo inscriptos.
+> **Reparto de objetivos:** los posts **6 y 9** abren a usuario general (jugar gratis) y el **2**
+> (cómo entrás) tiene el **primer paso gratis** como rampa; el resto sostiene el foco premium. El
+> **1** (lanzamiento) y el **4** (confianza) usan el contraste con el prode; el **3** (premio) y el
+> **6** (amigos) lo rozan suave. La idea: que la campaña **también** deje jugadores nuevos gratis
+> (LTV de pines), no solo inscriptos.
 
 ---
 
-### 1 · D-8 · viernes 20/06 — 🚀 Lanzamiento (HERO 1)
-**Objetivo:** 🏆 Liga Premium. Le habla a todo el público futbolero que ya está en algún prode.
-**Formato:** carrusel 4 slides.
+### 1 · D-8 · sabado 20/06 — 🚀 Lanzamiento (HERO 1)
+**Objetivo:** 🏆 Liga Premium. **Ángulo LANZAMIENTO** (no se abre "de base" con el prode): se
+presenta la Liga Premium como algo **nuevo**. Hasta ahora se jugaba **gratis entre amigos**; ahora
+llega la posibilidad de **competir por premios** y **demostrar quién sabe de verdad**. Le habla a
+todo el jugador actual + al futbolero que viene siguiendo el Mundial.
+**Formato:** carrusel 4 slides (generado: `scripts/generate-copa-1.ts` → `out/copa-1/copa-1_01..04.png`).
+**Estado:** GENERADO con los slides de abajo.
 
 **Slides (idea de cada uno):**
-1. **Portada / hook:** "El prode lo gana la suerte. **Esto, los que saben de fútbol.**" Fondo
-   dorado premium, Archivo Black.
-2. **La oferta:** "$400.000 garantizados al top 10. Entrada $5.000. Cupo 100. Abre HOY."
-3. **Cómo funciona en 1 línea:** "No adivinás resultados: armás y dirigís tu equipo. Rankea desde
-   16vos, hasta la final."
-4. **CTA + confianza:** "El premio lo pone la casa, se reparte sí o sí. Sumate: los11desampa.com/copa.
-   Cierra el 28/06 o al llenar los 100. *Bases y Condiciones en bio.*"
+1. **Portada / lanzamiento:** "**Llegó la Liga Premium.**" + "Hasta ahora jugabas gratis con tus
+   amigos. Ahora competís **por premios de verdad** y demostrás quién sabe más de fútbol." Deja
+   claro **ya en slide 1**: **rankea desde 16vos** y **te sumás hasta el 28/06**. Caja dorada
+   $400.000. Fondo claro premium, Archivo Black.
+2. **La oferta:** "$400.000 al top 10. Entrada $5.000. Cupo 100. Abre HOY." + "Premiamos al top 10,
+   desde $120.000 el 1°. Es **fijo**: repartimos los $400.000 completos **aunque no se llenen los 100**."
+3. **Cómo se juega:** "**Sos el DT.** Armás (15 figuras + DT con presupuesto) y **dirigís** —cada
+   fecha hacés cambios, no es un equipo fijo—. **Rankea desde 16vos, hasta la final.** El que mejor
+   arma y dirige, gana."
+4. **CTA + confianza:** "El premio **se reparte sí o sí**. Repartimos los $400.000 al top 10 aunque
+   no se llenen los 100. Con **Bases y Condiciones**. Cierra el 28/06 o al llenar los 100.
+   Sumate: los11desampa.com/copa."
 
 **Qué dice (caption):**
-> 🏆 Arrancó la **Liga Premium** del Mundial.
+> 🏆 **Lanzamos la Liga Premium** del Mundial.
 >
-> En el prode adivinás resultados y rezás. Acá **ganás por saber de fútbol**: armás tu equipo, lo
-> dirigís todo el Mundial y jugás por **$400.000 garantizados** repartidos entre los 10 primeros.
+> Hasta ahora jugabas **gratis con tus amigos**. Ahora podés **competir por premios de verdad** y
+> demostrar quién sabe más de fútbol: armás tu equipo, lo dirigís fecha a fecha y jugás por
+> **$400.000** repartidos entre los 10 primeros.
 >
-> 💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Rankea desde 16vos · 🛡️ El premio lo pone la casa, **se
-> reparte sí o sí**.
+> 💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Rankea desde 16vos · 🛡️ Repartimos el premio **sí o sí**,
+> aunque no se llenen los 100.
 >
-> Cierra el **28/06** o cuando se llenen los 100. Link en bio 👉 los11desampa.com/copa
+> Te sumás **hasta el 28/06** (o hasta que se llenen los 100). Link en bio 👉 los11desampa.com/copa
 >
-> ¿En cuántos prodes estás este Mundial? 👇 *(Bases y Condiciones en bio.)*
+> ¿Te animás a demostrar que sos el que más sabe? 👇 *(Bases y Condiciones en bio.)*
 >
-> #Mundial2026 #WorldCup2026 #Los11DeSampa #FantasyFutbol #LigaPremium #Prode
+> #Mundial2026 #WorldCup2026 #Los11DeSampa #FantasyFutbol #LigaPremium
 
-**Idea que transmite:** llegó algo serio y distinto al prode — se gana por **skill** (no por suerte),
-con premio grande y garantizado.
-**Por qué:** es la pieza que **abre la inscripción**; tiene que dejar la oferta cristalina y plantar
-el ángulo prode que se va a repetir toda la semana. Activa retargeting + prospecting (HERO 1).
-**Cuidados:** premio siempre como "garantizado por la casa" (no pozo); link a B&C sí o sí.
+**Idea que transmite:** llegó algo nuevo y en serio — lo que jugabas gratis entre amigos ahora se
+juega por premios, y acá se demuestra **quién sabe de verdad**.
+**Por qué:** es la pieza que **abre la inscripción**; tiene que dejar la oferta cristalina, posicionar
+la Liga Premium como **lanzamiento** (no como "otro prode") y plantar desde el slide 1 los dos datos
+que destraban la decisión (**desde 16vos**, **hay tiempo hasta el 28/06**). Activa retargeting +
+prospecting (HERO 1).
+**Cuidados:** primera persona (**premiamos / repartimos**); premio siempre como **garantizado y
+repartido aunque no se llene el cupo** (no es pozo) — **sin** usar el rótulo "lo pone la casa". Link
+a B&C sí o sí.
+
+**Regenerar:** `npx tsx scripts/generate-copa-1.ts` (las imágenes van a `out/copa-1/`, gitignored).
 
 ---
 
-### 2 · D-7 · sábado 21/06 — Educación: ¿cómo se juega?
-**Objetivo:** 🏆🎮 Ambos. Capta jugador nuevo **gratis** y, arriba de eso, presenta la Liga Premium
-como "subir de nivel". Le habla al curioso que vio el post 1 pero no sabe cómo funciona.
-**Formato:** carrusel 5 slides (tutorial).
+### 2 · D-7 · domingo 21/06 — Cómo entrás a la Liga Premium (en 3 pasos)
+**Objetivo:** 🏆🎮 Ambos. Día después del lanzamiento: explica **cómo se entra**, no "qué es" (eso ya
+lo cubre el carrusel **fijado *¿Qué es?***). El **paso 1 es gratis** (armar el equipo), así que
+también capta jugador nuevo; el paso 2 es la inscripción paga. Le habla al que vio el lanzamiento y
+se pregunta "¿y cómo me sumo?".
+**Formato:** carrusel 4 slides (pasos), generado: `scripts/generate-copa-2.ts` → `out/copa-2/copa-2_01..04.png`.
+**Estado:** GENERADO. Cada slide lleva una **figura** (sin texto suelto): roadmap de 3 nodos → cancha
+real con figuritas (reusa el tooling de `generate-que-es.ts`) → "ticket" de entrada → bracket
+16vos→Final + bloque de premio.
 
 **Slides:**
-1. **Portada:** "Cómo se juega Los 11 de Sampa (y no es adivinar resultados como el prode)."
-2. **Armá tu 11:** "Elegís 15 jugadores + DT con un presupuesto. Tu equipo, tu estrategia."
-3. **Sumás puntos reales:** "Cada jugador suma según su **rendimiento real** en el Mundial. Gol,
-   asistencia, valla invicta, figura…"
-4. **Competís:** "Ranking global + ligas privadas con tus amigos. **Gratis.**"
-5. **Subí de nivel:** "¿Querés jugar por plata? La **Liga Premium**: $400.000 al top 10, entrada
-   $5.000, cupo 100. los11desampa.com/copa"
+1. **Portada + roadmap:** "¿Cómo entrás?" + los **3 pasos como nodos** (Armá » Entrá » Jugá) y chip
+   "¿No sabés cómo se juega? Mirá el carrusel fijado *¿Qué es?*". Íconos **Lucide** (no dibujados a mano).
+2. **Paso 1 — Armá tu equipo (gratis):** badge **GRATIS** + **cancha real** (15 figuras + DT,
+   presupuesto 700M, 5M–150M) **+ el banco** (4 suplentes + DT) abajo. Equipo distinto al de *¿Qué es?*
+   (Kane, Rodríguez, Rodri, Diomande, Kimmich, Perisic…). "Entrás a los11desampa.com. No cuesta nada."
+3. **Paso 2 — Entrá a la Copa ($5.000):** figura de **ticket** dorado + stats (entrada $5.000 · cupo
+   100 · cierra 28/06). "Desde los11desampa.com/copa asegurás tu lugar."
+4. **Paso 3 — Jugá por $400.000:** **bracket** 16vos→Final (rankea toda la ruta) + bloque $400.000
+   "se reparte sí o sí". "Quedás rankeado desde 16vos hasta la final. El que mejor dirige, gana."
+
+**Regenerar:** `npx tsx scripts/generate-copa-2.ts` (las imágenes van a `out/copa-2/`, gitignored).
 
 **Qué dice (caption):**
-> 🎮 ¿Nunca jugaste un fantasy? Va el manual en 30 segundos 👇
+> 🎟️ Te lo simplificamos: **entrar a la Liga Premium son 3 pasos.**
 >
-> No es adivinar resultados (eso es el prode). Acá **armás tu equipo** de 15 + DT con presupuesto,
-> y sumás puntos por lo que **de verdad** hacen los jugadores en la cancha. Gol, asistencia, valla
-> invicta, figura del partido.
+> 1️⃣ Armá tu equipo en los11desampa.com (gratis: 15 figuras + DT).
+> 2️⃣ Entrá a la Copa en los11desampa.com/copa y asegurá tu lugar ($5.000, cupo 100).
+> 3️⃣ Listo: quedás rankeado **desde 16vos hasta la final**, jugando por **$400.000** al top 10.
 >
-> Jugás **gratis**, competís en el ranking global y armás tu liga privada con amigos.
+> ¿Todavía no sabés cómo se juega? Mirá el carrusel fijado 📌
 >
-> ¿Y si querés jugar fuerte? Está la **Liga Premium**: $400.000 garantizados al top 10. 🔗 bio.
+> Te sumás **hasta el 28/06** (o hasta que se llenen los 100). 🔗 bio · los11desampa.com/copa
 >
-> Armá tu 11 gratis en los11desampa.com — ¿con qué 9 arrancás el equipo? 👇
+> ¿Ya tenés tu equipo armado? 👇 *(Bases y Condiciones en bio.)*
 >
-> #Mundial2026 #FantasyFutbol #Los11DeSampa #ComoSeJuega #LigaPremium
+> #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
 
-**Idea que transmite:** es fácil, es gratis para empezar, y se gana por saber de fútbol — con la
-Liga Premium como techo aspiracional.
-**Por qué:** baja la barrera de entrada (mucha gente no sabe qué es un fantasy) y **agranda el
-público** que después puede pagar la Liga Premium. Encuesta para alcance.
-**Cuidados:** no prometer ganancias; el premium se menciona como opción.
+**Idea que transmite:** entrar es simple y rápido — armás (gratis), pagás la entrada, jugás por la plata.
+**Por qué:** convierte la curiosidad del lanzamiento en acción concreta (mata la fricción del "¿cómo
+me anoto?") y aprovecha el primer paso gratis para sumar jugadores nuevos. Sostiene el momento del
+día después del lanzamiento, donde antes había un hueco.
+**Cuidados:** dejar claro que el **paso 1 es gratis** y el **2 es pago**; primera persona; link a B&C.
 
 ---
 
-### 3 · D-6 · domingo 22/06 — Educación/Prueba: la distribución del premio
+### 3 · D-6 · lunes 22/06 — Educación/Prueba: la distribución del premio
 **Objetivo:** 🏆 Liga Premium. Le habla al interesado que duda "¿y cuánto se lleva cada uno?".
-**Formato:** carrusel 3 slides (con el gráfico del reparto).
+**Formato:** carrusel 3 slides, generado: `scripts/generate-copa-3.ts` → `out/copa-3/copa-3_01..03.png`.
+**Estado:** GENERADO. Figura por slide: **podio top-3** (portada) → **gráfico de barras del top 10**
+(transparencia) → CTA. Montos cableados desde `docs/MONETIZACION.md` (fuente de verdad).
 
 **Slides:**
-1. **Portada:** "$400.000. Así se reparten entre los 10 primeros."
-2. **El gráfico (top 10):** 1° $120.000 · 2° $72.000 · 3° $48.000 · 4° $36.000 · 5° $28.000 ·
-   6° $24.000 · 7° $20.000 · 8° $20.000 · 9° $16.000 · 10° $16.000.
-3. **CTA:** "Premio FIJO, lo pone la casa. Entrada $5.000, cupo 100. los11desampa.com/copa"
+1. **Portada (podio):** "$400.000 no se lo lleva uno solo. Premiamos al top 10." + podio 1°/2°/3°
+   ($120.000 / $72.000 / $48.000).
+2. **El gráfico (top 10):** barras proporcionales — 1° $120.000 · 2° $72.000 · 3° $48.000 ·
+   4° $36.000 · 5° $28.000 · 6° $24.000 · 7° $21.000 · 8° $19.000 · 9° $17.000 · 10° $15.000
+   (total $400.000 / 100%).
+3. **CTA:** "Entrar al top 10 ya paga" — premio fijo se reparte sí o sí, entrada $5.000, cupo 100,
+   cierra 28/06. los11desampa.com/copa.
+
+**Regenerar:** `npx tsx scripts/generate-copa-3.ts` (las imágenes van a `out/copa-3/`, gitignored).
 
 **Qué dice (caption):**
 > 💰 Transparencia total: así se reparten los **$400.000** de la Liga Premium.
 >
-> No es "el ganador se lleva todo y listo". **Premian al top 10**: desde $120.000 el 1° hasta
-> $16.000 el 10°. Y es **fijo** — lo pone la casa, no depende de cuántos se anoten.
+> No es "el ganador se lleva todo y listo". **Premiamos al top 10**: desde $120.000 el 1° hasta
+> $15.000 el 10°. Y es **fijo** — repartimos los $400.000 completos, aunque no se llenen los 100.
 >
 > 💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Cierra 28/06.
 >
@@ -426,46 +465,66 @@ ganar) ya paga.
 
 ---
 
-### 4 · D-5 · lunes 23/06 — Confianza: "el premio lo pone la casa"
-**Objetivo:** 🏆 Liga Premium. Le habla al desconfiado quemado por el prode que no paga.
-**Formato:** carrusel 3 slides (anti-objeción).
+### 4 · D-5 · martes 23/06 — Por qué la Liga Premium (no el prode del grupo)
+**Objetivo:** 🏆 Liga Premium. Le habla al que ya está en un prode del laburo/amigos: por qué jugar
+esto en serio. **Dos pilares** (NO "premio fijo vs pozo" — ver Cuidados): **(1) es skill** —
+estrategia, no adivinar: elegís jugadores con criterio de presupuesto y te medís con los mejores; y
+**(2) se paga seguro** — nadie se baja a mitad de camino, premio garantizado con B&C.
+**Formato:** carrusel 3 slides, generado: `scripts/generate-copa-4.ts` → `out/copa-4/copa-4_01..03.png`.
+**Estado:** GENERADO. Figura por slide: **2 pilares** (portada) → **plantel real + barra de
+presupuesto** (estrategia/criterio) → confianza + CTA.
 
 **Slides:**
-1. **Portada:** "'¿Y esto lo pagan de verdad?' Sí. Y te explicamos por qué."
-2. **El contraste:** "El prode del grupo: el premio sale de lo que junten… y a veces el que
-   organiza no aparece. **Acá el premio lo pone la casa.**"
-3. **CTA:** "$400.000 garantizados, se reparten sí o sí. Con Bases y Condiciones. los11desampa.com/copa"
+1. **Portada:** "Es más que un prode" + las **2 razones** como pilares (ES SKILL · SE PAGA).
+2. **Razón 1 — es estrategia, no suerte:** chips de plantel (Messi, Haaland, Kane, Rodri, Hakimi) +
+   **barra de presupuesto** (usaste 698,2M / tope 700M → "armaste el mejor 11 sin pasarte") + "hay que
+   tener criterio" + "te medís con los mejores DT".
+3. **Razón 2 — se paga seguro:** "acá nadie se baja" — premio garantizado (se reparte sí o sí, con
+   B&C) · nadie se borra (cupo de 100 que pagaron) · entrada $5.000/cupo 100/cierra 28/06 + CTA.
+
+**Regenerar:** `npx tsx scripts/generate-copa-4.ts` (las imágenes van a `out/copa-4/`, gitignored).
 
 **Qué dice (caption):**
-> 🛡️ La pregunta que todos se hacen: *"¿esto se paga de verdad?"*
+> ⚽ ¿Por qué jugar la Liga Premium y no quedarte solo con el prode del laburo?
 >
-> En el prode del grupo, el pozo sale de lo que juntan entre todos… y siempre hay un "che, el que
-> organizaba desapareció". **Acá no.** El premio de la Liga Premium **lo pone la casa**: $400.000
-> que se reparten **sí o sí**, esté lleno o no el cupo. Con **Bases y Condiciones** publicadas.
+> **1) Porque es estrategia, no suerte.** No marcás resultados al azar: elegís 15 cracks reales,
+> manejás un presupuesto (hay que tener criterio para no pasarte) y dirigís tu equipo fecha a fecha.
+> Te medís contra los mejores DT del país.
 >
-> Esa es la diferencia entre una quiniela de oficina y jugar en serio.
+> **2) Porque se paga, siempre.** Acá nadie se baja a mitad de camino ni "desaparece" con la plata: el
+> premio de **$400.000** está garantizado, se reparte **sí o sí** y con **Bases y Condiciones**.
 >
-> 💵 $5.000 · 🎟️ 100 lugares · 🏁 28/06 · 🔗 bio · los11desampa.com/copa
+> Es la diferencia entre adivinar resultados y jugar en serio. 💵 $5.000 · 🎟️ 100 lugares · 🏁 28/06
+> 🔗 bio · los11desampa.com/copa
 >
-> ¿Te pasó alguna vez que el prode no se pagó? Contá 👇
+> ¿Te pasó alguna vez que el prode del grupo no se pagó? Contá 👇
 >
 > #LigaPremium #Prode #Mundial2026 #Los11DeSampa #FantasyFutbol
 
-**Idea que transmite:** confianza — el premio está garantizado y documentado, a diferencia del prode
-informal.
-**Por qué:** ataca el bloqueante #1 de una compra con plata real (¿es confiable?). Usa el prode como
-espejo del problema que la Liga Premium resuelve. Engagement con anécdota = mucho comentario.
-**Cuidados:** el encuadre "garantizado por la casa" debe coincidir con B&C; no insultar al prode.
+**Idea que transmite:** la Liga Premium es **más divertida y más seria** que el prode: se gana por
+saber (estrategia + presupuesto, no azar) y la plata **está asegurada** (nadie se baja).
+**Por qué:** combina los dos motivos reales de elegirla — **skill/diversión** y **seguridad de
+cobro** —, sin caer en el ángulo equivocado del "premio fijo".
+**Cuidados:** **NO** venderlo como "premio fijo, no pozo": un pozo de 100×$5.000 = $500.000 sería
+**mayor** que los $400.000 → es desventaja, no ventaja. El diferencial es **se paga seguro** (nadie se
+baja) **+ es skill** (no azar). No usar "lo pone la casa"; primera persona; no insultar al prode.
 
 ---
 
-### 5 · D-4 · martes 24/06 — Escasez: cupo en vivo
+### 5 · D-4 · miércoles 24/06 — Escasez: cupo en vivo
 **Objetivo:** 🏆 Liga Premium. Le habla al indeciso ("lo pienso") — la escasez lo empuja.
-**Formato:** placa única (o carrusel 2) con el número de cupo grande.
+**Formato:** carrusel 2 slides, generado: `scripts/generate-copa-5.ts` → `out/copa-5/copa-5_01..02.png`.
+**Estado:** GENERADO (con **placeholder** de cupo). Figura hero: **grilla de 100 lugares** (ocupados
+en dorado / libres en blanco) → el cupo finito se ve de un vistazo.
+
+> ⚠️ **El número es REAL.** Antes de publicar, sacá los anotados de `getCopasStatus` y regenerá con
+> `--enrolled <N>`. El default es solo para previsualizar (el script avisa por consola). Nunca inflar.
 
 **Slides:**
-1. **Portada:** "Ya se anotaron **[X]**. Quedan **[Y] de 100**." (número en vivo, `getCopasStatus`).
-2. *(opcional)* "Cuando se llena, se cierra. El que entra, juega por $400.000. los11desampa.com/copa"
+1. **Cupo en vivo:** "Quedan **[Y] de 100**" + grilla de 100 (ocupados/libres) + "ya entraron [X]".
+2. **CTA:** "El que entra, juega por **$400.000**" — se cierra al llenarse / o el 28/06 / entrada $5.000.
+
+**Regenerar:** `npx tsx scripts/generate-copa-5.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-5/`, gitignored).
 
 **Qué dice (caption):**
 > 🎟️ El cupo se mueve: **quedan [Y] de 100** lugares en la Liga Premium.
@@ -487,16 +546,23 @@ del Tramo 2 (`LANZAMIENTO-COPA.md` §8).
 
 ---
 
-### 6 · D-3 · miércoles 25/06 — Prueba/General: "jugá gratis con tus amigos"
+### 6 · D-3 · jueves 25/06 — Prueba/General: "jugá gratis con tus amigos"
 **Objetivo:** 🎮 General. Le habla al que no quiere pagar pero sí quiere competir con su grupo.
-**Formato:** carrusel 3 slides.
+**Formato:** carrusel 3 slides, generado: `scripts/generate-copa-6.ts` → `out/copa-6/copa-6_01..03.png`.
+**Estado:** GENERADO. Como es del **modo gratis**, el footer es **general** (`los11desampa.com`,
+tag "Jugá gratis"), **no** `/COPA`. Figura por slide: **mockup de chat** del grupo (portada) → **3
+pasos + mini-ranking** de liga privada en vivo → puente **gratis vs Premium** + CTA.
 
 **Slides:**
-1. **Portada:** "¿Tenés un grupo de fútbol en WhatsApp? Ya tenés tu liga."
-2. **Cómo:** "Creás una liga privada **gratis**, pasás el código y compiten entre ustedes todo el
-   Mundial. El prode del grupo, pero bien hecho."
-3. **Puente premium:** "¿Y si suben la apuesta? La **Liga Premium** los espera. Pero jugar con los
-   pibes es gratis. los11desampa.com"
+1. **Portada (mockup de chat):** "Tu grupo ya tiene su liga." + chat del grupo ("Los pibes del
+   fútbol") con burbuja dorada que comparte el **código de liga** (7K2Q9P). "Sin planillas, sin
+   perseguir a nadie. Y es gratis."
+2. **Cómo (3 pasos + tabla):** "El prode del grupo, bien hecho." + pasos Creá » Pasá el código »
+   Compiten + **mini-ranking** de la liga privada (corona en el 1°, fila "VOS" resaltada).
+3. **Puente premium:** dos opciones — **GRATIS** (liga con amigos, $0) vs **$400.000** (Liga
+   Premium si suben la apuesta) + CTA "Armá la liga del grupo, gratis · los11desampa.com".
+
+**Regenerar:** `npx tsx scripts/generate-copa-6.ts` (las imágenes van a `out/copa-6/`, gitignored).
 
 **Qué dice (caption):**
 > 👯 El grupo de fútbol de WhatsApp merece algo mejor que una planilla de Excel.
@@ -521,7 +587,7 @@ constante de la semana.
 
 ---
 
-### 7 · D-2 · jueves 26/06 — Urgencia: "faltan 2 días"
+### 7 · D-2 · viernes 26/06 — Urgencia: "faltan 2 días"
 **Objetivo:** 🏆 Liga Premium. Le habla al interesado tibio que venía postergando.
 **Formato:** placa única (countdown) o carrusel 2.
 
@@ -549,7 +615,7 @@ constante de la semana.
 
 ---
 
-### 8 · D-1 · viernes 27/06 — Urgencia: "última chance, cierra mañana"
+### 8 · D-1 · sábado 27/06 — Urgencia: "última chance, cierra mañana"
 **Objetivo:** 🏆 Liga Premium. Le habla al que ya decidió pero no se anotó todavía.
 **Formato:** placa única (countdown fuerte).
 
@@ -576,7 +642,7 @@ escasez antes del cierre.
 
 ---
 
-### 9 · D-0 · sábado 28/06 — 🔔 Último llamado + rescate al general
+### 9 · D-0 · domingo 28/06 — 🔔 Último llamado + rescate al general
 **Objetivo:** 🏆🎮 Ambos. Cierra la Liga Premium **a la mañana** y, para los que no llegaron, los
 invita a jugar **gratis** igual (no perder el lead).
 **Formato:** carrusel 2 slides.
@@ -645,7 +711,13 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
 - **Reusá el tooling:** las placas siguen `VISUAL-SYSTEM.md`; el gráfico de premio (#3) y el contador
   de cupo (#5, #7, #8) pueden ser plantillas nuevas en `assets/`. Captions con la voz de
   `COPY-VOICE.md`.
+- **Apoyate en esquemas/figuras, no solo texto** (referencia: `out/que-es`, `scripts/generate-que-es.ts`):
+  cancha con jugadores reales + chips Panini + banderas, barras del reparto del premio, iconos. Cada
+  pieza debería "mostrar", no solo "decir". El post #1 ya está generado (`generate-copa-1.ts`); ir
+  llevando el resto de las publicaciones a este nivel visual al iterarlas.
+- **Tono (decidido):** primera persona (**premiamos / repartimos / lanzamos**) y el premio siempre
+  como **garantizado y repartido sí o sí, aunque no se llenen los 100** — **nunca** "lo pone la casa".
 - **Cupo "[X]/[Y]"**: completar con el dato real de `getCopasStatus` al momento de publicar.
 - **Si se abre la copa #2 / oleada 8vos** (`LANZAMIENTO-COPA.md` §1.5, §8): este calendario se
   **reusa comprimido** según los días que queden, manteniendo el mismo orden de ángulos.
-- **B&C**: link obligatorio en toda pieza de Liga Premium (#1, #3, #4, #5, #7, #8, #9).
+- **B&C**: link obligatorio en toda pieza de Liga Premium (#1, #2, #3, #4, #5, #7, #8, #9). El #6 (amigos, modo gratis) no lleva.

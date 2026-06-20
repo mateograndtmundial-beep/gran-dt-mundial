@@ -39,6 +39,13 @@ Render: Playwright/Chromium a `deviceScaleFactor=2` y downscale LANCZOS con `sha
 | Carrusel: tabla equipo | `assets/stories/scoreboard-team.html` | `lib/stories/scoreboard-data.ts` | `npm run scoreboards` |
 | Carrusel: leyenda | `assets/stories/scoreboard-legend.html` | `lib/stories/scoreboard-data.ts` | `npm run scoreboards` |
 | Story figura | `assets/stories/template.html` | `lib/stories/recap-data.ts` | `npm run stories` |
+| Carrusel explicativo "¿Qué es?" | HTML cableado en el script | — | `npx tsx scripts/generate-que-es.ts` |
+| Carruseles **Liga Premium** (lanzamiento Copa) | HTML cableado en el script | — | `npx tsx scripts/generate-copa-N.ts` |
+
+> Las placas **diseñadas** (no-scoreboard) se cablean en su propio `scripts/generate-*.ts` (HTML por
+> slide), reusando el toolkit de `generate-que-es.ts` (`flag`/`figure`/`pitch`/`benchItem`) y el chrome
+> premium (footer `/COPA`). Una **publicación = un generador** (`copa-1`…`copa-N`). Guía de armado:
+> [`PLACAS-GUIDELINES.md`](./PLACAS-GUIDELINES.md) (íconos Lucide §1.5, biblioteca de figuras §3.5).
 
 Assets compartidos: `assets/stories/flags.json` (banderas base64), `assets/stories/icons/*` (PNG de
 eventos), `assets/stories/fonts/` (Archivo Black embebida), `public/images/logo/logo-badge-192.png`.
@@ -54,6 +61,9 @@ npm run scoreboards -- --pending       # = lo que corre el cron
 npm run stories -- --demo              # story figura de prueba → out/stories
 npm run stories -- --round 1           # stories de los partidos terminados de la fecha 1
 npm run stories -- --match 123 --slack # postea la story de un partido a #SOCIAL
+
+npx tsx scripts/generate-que-es.ts     # carrusel anclado "¿Qué es?" → out/que-es
+npx tsx scripts/generate-copa-2.ts     # publicación N del lanzamiento Copa → out/copa-2
 ```
 
 > Las imágenes salen a `out/` (gitignored). No se commitean; se regeneran con el comando.
