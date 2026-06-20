@@ -101,6 +101,7 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 
 ---
 
+
 ## Estado técnico (rama `feat/copa-golden-ticket`) — actualizado 19/06
 **TODO el código está HECHO en esta rama (build verde).** Resumen:
 - **Schema + migración `0014`:** `leagues` (`kind`/`status`/`capacity`/`entryFeeArs`/`prizeArs`) +
