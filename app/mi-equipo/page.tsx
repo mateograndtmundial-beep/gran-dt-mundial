@@ -188,12 +188,15 @@ export default async function MiEquipoPage({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <Card className="p-4 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
-            <div className="flex items-baseline gap-2 min-w-0">
+            <div className="flex items-center gap-2 min-w-0">
               <Eyebrow>Tu equipo</Eyebrow>
               {user.username && (
-                <span className="truncate text-sm font-semibold text-ink-2" title="Tu nombre de DT">
-                  @{user.username}
-                </span>
+                <>
+                  <span className="h-3 w-px shrink-0 bg-border-strong" aria-hidden />
+                  <span className="truncate text-[11px] font-semibold text-ink-2" title="Tu nombre de DT">
+                    @{user.username}
+                  </span>
+                </>
               )}
             </div>
             {latestRound && <span className="shrink-0 text-[11px] text-ink-3">{latestRound.formation}</span>}
