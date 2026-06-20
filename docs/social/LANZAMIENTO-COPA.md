@@ -1,6 +1,11 @@
-# Plan de comunicación en redes — Lanzamiento Copa GOLDEN TICKET
+# Plan de comunicación en redes — Lanzamiento Liga Premium
 
-> Estrategia de redes para llenar las **Copas GOLDEN TICKET** (cupo 100 c/u, entrada $5.000,
+> **Nombre público de la feature: Liga Premium** (las copas se llaman **"Liga Premium I"** y
+> **"Liga Premium II"**). El marketing **no** gira en torno a "GOLDEN TICKET": ese nombre
+> aparece **solo** en el checkout de Mercado Pago (rótulo del cobro), para no explicitar que
+> es una liga premium paga. En este doc "copa" se usa como sinónimo casual de cada Liga Premium.
+>
+> Estrategia de redes para llenar las **Ligas Premium** (cupo 100 c/u, entrada $5.000,
 > premio fijo $400.000 al top 10) antes del **cierre = kickoff de 16vos (28/06)**.
 > Modelo de presupuesto: **escalonado por demanda** — **$100.000 por copa**, se libera el
 > siguiente tramo solo cuando la copa anterior se llena. Hoy es **19/06** → la inscripción abre
@@ -112,9 +117,14 @@ caliente del momento: grupos de WhatsApp, planillas de Excel, quinielas de ofici
 contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que la gente ya entiende
 → lo agarramos y mostramos que la Copa es "el prode, pero en serio".
 
-**El gancho:** *"El prode se te termina en fase de grupos. Esto recién empieza."*
+**El gancho:** *"El prode lo gana la suerte. La Liga Premium, los que saben de fútbol."*
 
-| | **Prode / quiniela típica** | **Copa GOLDEN TICKET** |
+> ⚠️ **Premisa correcta:** el prode **no termina** en fase de grupos — corrés predicciones de todo
+> el torneo. El contraste real (y siempre verdadero) es **suerte vs. skill**: en el prode adivinás
+> resultados; en la Liga Premium armás y dirigís tu equipo. No usar ganchos del tipo "el prode se te
+> termina" / "tu prode ya está liquidado" (son falsos).
+
+| | **Prode / quiniela típica** | **Liga Premium** |
 |---|---|---|
 | Cómo ganás | Adivinar resultados (**suerte**) | Armás y dirigís tu equipo (**skill**, dura todo el Mundial) |
 | Premio | Lo que junta el grupo, **a veces no se paga** | **$400.000 FIJO, lo garantiza la casa** |
@@ -123,17 +133,18 @@ contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que 
 | Entrada | Informal | **$5.000**, transparente |
 
 **Mensajes-rampa (usar en HERO y stories):**
-- *"¿Cuántos prodes llenaste ya? Te queda el que importa."*
+- *"En el prode adivinás resultados. Acá armás y dirigís tu equipo."*
 - *"Cansado de que el del prode después no aparezca? Acá el premio lo pone la casa: $400.000 asegurados."*
 - *"El prode es de suerte. Esto es de los que saben de fútbol."*
-- *"Tu prode ya está liquidado. Armá tu equipo y jugá por $400.000 hasta la final."*
+- *"Dejá de adivinar resultados. Armá tu equipo y jugá por $400.000 hasta la final."*
 
 **Cómo se aplica sin friccionar:**
 - **Posiciona, no insulta:** el que está en un prode es nuestro público ideal, no el enemigo. Tono
   cómplice ("vos que ya estás jugando…"), nunca despectivo con el prode del grupo de amigos.
-- **Aprovechá el momento de dolor:** cuando los prodes se empiezan a definir/pinchar en la fase de
-  grupos (y la gente queda eliminada), es **el mejor momento** para decir "esto recién arranca, y el
-  premio está garantizado". El calendario (§7) lo explota en la fase de Educación/Prueba.
+- **Aprovechá el momento de dolor:** cuando a alguien el prode se le va al descenso por pura suerte
+  (un rebote, un penal en contra, un resultado insólito), es **el mejor momento** para decir "acá no
+  dependés de la suerte: armás tu equipo y el premio está garantizado". El calendario (§7) lo explota
+  en la fase de Educación/Prueba.
 - **Retargeting fútbol/fantasy:** el público de prospecting (§1) se solapa con quien busca prodes →
   el ángulo mejora el CTR de esa partida.
 
@@ -229,7 +240,7 @@ calendario comprimido** según los días que queden cuando se libere.
 
 | Día | Fecha | Fase | Post dedicado (ángulo) | Stories | Pauta (Tramo 1) |
 |---|---|---|---|---|---|
-| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "El prode se te termina en fase de grupos. Esto recién empieza."** (§1.6): presenta la Copa, premio $400k garantizado, cupo 100, entrada $5.000, abre HOY. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
+| **D-8** | 20/06 | 🚀 Lanzamiento | **HERO 1 — "El prode lo gana la suerte. Esto, los que saben de fútbol."** (§1.6): presenta la Liga Premium, premio $400k garantizado, cupo 100, entrada $5.000, abre HOY. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
 | **D-7** | 21/06 | Educación | **¿Cómo funciona?** Jugás con tu equipo (no es adivinar resultados como el prode), rankea desde 16vos, 5 cambios gratis para inscriptos. | Tutorial 3 frames + encuesta ("¿en cuántos prodes estás?") | HERO 2 (cómo funciona) a retargeting |
 | **D-6** | 22/06 | Educación/Prueba | **La distribución del premio** (gráfico top 10: 1°=$120k…). | Desglose del premio + link | Sigue HERO 1+2 |
 | **D-5** | 23/06 | Prueba/Confianza | **"El premio lo pone la casa, se reparte sí o sí"** (anti-objeción "¿es real?" + "a diferencia del prode que no paga"). | Q&A / FAQ | Cortar el creativo que peor convierte |
