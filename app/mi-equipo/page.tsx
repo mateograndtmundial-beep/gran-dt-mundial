@@ -147,14 +147,7 @@ export default async function MiEquipoPage({
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <div className="flex flex-wrap items-baseline gap-x-2">
-            <Eyebrow>MI EQUIPO</Eyebrow>
-            {user.username && (
-              <span className="text-sm font-semibold text-ink-2" title="Tu nombre de DT">
-                @{user.username}
-              </span>
-            )}
-          </div>
+          <Eyebrow>MI EQUIPO</Eyebrow>
           <h1 className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none text-ink">
             {team.entry.name}
           </h1>
@@ -195,8 +188,15 @@ export default async function MiEquipoPage({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-start">
         <Card className="p-4 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b-2 border-border pb-2">
-            <Eyebrow>Tu equipo</Eyebrow>
-            {latestRound && <span className="text-[11px] text-ink-3">{latestRound.formation}</span>}
+            <div className="flex items-baseline gap-2 min-w-0">
+              <Eyebrow>Tu equipo</Eyebrow>
+              {user.username && (
+                <span className="truncate text-sm font-semibold text-ink-2" title="Tu nombre de DT">
+                  @{user.username}
+                </span>
+              )}
+            </div>
+            {latestRound && <span className="shrink-0 text-[11px] text-ink-3">{latestRound.formation}</span>}
           </div>
 
           {hasLineup ? (
