@@ -147,15 +147,17 @@ export default async function MiEquipoPage({
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">
         <div className="space-y-1">
-          <Eyebrow>MI EQUIPO</Eyebrow>
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <Eyebrow>MI EQUIPO</Eyebrow>
+            {user.username && (
+              <span className="text-sm font-semibold text-ink-2" title="Tu nombre de DT">
+                @{user.username}
+              </span>
+            )}
+          </div>
           <h1 className="font-display text-[clamp(1.8rem,4vw,3rem)] leading-none text-ink">
             {team.entry.name}
           </h1>
-          {user.username && (
-            <p className="text-sm font-semibold text-ink-2">
-              @{user.username} <span className="font-normal text-ink-3">· tu nombre de DT</span>
-            </p>
-          )}
           <p className="text-sm text-ink-3">
             <span className="jersey-numeral text-base text-ink">{formatPoints(team.entry.totalPoints)}</span> pts
             {rankingsVisible && ranking ? (
