@@ -721,3 +721,103 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
 - **Si se abre la copa #2 / oleada 8vos** (`LANZAMIENTO-COPA.md` §1.5, §8): este calendario se
   **reusa comprimido** según los días que queden, manteniendo el mismo orden de ángulos.
 - **B&C**: link obligatorio en toda pieza de Liga Premium (#1, #2, #3, #4, #5, #7, #8, #9). El #6 (amigos, modo gratis) no lleva.
+
+---
+
+## ANEXO B — Captions listas para IG (#1 → #6)
+
+> **Para copiar y pegar tal cual** al subir cada carrusel. Bloques limpios (sin `>` ni formato), en
+> el orden de publicación. Antes de pegar, repasar: link en bio apunta a `los11desampa.com/copa`
+> (posts premium) o `los11desampa.com` (#6, general); **Bases y Condiciones** linkeadas en bio para
+> todo lo premium. **No usar "lo pone la casa"**; premio siempre "se reparte sí o sí, aunque no se
+> llenen los 100". Primera persona (premiamos / repartimos / lanzamos).
+
+### #1 · 20/06 — Lanzamiento
+```text
+🏆 Lanzamos la Liga Premium del Mundial.
+
+Hasta ahora jugabas gratis con tus amigos. Ahora podés competir por premios de verdad y demostrar quién sabe más de fútbol: armás tu equipo, lo dirigís fecha a fecha y jugás por $400.000 repartidos entre los 10 primeros.
+
+💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Rankea desde 16vos · 🛡️ Repartimos el premio sí o sí, aunque no se llenen los 100.
+
+Te sumás hasta el 28/06 (o hasta que se llenen los 100). Link en bio 👉 los11desampa.com/copa
+
+¿Te animás a demostrar que sos el que más sabe? 👇 (Bases y Condiciones en bio.)
+
+#Mundial2026 #WorldCup2026 #Los11DeSampa #FantasyFutbol #LigaPremium
+```
+
+### #2 · 21/06 — Cómo entrás (en 3 pasos)
+```text
+🎟️ Te lo simplificamos: entrar a la Liga Premium son 3 pasos.
+
+1️⃣ Armá tu equipo en los11desampa.com (gratis: 15 figuras + DT).
+2️⃣ Entrá a la Copa en los11desampa.com/copa y asegurá tu lugar ($5.000, cupo 100).
+3️⃣ Listo: quedás rankeado desde 16vos hasta la final, jugando por $400.000 al top 10.
+
+¿Todavía no sabés cómo se juega? Mirá el carrusel fijado 📌
+
+Te sumás hasta el 28/06 (o hasta que se llenen los 100). 🔗 bio · los11desampa.com/copa
+
+¿Ya tenés tu equipo armado? 👇 (Bases y Condiciones en bio.)
+
+#LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
+```
+
+### #3 · 22/06 — La distribución del premio
+```text
+💰 Transparencia total: así repartimos los $400.000 de la Liga Premium.
+
+No es "el ganador se lleva todo y listo". Premiamos al top 10: desde $120.000 el 1° hasta $15.000 el 10°. Y es fijo — repartimos los $400.000 completos, aunque no se llenen los 100.
+
+💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Cierra 28/06.
+
+Link en bio 👉 los11desampa.com/copa
+
+Si entrás, ¿a qué puesto apuntás? 👇 (Bases y Condiciones en bio.)
+
+#LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #Premio
+```
+
+### #4 · 23/06 — Por qué la Liga Premium (no el prode del grupo)
+```text
+⚽ ¿Por qué jugar la Liga Premium y no quedarte solo con el prode del laburo?
+
+1) Porque es estrategia, no suerte. No marcás resultados al azar: elegís 15 cracks reales, manejás un presupuesto (hay que tener criterio para no pasarte) y dirigís tu equipo fecha a fecha. Te medís contra los mejores DT del país.
+
+2) Porque se paga, siempre. Acá nadie se baja a mitad de camino ni "desaparece" con la plata: el premio de $400.000 está garantizado, se reparte sí o sí y con Bases y Condiciones.
+
+Es la diferencia entre adivinar resultados y jugar en serio. 💵 $5.000 · 🎟️ 100 lugares · 🏁 28/06
+🔗 bio · los11desampa.com/copa
+
+¿Te pasó alguna vez que el prode del grupo no se pagó? Contá 👇
+
+#LigaPremium #Prode #Mundial2026 #Los11DeSampa #FantasyFutbol
+```
+
+### #5 · 24/06 — Cupo en vivo
+> ⚠️ Completar `[Y]` con el número real de `getCopasStatus` (lugares libres) antes de publicar. Mismo número que se usó en `--enrolled` al regenerar la placa. **Nunca inflar.**
+```text
+🎟️ El cupo se mueve: quedan [Y] de 100 lugares en la Liga Premium.
+
+No es marketing de humo — son 100 y nada más. Cuando se llena, se cierra y listo. Los que entran juegan por $400.000 garantizados al top 10.
+
+💵 $5.000 · 🏁 Cierra 28/06 (o antes si se llena) · 🔗 bio · los11desampa.com/copa
+
+¿Entrás o te lo vas a perder? 👇 (Bases y Condiciones en bio.)
+
+#LigaPremium #Mundial2026 #Los11DeSampa #CupoLimitado #FantasyFutbol
+```
+
+### #6 · 25/06 — Jugá gratis con tus amigos (general)
+```text
+👯 El grupo de fútbol del celu merece algo mejor que una planilla de Excel.
+
+En Los 11 de Sampa armás tu liga privada gratis: pasás el código, se anotan los pibes y compiten todo el Mundial con sus equipos. Sin cargar resultados a mano ni perseguir a nadie para que pague.
+
+Es el prode del grupo, pero bien hecho. Y si después quieren jugar fuerte, ahí está la Liga Premium por $400.000. 🔗 bio.
+
+Armá la liga gratis en los11desampa.com — etiquetá a los 3 que NO pueden faltar 👇
+
+#Los11DeSampa #FantasyFutbol #Mundial2026 #LigaConAmigos #Prode
+```
