@@ -13,8 +13,7 @@
 | [`PLACAS-GUIDELINES.md`](./PLACAS-GUIDELINES.md) | **Cómo construir una placa nueva bien** (carrusel explicativo/promo): pipeline (HTML→`renderPng`), gotchas técnicos (cargar Poppins, el bug del acento de color, screenshots a 1×), principios de contenido (sin screenshots, por concepto no pasos, llenar sin saturar) y checklist. | Vas a **generar una placa nueva** que no sea un scoreboard. |
 | [`FORMATS.md`](./FORMATS.md) | Tamaños por plataforma (carrusel 1080×1350, story 1080×1920, X), qué template usa cada pieza y con qué comando se genera, y el auto-posteo a Slack. | Vas a generar imágenes o adaptar a otro formato/red. |
 | [`COPY-VOICE.md`](./COPY-VOICE.md) | Voz de marca, estructura de caption, hashtags, CTAs y estrategia por red (IG/FB/X/Stories). | Vas a escribir el texto de una publicación. |
-| [`LANZAMIENTO-COPA.md`](./LANZAMIENTO-COPA.md) | **Plan de comunicación del lanzamiento de la Liga Premium**: ángulo "prode pero en serio", cadencia, stories, budget escalonado ($100k por copa), IG vs X, calendario día por día y anatomía de cada pieza. | Vas a comunicar/promocionar la Liga Premium en redes. |
-| [`IG-9-PUBLICACIONES.md`](./IG-9-PUBLICACIONES.md) | **Las 9 publicaciones de feed de IG (20/06→28/06), una por una**: copy borrador, idea que transmite y por qué de cada post; objetivo declarado (Liga Premium / general / ambos). Aterriza el calendario §7 de `LANZAMIENTO-COPA.md`. | Vas a redactar/subir los posts del lanzamiento. |
+| [`LANZAMIENTO-COPA.md`](./LANZAMIENTO-COPA.md) | **Plan de comunicación del lanzamiento de la Liga Premium**: ángulo "prode pero en serio", cadencia, stories, budget escalonado ($100k por copa), IG vs X, calendario día por día y anatomía de cada pieza. Incluye el **anexo con las 9 publicaciones de IG** (20/06→28/06), una por una (copy, objetivo y por qué). | Vas a comunicar/promocionar la Liga Premium o redactar/subir los posts del lanzamiento. |
 
 ## Cómo usarlo
 

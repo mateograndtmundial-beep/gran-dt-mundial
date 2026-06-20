@@ -111,6 +111,5 @@ Todo lo de `VISUAL-SYSTEM.md`, más lo que estandarizamos acá:
 
 ---
 
-> **Ejemplo de referencia end-to-end:** carrusel "¿Qué es Los 11 de Sampa?" →
-> contenido en [`IG-CARRUSEL-QUE-ES.md`](./IG-CARRUSEL-QUE-ES.md), generador en
-> `scripts/generate-que-es.ts`, salida en `out/que-es/`.
+> **Ejemplo de referencia end-to-end:** carrusel "¿Qué es Los 11 de Sampa?" → generador
+> `scripts/generate-que-es.ts` (contenido de cada slide cableado ahí mismo), salida en `out/que-es/`.
