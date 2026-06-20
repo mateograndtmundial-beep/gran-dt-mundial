@@ -279,20 +279,9 @@ export async function joinLeague(code: string) {
   return { ok: true as const, code: league.code };
 }
 
-/** Solo el dueño puede renombrar la liga. */
-export async function renameLeague(leagueId: number, newName: string) {
-  const user = await getCurrentUser();
-  if (!user) return { ok: false as const, error: "auth" as const };
-  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
-  if (!league) return { ok: false as const, error: "not-found" as const };
-  if (league.ownerId !== user.id) return { ok: false as const, error: "forbidden" as const };
-  const name = (typeof newName === "string" ? newName : "").trim().slice(0, LEAGUE_NAME_MAX);
-  if (!name) return { ok: false as const, error: "empty" as const };
-  await db.update(leagues).set({ name }).where(eq(leagues.id, leagueId));
-  revalidatePath(`/ligas/${league.code}`);
-  revalidatePath("/ligas");
-  return { ok: true as const };
-}
+// El nombre de la liga queda fijo desde su creación: no se puede renombrar
+// (decisión de producto — ni el dueño ni un admin). Por eso no hay action de
+// renombrar; el nombre sólo se setea en createLeague.
 
 /**
  * Solo el dueño define desde qué instancia puntúa la liga. `roundId` null =

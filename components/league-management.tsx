@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  renameLeague,
   removeMember,
   setLeagueScoringStart,
   deleteLeague,
@@ -32,7 +31,6 @@ export function LeagueManagement({
   scoringStartRoundId: number | null;
 }) {
   const router = useRouter();
-  const [name, setName] = useState(leagueName);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [toRemove, setToRemove] = useState<{ userId: number; label: string } | null>(null);
@@ -61,17 +59,6 @@ export function LeagueManagement({
     if (!r.ok && r.error === "auth") return router.push("/sign-in");
     if (!r.ok) return setMsg("No se pudo cambiar la instancia.");
     setMsg("Instancia de puntuación actualizada.");
-    router.refresh();
-  }
-
-  async function onRename() {
-    setBusy(true);
-    setMsg(null);
-    const r = await renameLeague(leagueId, name);
-    setBusy(false);
-    if (!r.ok && r.error === "auth") return router.push("/sign-in");
-    if (!r.ok) return setMsg("No se pudo renombrar.");
-    setMsg("Liga renombrada.");
     router.refresh();
   }
 
@@ -119,19 +106,7 @@ export function LeagueManagement({
     <Card className="space-y-4 p-4">
       <Eyebrow>Administrar liga</Eyebrow>
 
-      <div className="flex gap-2">
-        <input
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Nombre de la liga"
-          className="flex-1 rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
-        />
-        <PrimaryButton onClick={onRename} disabled={busy || !name.trim() || name.trim() === leagueName}>
-          {busy ? "…" : "Renombrar"}
-        </PrimaryButton>
-      </div>
-
-      <div className="border-t border-border pt-3">
+      <div>
         <Eyebrow className="mb-1">Puntúa desde</Eyebrow>
         <p className="mb-2 text-xs text-ink-3">
           Elegí desde qué instancia se cuentan los puntos en esta liga. Quien se sume con el
