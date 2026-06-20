@@ -80,6 +80,10 @@ export default function SoportePage() {
           ¿Cómo cuidamos tus datos? Leé nuestra{" "}
           <Link href="/privacidad" className="font-semibold text-blue hover:underline">
             política de privacidad
+          </Link>{" "}
+          y las{" "}
+          <Link href="/bases" className="font-semibold text-blue hover:underline">
+            Bases y Condiciones de la Liga Premium
           </Link>
           .
         </span>

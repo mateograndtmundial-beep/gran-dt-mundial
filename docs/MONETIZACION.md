@@ -1,7 +1,9 @@
 # Liga Premium — alineación rápida
 
 > Doc para que **el compañero** entienda la propuesta: decisiones tomadas, lo que queda por
-> definir y los **riesgos que asumimos**. Hoy 18/06; **16vos arranca ~28/06**.
+> definir y los **riesgos que asumimos**. Última actualización 19/06; **16vos arranca ~28/06**.
+> El **código y la UI ya están hechos** en la rama (ver "Estado técnico"); lo que queda es
+> legal/fiscal/operativo + el deploy.
 >
 > Se trabaja en la rama `feat/copa-golden-ticket`; se mergea a `main` cuando lo decidamos.
 >
@@ -32,9 +34,11 @@ Entrada $5.000 · premio fijo $400.000 · cupo 100. A cupo lleno la casa deja **
 | 56 | $280.000 | $400.000 | −$120.000 |
 | 30 | $150.000 | $400.000 | −$250.000 |
 
-> **Decisión:** se hace **sí o sí** y los **$400k se reparten sí o sí** — **sin mínimo ni
-> reembolso**. El objetivo es llenar los 100. Si no se llegara, la casa cubre la diferencia
-> (riesgo asumido, ver abajo).
+> **Decisión:** se hace **sí o sí** y los **$400k se reparten sí o sí**. El objetivo es llenar
+> los 100; si no se llegara, **la casa cubre la diferencia** (riesgo asumido, ver abajo) — o sea
+> **no hay reembolso por "no se llenó la copa"**. **Distinto del overflow:** si alguien **paga
+> pero no entra por falta de cupo** (carrera por el último lugar / inscripción ya cerrada),
+> **eso sí se reembolsa** (decisión 19/06, ver checklist técnico).
 
 ---
 
@@ -43,8 +47,9 @@ Entrada $5.000 · premio fijo $400.000 · cupo 100. A cupo lleno la casa deja **
 2. **Entrada $5.000.**
 3. **Cupo 100 personas** por copa. Objetivo: llenarlo.
 4. **Premio al top 10**, distribución confirmada (abajo).
-5. **Dos copas IGUALES.** Una activa; la segunda se **habilita manualmente** si la primera
-   llena los 100. Misma entrada/premio/cupo. Estructura lista desde el arranque.
+5. **Dos copas IGUALES.** Una activa; la segunda se **habilita AUTOMÁTICAMENTE** cuando la
+   primera llena los 100 (`markCopaFullAndActivateNext`; hay fallback manual con `setCopaStatus`).
+   Misma entrada/premio/cupo. Estructura lista desde el arranque.
 6. **Arranca en 16vos.** Rankea desde 16vos en adelante (grupos no cuenta). → técnicamente
    `leagues.scoringStartRoundId` apuntando a 16vos (infra ya existe y probada en prod).
 7. **Un equipo por usuario.** Es un ranking sobre el equipo actual, no un equipo nuevo.
@@ -96,43 +101,41 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 
 ---
 
-## Estado técnico (rama `feat/copa-golden-ticket`)
-**Hecho (backend) — build + tests verdes:**
-- **Schema:** `leagues` + `kind`/`status`/`capacity`/`entryFeeArs`/`prizeArs`; `products` +
-  `entryLeagueId`. Migración `drizzle/0014` **generada, NO aplicada**.
-- **Inscripción:** `createEntryOrder` (cobra la entrada por Mercado Pago) + branch en
-  `creditOrder` → al pagar, inscribe en la copa (idempotente, control de cupo, aviso a Slack
-  si está llena) en vez de acreditar pines. El webhook actual ya enruta solo.
-- **Ranking desde 16vos:** reusa `scoringStartRoundId` (sin código nuevo).
-- **5 cambios gratis en 16vos solo para inscriptos:** `getFreeChangesForRound(order, inCopa)`
-  (config.ts) + `isEnrolledInGoldenTicket` (queries.ts).
-- **Seed:** `npm run seed:golden-ticket` crea las 2 copas (1 `open`, 1 `draft`) + sus
-  productos de entrada. Idempotente.
+## Estado técnico (rama `feat/copa-golden-ticket`) — actualizado 19/06
+**TODO el código está HECHO en esta rama (build verde).** Resumen:
+- **Schema + migración `0014`:** `leagues` (`kind`/`status`/`capacity`/`entryFeeArs`/`prizeArs`) +
+  `products.entryLeagueId`. **Migración APLICADA en prod** (aditiva, retrocompatible).
+- **Inscripción/cobro:** `createEntryOrder` (entrada por MP, gate de cupo y de **deadline**) +
+  `creditOrder → enrollInLeague` (webhook): al pagar inscribe (idempotente). Si paga sin
+  lugar/fuera de término → orden `refunded` + alerta Slack (reembolso manual). Auto-activa la copa
+  de reserva al llenarse (`markCopaFullAndActivateNext`, `lib/copa/lifecycle.ts`).
+- **Tope 5 por país desde 16vos:** `MAX_PER_COUNTRY_KNOCKOUT` (regla general, todos los usuarios).
+- **Ranking desde 16vos** (`scoringStartRoundId`) + **desempate** (mejor pico de fecha →
+  `joinedAt`, en `getLeagueRanking`) + **snapshot de corte** (`snapshotCopaRanking`, admin).
+- **5 cambios gratis en 16vos solo para inscriptos** (`getFreeChangesForRound`).
+- **Seed corrido:** copas 103/104, productos `golden_ticket_1/2` (`active=false`).
+- **UI:** `EnrollButton` (checkbox B&C → `createEntryOrder` → MP), `?status=` en `/ligas/[code]`
+  y `/copa`, `CupoLive`, `CopaPromoCard`/`CopaLeagueRow`/`CopaSoldOutCard`, `CopaPrizeHeader`,
+  landing `/copa`, banner sutil en la home (`CopaHomeBanner`), reconciliación + control de copas
+  en `/admin` (`AdminCopaControls`).
+- **Bases y Condiciones:** `docs/legal/BASES-Y-CONDICIONES.md` (draft) + `/bases`, linkeada en el
+  checkout y en `/soporte`.
 
-**Datos listos para la UI:**
-- `getGoldenTicketCopas(userId?)` (lectura, server component) y `getCopasStatus()` (server
-  action, para refrescar el cupo en vivo / polling). Devuelven cada copa con: `code`, `name`,
-  `status`, `capacity`, `enrolled`, `spotsLeft`, `entryFeeArs`, `prizeArs`, `entrySku`,
-  `isEnrolled`. Tipo exportado: `CopaStatus`.
-- `createEntryOrder(entrySku)` → crea la orden y devuelve `{ url }` para redirigir al checkout.
-
-**Falta — UI (lo del compañero):**
-- Sección de inscripción (botón → `createEntryOrder(entrySku)` → redirige a `url`).
-- Mostrar cupo (`enrolled`/`capacity`), entrada y premio; si `isEnrolled`, estado "ya estás dentro".
-- Ranking de la Copa: `/ligas/[code]` ya muestra el ranking; falta el layout premium
-  (entrada/premio/cupo + distribución al top 10).
-
-## Cómo activar (gated por OK + visto legal) 🔒
-1. Aplicar la migración a la DB (`npm run db:migrate`) — leé `docs/PRODUCCION.md §2` antes.
-2. Seedear copas + productos (`npm run seed:golden-ticket`) — requiere un admin y el torneo seedeado.
-3. Crear el producto/preferencia GOLDEN TICKET en Mercado Pago (el adapter ya arma el checkout).
-4. Mergear la rama a `main` (recién **acá** se toca producción).
+## Cómo activar (gated por visto legal) 🔒 — lo que QUEDA, en orden
+1. **Visto legal** (abogado) + cerrar los `[REVISAR CON ABOGADO]` de las Bases.
+2. **Fiscal** (contador): facturación de entradas + pago de premios + retenciones.
+3. **Merge de la rama a `main` + deploy** con build verde (recién acá se toca prod; la migración
+   ya está aplicada → seguro).
+4. **Activar los productos** `golden_ticket_1/2` (`active=true`) — hoy en `false`.
+5. **Crear el producto/preferencia GOLDEN TICKET en MP** + **smoke-test de pago real** en prod
+   (el webhook no llega a localhost; ojo gotcha test/prod).
+6. **Lanzamiento en Instagram/Twitter** (abre inscripción) → cierra al kickoff de 16vos o a los 100.
 
 ---
 
 ## Resumen
-- **Liga Premium** en **16vos**, **cupo 100**, **2 copas iguales** (1 activa + 1 reserva
-  manual), **entrada $5.000**, **premio FIJO $400.000** al **top 10**, **se reparte sí o sí**.
+- **Liga Premium** en **16vos**, **cupo 100**, **2 copas iguales** (1 activa + 1 reserva que se
+  abre sola al llenarse la 1ra), **entrada $5.000**, **premio FIJO $400.000** al **top 10**.
 - **No es pozo**: lo pone la casa. Vamos a **llenar los 100**; si no, la casa cubre.
 - **El negocio son los pines**; la entrada es secundaria.
 - **Cobro por MP** con **alta automática** por webhook. **Único bloqueante: visto legal antes
@@ -143,12 +146,21 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 
 ## Checklist para salir LIVE
 
-### TL;DR del estado
-- **Backend: hecho y verde** (schema, inscripción/cobro por MP, webhook que inscribe,
-  ranking desde 16vos, cupo, 5 cambios gratis para inscriptos, seed). Tests + build pasan.
-- **Falta para LIVE:** UI completa, visto legal + bases y condiciones, proceso fiscal,
-  cierre de inscripción por tiempo, manejo de overflow/reembolso, y el deploy en orden.
-- **"Mañana" es ajustado:** las rocas grandes (legal, UI, fiscal) no son código rápido.
+### TL;DR del estado (actualizado 19/06)
+- **Backend + UI: HECHO en esta rama.** Schema + migración `0014` **aplicada** en prod, seed
+  **corrido** (copas 103/104, productos `golden_ticket_1/2` `active=false`). Inscripción/cobro por
+  MP, webhook que inscribe, ranking desde 16vos, cupo, 5 cambios gratis para inscriptos.
+- **Cerrado en esta rama (código):** tope **5 por país desde 16vos** (regla general); **cierre por
+  cupo + por kickoff de 16vos**; **auto-activación de la copa II** al llenarse la I; **overflow →
+  orden `refunded` + alerta Slack + vista de reconciliación en `/admin`** (reembolso manual en MP);
+  **desempate** (mejor pico de fecha → inscripción más temprana); **snapshot de corte** tras la
+  Final (`snapshotCopaRanking`); **UI de pago** (EnrollButton con T&C → `createEntryOrder`, retorno
+  `?status=`, cupo en vivo, estado "cupos agotados → Instagram", landing `/copa`, **banner sutil en
+  la home**); **Bases y Condiciones** (`docs/legal/BASES-Y-CONDICIONES.md` + `/bases`, linkeadas en
+  el checkout y en `/soporte`).
+- **Falta para LIVE (NO es código):** visto legal del abogado, proceso fiscal (monotributo/CUIT),
+  activar los productos `golden_ticket_1/2` (`active=true`), crear el producto/preferencia en MP,
+  merge a `main` + deploy, y la **prueba de pago real** end-to-end en prod.
 
 ---
 
@@ -170,56 +182,60 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 ### 🔴 Pendiente — agrupado por área
 
 #### Legal (bloqueante real)
-- [ ] **Visto de un abogado** antes de cobrar (entrada + premio en plata puede ser juego regulado). *(aún no)*
-- [ ] **Bases y Condiciones**: redactar el documento + publicarlo + **linkearlo en toda comunicación y en el checkout** (aceptación obligatoria antes de pagar). *(aún no — es legal y de confianza a la vez)*
-- [ ] **Privacidad**: consentimiento para **publicar nombre/usuario de ganadores** en redes (lo pide la mecánica de payout). *(agregado)*
+- [ ] **Visto de un abogado** antes de cobrar (entrada + premio en plata puede ser juego regulado). *(aún no — bloqueante)*
+- [~] **Bases y Condiciones**: **draft hecho** (`docs/legal/BASES-Y-CONDICIONES.md` + página `/bases`, con aceptación obligatoria en el checkout y link en `/soporte`). **Falta:** que el abogado revise/cierre los `[REVISAR CON ABOGADO]` y dar por publicada la versión final.
+- [x] **Privacidad**: el consentimiento para **publicar nombre/usuario de ganadores** ya está en las Bases (se acepta al inscribirse). *(operativo si cambia el texto legal)*
 
 #### Fiscal
 - [ ] **Facturación de entradas** y **pago de premios** en regla (monotributo/CUIT, con contador). *(aún no)*
 - [ ] **Retención de impuestos** sobre premios, si corresponde. *(agregado)*
 
 #### Producto / técnico
-- [ ] **Tope por país en playoffs = 5 (regla GENERAL, aplica a TODOS los usuarios, no solo la Copa).** Hoy (`lib/actions.ts:77`) el tope de **3 por país rige solo en grupos** y en playoffs queda **sin límite**. Cambiarlo: desde **16vos** (`round.type === "knockout"`, order ≥ 4, 32 selecciones vivas) el tope pasa a **5 por país** (en vez de ilimitado). Razón: 5 por país ya permite equipos 100% funcionales hasta la última instancia (4 selecciones vivas → 20 jugadores posibles sobre 15 titulares+suplentes); con 3 no alcanzaba. Implica: `MAX_PER_COUNTRY_KNOCKOUT = 5` en `lib/game/config.ts`, aplicar el cap también en la rama `knockout` de `saveLineup`, mensaje de error con el `max` correcto, y **aclararlo en `/como-funciona`** (la regla la ve cualquier usuario, no es exclusiva de la Copa). *(agregado — decisión cerrada)*
-- [ ] **UI completa** (ver sección **"UI de inscripción (plan)"** más abajo, en este mismo doc): inscripción, cupo en vivo, layout premium del ranking. *(scaffold dejado como plan, sin construir)*
-- [ ] **Aplicar migración `0014` a la DB de prod ANTES de deployar.** Si se mergea sin esto, `/equipo` y `saveLineup` se rompen para **todos** (consultan `leagues.kind`). La migración tiene `DEFAULT` → aplicarla sola es inocua y retrocompatible. *(aún no)*
+- [x] **Tope por país en playoffs = 5 (regla GENERAL, todos los usuarios).** `MAX_PER_COUNTRY_KNOCKOUT = 5` en `lib/game/config.ts`; `saveLineup` aplica 3 en grupos / 5 en knockout; `/equipo` pasa el cap correcto; texto actualizado en `/como-funciona`.
+- [x] **UI completa.** EnrollButton con checkbox de Bases y Condiciones → `createEntryOrder` → checkout MP; retorno `?status=` en `/ligas/[code]` y `/copa`; cupo en vivo (`CupoLive`, polling de `getCopasStatus`); estado "cupos agotados → Instagram" (`CopaSoldOutCard`); landing `/copa`; layout premium del ranking ya existía (`CopaPrizeHeader`).
+- [x] **Migración `0014` aplicada** a la DB de prod (aditiva, retrocompatible). *(hecho el 19/06)*
+- [x] **Copas seedeadas** en prod (`npm run seed:golden-ticket`): copas 103/104, productos `golden_ticket_1/2`. *(hecho el 19/06)*
+- [x] **Cierre de inscripción por tiempo**: `createEntryOrder` y `enrollInLeague` rechazan después del kickoff de 16vos (`isCopaPastDeadline`, `lib/copa/lifecycle.ts`). Acción admin `setCopaStatus` para abrir/cerrar a mano.
+- [x] **Overflow / pago-sin-lugar → reembolso**: si se paga sin lugar (carrera por el último cupo) o fuera de término, `enrollInLeague` marca la orden `refunded` + alerta Slack con todos los datos → reembolso manual en MP.
+- [x] **Reconciliación de órdenes pagas no inscriptas**: `getOrphanedEntryOrders` + vista en `/admin` (`AdminCopaControls`).
+- [x] **Activación de copas (misma oleada)**: automática — `markCopaFullAndActivateNext` pasa la copa llena a `full` y la copa de reserva `draft → open`. Fallback manual con `setCopaStatus`.
+- [x] **Desempates**: mejor puntaje en una sola fecha → inscripción más temprana (`getLeagueRanking`). Documentado en Bases y Condiciones.
+- [x] **Momento de corte del ranking**: snapshot tras publicar la Final — `snapshotCopaRanking` (admin) congela `leagueMembers.currentRank`.
 - [ ] **Merge a `main` + deploy** con build verde. *(aún no)*
-- [ ] **Seedear copas** en prod: `npm run seed:golden-ticket` (necesita admin + torneo seedeado). *(aún no)*
+- [ ] **Activar los productos `golden_ticket_1/2`** (`active=true`) al go-live (hoy `active=false`). *(operativo)*
 - [ ] **MP**: crear el producto/preferencia GOLDEN TICKET en la cuenta real + **probar un pago real end-to-end** (pagar $5.000 → webhook inscribe). El webhook **no llega a localhost**; se prueba en prod. Ojo gotcha test/prod. *(aún no)*
-- [ ] **Cierre de inscripción por tiempo**: hoy **no se cierra solo**. `createEntryOrder` valida `status === "open"` y cupo, pero **nadie pasa la copa a `closed` al kickoff de 16vos**. Falta un mecanismo (cron o acción admin) que la cierre al deadline. *(agregado — la decisión 7 lo exige)*
-- [ ] **Overflow / pago-sin-lugar**: `createEntryOrder` chequea cupo al crear la orden, pero la inscripción final ocurre en el **webhook** (`creditOrder`). Dos personas pueden pasar el check, pagar, y superar 100 → `creditOrder` rechaza al que sobra **pero ya pagó**. Definir: ¿reembolso al que quedó afuera? ¿lista de espera? Hoy "sin reembolso" choca con este caso. *(agregado — importante)*
-- [ ] **Reconciliación de órdenes pagas no inscriptas**: detectar y resolver órdenes `paid` que no inscribieron (cupo lleno, error). *(agregado)*
-- [ ] **Activación de copas (misma oleada):** la copa #2 ya está seedeada en `draft`; falta la acción admin/script para `draft → open` cuando la anterior llene. *(agregado)*
-- [ ] **Copas de oleada 8vos:** el seed actual crea copas que arrancan en **16vos** (`scoringStartRoundId = r16`). Una copa que arranque en **8vos** (order 5) necesita seedearse con ese `scoringStartRoundId` y su deadline en el kickoff de 8vos. **Falta parametrizar el seed** para generar copas por oleada. *(agregado — decisión: si quedan interesados al 28/06, se abre oleada 8vos)*
-- [ ] **Desempates** para los puestos del premio (top 10): definir criterio si dos equipos terminan con los mismos puntos. *(agregado)*
-- [ ] **Momento de corte del ranking** para premiar (snapshot tras la final). *(agregado)*
-- [ ] **Reembolsos / contracargos** de MP: política y manejo operativo. *(aún no)*
-- [ ] **Proceso de claim del premio**: ventana para reclamar, **verificación de identidad** (que el usuario de IG/mail = titular de la cuenta) antes de transferir plata. *(agregado — KYC mínimo)*
-- [ ] **Soporte / disputas** para usuarios que pagaron (canal y SLA). *(agregado)*
+- [~] **Proceso de claim del premio**: **decidido** — pago por **transferencia a CBU/ALIAS** de cuenta bancaria **argentina** a nombre del ganador; verificación = pedir **acceso al mail registrado** del usuario. Ya está en las Bases (`/bases`). Falta solo definir la **ventana de reclamo** y el operativo de pago.
+- [ ] **Soporte / disputas**: usar el canal existente `/soporte` (Instagram + email). *(operativo)*
 - [ ] **Tener los $400.000 disponibles** para el payout. *(operativo)*
 
 #### Marketing
-- [ ] **Banner in-app** que lleve a la inscripción (parte técnica de la UI). *(decisión: sí)*
-- [ ] **Lanzamiento en Instagram + Twitter** (la publicación que **abre** la inscripción). *(decisión: sí)*
-- [ ] **Email**: evaluar como posibilidad (hoy **no hay** setup de envío de mails; solo notificaciones a Slack). Si se hace, hay que: conseguir los mails (¿vía Clerk?), elegir proveedor de envío, e integrarlo. *(decisión: "puede llegar a ser" → desarrollar como posibilidad)*
-- [ ] **Creativos + copy**: placas para redes, gráfico de la **distribución al top 10**, mensaje de premio **garantizado** (no pozo) y de **escasez** (cupo 100, contador en vivo). *(agregado)*
-- [ ] **Contador de cupo en vivo** en la comunicación/landing (`getCopasStatus` ya lo soporta). *(agregado)*
-- [ ] **Link a Bases y Condiciones** en todas las piezas. *(agregado)*
+- [x] **Banner in-app** (home: `CopaHomeBanner`, sutil; `/ligas`: `CopaPromoCard`). Parte técnica lista.
+- [x] **Contador de cupo en vivo** in-app (`CupoLive`, polling de `getCopasStatus`). *(en la landing/app)*
+- [x] **Link a Bases y Condiciones** in-app (checkout + `/soporte`). *(falta en las piezas de redes)*
+- [ ] **Lanzamiento en Instagram + Twitter** (la publicación que **abre** la inscripción). *(no código)*
+- [ ] **Creativos + copy** para redes (placas, gráfico de la distribución, premio garantizado + escasez). *(no código)*
+- [ ] **Email a ganadores** (DIFERIDO — se construye más adelante): hoy **no hay** setup de envío (solo Slack). Cuando se haga: conseguir mails (¿Clerk?) + proveedor de envío + integración.
 
 ---
 
-### 🔢 Orden recomendado de activación (cuando se decida ir)
-1. Visto legal + Bases y Condiciones publicadas.
-2. Resolver fiscal (contador) + overflow/reembolso + cierre por tiempo (código).
-3. Construir la UI (inscripción + ranking premium + banner).
-4. Aplicar migración `0014` a prod → **después** deploy/merge a `main`.
-5. Seedear copas (`seed:golden-ticket`) + crear producto en MP + smoke-test de pago real.
-6. Lanzamiento en Instagram/Twitter (abre inscripción) → cierra al kickoff de 16vos o a los 100.
-
-> ⚠️ El paso 4 es de seguridad de deploy: la migración **antes** que el código, o se rompe el armador para todos.
+### 🔢 Orden recomendado de activación (cuando se decida ir) — actualizado 19/06
+> El **código y la UI ya están** (migración aplicada, seed corrido). Lo que queda es legal/fiscal/operativo:
+1. **Visto legal** (abogado) + cerrar los `[REVISAR CON ABOGADO]` de las Bases.
+2. **Fiscal** (contador): facturación de entradas + pago de premios + retenciones.
+3. **Merge a `main` + deploy** con build verde (la migración ya está aplicada → seguro).
+4. **Activar los productos** `golden_ticket_1/2` (`active=true`).
+5. **Crear producto/preferencia en MP** + **smoke-test de pago real** en prod.
+6. **Lanzamiento en Instagram/Twitter** (abre inscripción) → cierra al kickoff de 16vos o a los 100.
 
 ---
 
-## UI de inscripción (plan)
+## UI de inscripción (plan) — ✅ EJECUTADO (19/06)
+
+> Esta sección era el **plan** de la UI; **ya está construido** (ver "Estado técnico" arriba).
+> Se conserva como referencia de las decisiones de diseño. Cambio respecto del plan: **no se hizo
+> `PrizeTable`/tabla de distribución en la UI** (decisión del dueño — `CopaPrizeHeader` sin tabla);
+> la distribución vive en `/bases`. Tampoco se hizo `CopaCard.tsx` (se resolvió con
+> `CopaPromoCard` + `CopaLeagueRow` + la landing `/copa`).
 
 ### ⭐ Decisión de navegación (IMPORTANTE — leer primero)
 **La Copa NO suma un ítem nuevo a la barra inferior de mobile.** La low-bar ya tiene 6 destinos
@@ -307,13 +323,13 @@ Cuando la liga es `kind==="golden_ticket"`: header especial con entrada/premio/c
 1°30% · 2°18% · 3°12% · 4°9% · 5°7% · 6°6% · 7°5,25% · 8°4,75% · 9°4,25% · 10°3,75% → $400.000.
 (Tabla completa arriba, en la sección "Distribución del premio".)
 
-### Checklist de la UI
-- [ ] **Integrar la Copa en `/ligas`** (superficie principal): copa inscripta como fila premium dorada + card de promo/CTA para no-inscriptos. **Sin sumar ítem a la nav.**
-- [ ] `/copa` con CopaCard y sus estados (no-inscripto / inscripto / cerrada / llena / unavailable) — landing de campaña, **fuera de la nav**.
-- [ ] EnrollButton → `createEntryOrder` → redirect a MP; manejo de errores `closed/full/unavailable/product`. Reusado en `/ligas` y `/copa`.
-- [ ] Contador de cupo en vivo (polling `getCopasStatus`).
-- [ ] Manejo de `?status=` de retorno de pago (en `/copa` y, si se permite el flujo, en `/ligas`).
-- [ ] Checkbox de Bases y Condiciones (cuando exista el doc).
-- [ ] Banner in-app → `/copa` (solo si hay copa abierta y el usuario no está inscripto).
-- [ ] Layout premium del ranking en `/ligas/[code]`.
-- [ ] **Responsive verificado en mobile** (320px → desktop), sin scroll horizontal.
+### Checklist de la UI — ✅ todo hecho
+- [x] **Integrar la Copa en `/ligas`**: fila premium dorada (inscripto) + card de promo/CTA (no inscripto). Sin ítem nuevo en la nav.
+- [x] `/copa` landing con sus estados (no-inscripto / inscripto / agotado), fuera de la nav.
+- [x] EnrollButton → `createEntryOrder` → redirect a MP, con manejo de errores `closed/full/already/unavailable/...`.
+- [x] Contador de cupo en vivo (`CupoLive`, polling `getCopasStatus`).
+- [x] Manejo de `?status=` de retorno de pago (`/ligas/[code]` y `/copa`).
+- [x] Checkbox de Bases y Condiciones (link a `/bases`) obligatorio antes del CTA.
+- [x] Banner in-app → `/copa` en la home (`CopaHomeBanner`), solo si hay copa abierta y no estás inscripto.
+- [x] Layout premium del ranking en `/ligas/[code]` (`CopaPrizeHeader`).
+- [~] **Responsive en mobile**: estructura mobile-first; pendiente una **verificación visual final** con sesión real (el banner solo aparece logueado + copa abierta + no inscripto).

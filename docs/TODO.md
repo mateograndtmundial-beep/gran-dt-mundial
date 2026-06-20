@@ -24,10 +24,6 @@
   (arranca 11/06/2026), subir a varias veces por día (p.ej. `0 */6 * * *`) para que las stats
   estén frescas cuando el admin sincroniza/publica.
 
-- **`MAX_PER_COUNTRY` en 16avos** (`lib/actions.ts`): hoy el tope de 3 jugadores por país se
-  libera desde 16avos (32 selecciones vivas). Revisar si es la intención del diseño o conviene
-  mantenerlo hasta cuartos.
-
 ## Pagos (fuera de alcance — requiere PR aparte, es crítico antes de procesar volumen real)
 
 > ⚠️ Este ítem es **hardening de seguridad sobre pagos ya en producción** (Mercado Pago
