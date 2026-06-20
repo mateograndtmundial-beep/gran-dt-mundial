@@ -7,6 +7,7 @@ import { Home, Users, Shirt, Trophy, ListOrdered, HelpCircle } from "lucide-reac
 import { SignInButton, UserButton, useAuth } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 import { PinBalance } from "@/components/pin-balance";
+import { UsernameBadge } from "@/components/username-badge";
 
 const links = [
   { href: "/",          label: "Inicio",    icon: Home },
@@ -100,6 +101,7 @@ export function SiteNav() {
           </nav>
 
           <div className="flex items-center gap-2">
+            {clerkEnabled && <UsernameBadge />}
             {clerkEnabled && <PinBalance />}
             <AuthArea />
           </div>
