@@ -72,10 +72,10 @@ $400.000 entre los 10 primeros:
 | 4° | 9% | $36.000 |
 | 5° | 7% | $28.000 |
 | 6° | 6% | $24.000 |
-| 7° | 5% | $20.000 |
-| 8° | 5% | $20.000 |
-| 9° | 4% | $16.000 |
-| 10° | 4% | $16.000 |
+| 7° | 5,25% | $21.000 |
+| 8° | 4,75% | $19.000 |
+| 9° | 4,25% | $17.000 |
+| 10° | 3,75% | $15.000 |
 | **Total** | **100%** | **$400.000** |
 
 ---
@@ -304,8 +304,8 @@ Cuando la liga es `kind==="golden_ticket"`: header especial con entrada/premio/c
 - Reusar primitivas de `components/editorial` (Eyebrow, PrimaryButton, etc.) y la paleta dorada (capitán/top-3) para el branding "premium".
 
 ### Datos de la distribución (top 10)
-1°30% · 2°18% · 3°12% · 4°9% · 5°7% · 6°6% · 7°5% · 8°5% · 9°4% · 10°4% → $400.000.
-(Tabla completa en `MONETIZACION.md`.)
+1°30% · 2°18% · 3°12% · 4°9% · 5°7% · 6°6% · 7°5,25% · 8°4,75% · 9°4,25% · 10°3,75% → $400.000.
+(Tabla completa arriba, en la sección "Distribución del premio".)
 
 ### Checklist de la UI
 - [ ] **Integrar la Copa en `/ligas`** (superficie principal): copa inscripta como fila premium dorada + card de promo/CTA para no-inscriptos. **Sin sumar ítem a la nav.**
