@@ -38,6 +38,10 @@ const MODAL_PAGE = 60;
 
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+/* Key de localStorage para recordar que el usuario cerró la leyenda de "te sumás
+   con el Mundial en juego" (caso borde de armado tardío). */
+const LATE_JOIN_TIP_KEY = "l11_lateJoinTip_dismissed";
+
 /**
  * Accesibilidad de bottom-sheet/modal: cierra con Esc y atrapa el foco adentro
  * (Tab/Shift+Tab cicla entre los elementos enfocables, sin escaparse al fondo).
@@ -167,6 +171,7 @@ export function FieldBuilder({
   const [pendingFormation, setPendingFormation] = useState<string | null>(null);
   const [draftConflict, setDraftConflict] = useState<LineupDraft | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [lateJoinTipDismissed, setLateJoinTipDismissed] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const draftHandled = useRef(false);
   const autoSaveArmed = useRef(false);
@@ -462,6 +467,13 @@ export function FieldBuilder({
   // localStorage es client-only: leerlo en render rompería la hidratación, por
   // eso el setState va en un effect de montaje (corre solo en el cliente).
   /* eslint-disable react-hooks/set-state-in-effect */
+  // El usuario pudo haber cerrado la leyenda de "te sumás con el Mundial en juego"
+  // en una visita anterior — la recordamos cerrada (localStorage, client-only).
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(LATE_JOIN_TIP_KEY) === "1") setLateJoinTipDismissed(true);
+    } catch {}
+  }, []);
   useEffect(() => {
     if (draftHandled.current) return;
     draftHandled.current = true;
@@ -885,12 +897,23 @@ export function FieldBuilder({
             </div>
           )}
           {/* Caso borde: te sumás con el Mundial ya en juego → armado inicial gratis para la próxima fecha */}
-          {cc && !limited && cc.roundStarted && (
-            <div className="rounded-[8px] border border-blue/25 bg-blue/5 px-3 py-2 text-[11px] leading-relaxed text-ink-2">
+          {cc && !limited && cc.roundStarted && !lateJoinTipDismissed && (
+            <div className="relative rounded-[8px] border border-blue/25 bg-blue/5 px-3 py-2 pr-9 text-[11px] leading-relaxed text-ink-2">
               Te sumás con el Mundial en juego: armás tu equipo para {roundArticle(cc.roundName)}{" "}
               <strong className="text-blue">{roundDisplayName(cc.roundName)}</strong> y sumás desde ahí. Tenés cambios{" "}
               <strong className="text-blue">ilimitados</strong> hasta que arranque {roundArticle(cc.roundName)}{" "}
               <strong className="text-blue">{roundDisplayName(cc.roundName)}</strong>, luego será 1 por fecha.
+              <button
+                type="button"
+                onClick={() => {
+                  setLateJoinTipDismissed(true);
+                  try { localStorage.setItem(LATE_JOIN_TIP_KEY, "1"); } catch {}
+                }}
+                aria-label="Cerrar"
+                className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full text-ink-3 hover:bg-blue/10 hover:text-blue transition-colors"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
           )}
 
