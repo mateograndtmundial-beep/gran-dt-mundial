@@ -61,10 +61,18 @@ export default function PrivacidadPage() {
               cambios y el saldo y los movimientos de pines.
             </li>
             <li>
-              <strong>Datos de pagos:</strong> las compras de pines se procesan a través de Mercado
-              Pago (Argentina) o dLocal (resto de LatAm). Esos proveedores procesan tus datos de
-              pago; <strong>nosotros no almacenamos los datos de tu tarjeta</strong>. Guardamos el
-              estado y el monto de la orden para acreditarte los pines.
+              <strong>Datos de pagos:</strong> las compras de pines y la entrada a la Liga Premium se
+              procesan a través de Mercado Pago (Argentina) o dLocal (resto de LatAm). Esos
+              proveedores procesan tus datos de pago; <strong>nosotros no almacenamos los datos de tu
+              tarjeta</strong>. Guardamos el estado y el monto de la orden para acreditarte los pines
+              o tu inscripción.
+            </li>
+            <li>
+              <strong>Datos para el pago de premios:</strong> si ganás un premio de la Liga Premium,
+              para pagártelo y verificar que sos el titular legítimo tratamos tu{" "}
+              <strong>CBU/ALIAS</strong>, tu identidad y la confirmación de acceso al{" "}
+              <strong>correo registrado en tu cuenta</strong>. Usamos esos datos únicamente para
+              entregar el premio y prevenir fraude.
             </li>
             <li>
               <strong>Datos técnicos:</strong> dirección IP, tipo de dispositivo y navegador, y país
@@ -87,6 +95,40 @@ export default function PrivacidadPage() {
           </ul>
         </Section>
 
+        <Section title="Base legal del tratamiento">
+          <p>
+            Tratamos tus datos sobre las siguientes bases, en el marco de la{" "}
+            <strong>Ley N° 25.326 de Protección de los Datos Personales</strong>:
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              <strong>Ejecución del contrato:</strong> lo necesario para darte el servicio (tu
+              cuenta, el juego, las ligas, las compras, la inscripción y el pago de premios).
+            </li>
+            <li>
+              <strong>Tu consentimiento:</strong> que prestás al registrarte y aceptar esta política
+              (y que podés retirar).
+            </li>
+            <li>
+              <strong>Interés legítimo:</strong> mantener el servicio seguro y prevenir fraude y
+              abusos.
+            </li>
+            <li>
+              <strong>Obligaciones legales:</strong> cuando una norma nos exige conservar o informar
+              datos.
+            </li>
+          </ul>
+        </Section>
+
+        <Section title="Decisiones automatizadas">
+          <p>
+            Los puntajes del juego se calculan de forma <strong>automatizada</strong> a partir de los
+            datos deportivos que reporta nuestro proveedor externo (API-Football), aplicando las
+            mismas reglas para todos. No tomamos decisiones automatizadas que produzcan efectos
+            legales sobre vos más allá del propio funcionamiento del juego.
+          </p>
+        </Section>
+
         <Section title="Con quién compartimos tus datos">
           <p>
             No vendemos tus datos. Los compartimos únicamente con proveedores que nos ayudan a
@@ -105,6 +147,24 @@ export default function PrivacidadPage() {
           <p>También podemos divulgar información si una ley o autoridad competente lo requiere.</p>
         </Section>
 
+        <Section title="Transferencias internacionales de datos">
+          <p>
+            Algunos de estos proveedores (Clerk, Neon, Vercel, Slack y los procesadores de pago)
+            operan o almacenan datos <strong>fuera de la Argentina</strong>. Eso implica una{" "}
+            <strong>transferencia internacional</strong> de tus datos, que realizamos solo en la
+            medida necesaria para prestar el servicio y bajo medidas de seguridad razonables, con
+            empresas que ofrecen niveles adecuados de protección.
+          </p>
+        </Section>
+
+        <Section title="No usamos publicidad ni analytics de terceros">
+          <p>
+            No vendemos tus datos ni los usamos para publicidad. <strong>No utilizamos herramientas
+            de analytics ni de seguimiento de terceros</strong> con fines publicitarios; las cookies
+            que usamos son las necesarias para mantener tu sesión.
+          </p>
+        </Section>
+
         <Section title="Cuánto tiempo conservamos los datos">
           <p>
             Conservamos tus datos mientras tengas una cuenta activa y durante el tiempo necesario
@@ -116,8 +176,11 @@ export default function PrivacidadPage() {
         <Section title="Tus derechos">
           <p>
             Como titular de los datos, podés acceder, rectificar, actualizar y solicitar la
-            supresión de tu información personal. Para ejercer estos derechos, escribinos a{" "}
-            <Mailto />.
+            supresión de tu información personal, y retirar tu consentimiento. Para ejercer estos
+            derechos, escribinos a <Mailto /> o por nuestro{" "}
+            <Link href="/soporte" className="font-semibold text-blue hover:underline">canal de soporte</Link>.
+            Respondemos en un plazo razonable (en general dentro de los 10 días hábiles). Podemos
+            pedirte que acredites tu identidad antes de dar curso al pedido.
           </p>
           <p>
             En Argentina, la <strong>Agencia de Acceso a la Información Pública (AAIP)</strong>,
@@ -156,7 +219,11 @@ export default function PrivacidadPage() {
       </Card>
 
       <p className="text-sm text-ink-3">
-        ¿Necesitás ayuda con tu cuenta?{" "}
+        Sobre pines, inscripción a la Copa y reembolsos, mirá las{" "}
+        <Link href="/bases" className="font-semibold text-blue hover:underline">
+          Bases y Condiciones
+        </Link>
+        . ¿Necesitás ayuda con tu cuenta?{" "}
         <Link href="/soporte" className="font-semibold text-blue hover:underline">
           Andá a Soporte
         </Link>

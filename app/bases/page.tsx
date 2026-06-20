@@ -34,9 +34,9 @@ function Mailto() {
   );
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
+function Section({ title, children, id }: { title: string; children: ReactNode; id?: string }) {
   return (
-    <section className="space-y-2.5">
+    <section id={id} className="scroll-mt-24 space-y-2.5">
       <h2 className="font-display text-2xl leading-none tracking-tight text-ink">{title}</h2>
       <div className="space-y-2.5 text-[15px] leading-relaxed text-ink-2">{children}</div>
     </section>
@@ -64,10 +64,17 @@ export default function BasesPage() {
 
         <Section title="Quién puede participar">
           <p>
-            Personas mayores de 18 años con una cuenta válida en {SITE.name}. Un (1) equipo por
-            usuario: la Liga Premium se juega con el <strong>mismo equipo</strong> del juego, no con
-            un equipo nuevo. No participan los organizadores ni personas vinculadas a la
-            administración del juego.
+            Personas <strong>mayores de 18 años</strong> con una cuenta válida en {SITE.name}.
+            (El juego en general es apto desde los 13 años, pero la Liga Premium —al involucrar un
+            pago y un premio en dinero— es <strong>solo para mayores de 18</strong>.) Un (1) equipo
+            y <strong>una (1) inscripción por persona</strong>: la Liga Premium se juega con el{" "}
+            <strong>mismo equipo</strong> del juego, no con un equipo nuevo. No participan los
+            organizadores ni personas vinculadas a la administración del juego.
+          </p>
+          <p>
+            Sos responsable de la seguridad de tu cuenta y del correo registrado en ella: con ese
+            correo se valida tu identidad para entregar el premio (ver{" "}
+            <strong>Entrega del premio</strong>). No compartas tus credenciales.
           </p>
         </Section>
 
@@ -97,6 +104,17 @@ export default function BasesPage() {
               sí haya jugado.
             </li>
             <li>
+              <strong>Si no editás una fecha, tu equipo se mantiene:</strong> la última alineación
+              que hayas guardado sigue puntuando en las fechas siguientes hasta que la cambies. No
+              hace falta volver a armar el equipo cada fecha.
+            </li>
+            <li>
+              <strong>Jugadores eliminados o que no juegan:</strong> un jugador cuya selección quedó
+              eliminada (o que no es convocado/juega) simplemente no suma esa fecha; la
+              auto-sustitución cubre la ausencia con un suplente. Gestionar tu plantel y reemplazar
+              a esos jugadores es tu responsabilidad (con tus cambios de la fecha).
+            </li>
+            <li>
               <strong>Puntaje:</strong> los puntos salen del rendimiento real de cada jugador en cada
               partido, según la tabla de puntaje del juego (ver{" "}
               <Link href="/como-funciona" className="font-semibold text-blue hover:underline">Cómo funciona</Link>,
@@ -108,18 +126,50 @@ export default function BasesPage() {
         <Section title="Cambios entre fechas">
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              Cada fecha tenés <strong>1 cambio gratis</strong> respecto de la fecha anterior. Los
-              cambios <strong>adicionales</strong> cuestan <strong>pines</strong>.
+              <strong>Tu primer equipo es gratis:</strong> la primera fecha en la que armás tu
+              equipo, lo podés editar <strong>cuanto quieras, sin costo</strong> (no se cuenta ningún
+              cambio mientras no hayas guardado una fecha posterior).
             </li>
             <li>
-              <strong>Beneficio Liga Premium:</strong> en los <strong>16vos de final</strong>, los
-              inscriptos en la Liga Premium reciben <strong>5 cambios gratis</strong> esa fecha (en
-              lugar de 1), para emparejar cuentas nuevas y veteranas. Los no inscriptos mantienen su
-              1 cambio gratis.
+              <strong>De ahí en más, 1 cambio gratis por fecha:</strong> a partir de tener una fecha
+              anterior guardada, cada fecha tenés <strong>1 cambio gratis</strong> respecto de esa
+              alineación. Los cambios <strong>adicionales</strong> cuestan <strong>pines</strong>.
             </li>
             <li>
-              Los cambios gratis son <strong>por fecha</strong> y <strong>no se acumulan</strong>: se
-              reinician al arrancar cada fecha.
+              <strong>Los cambios gratis NO se acumulan:</strong> son por fecha y se reinician al
+              arrancar cada una. El cambio gratis que no uses una fecha <strong>se pierde</strong>{" "}
+              (no se traslada a la siguiente).
+            </li>
+            <li>
+              <strong>Los pines SÍ se acumulan:</strong> tu saldo de pines persiste entre fechas, no
+              se reinicia ni vence mientras tu cuenta esté activa. Lo que no gastás queda disponible
+              para más adelante (ver <Link href="/bases#pines" className="font-semibold text-blue hover:underline">Pines</Link>).
+            </li>
+            <li>
+              <strong>Beneficio Liga Premium (solo en 16vos):</strong> en los{" "}
+              <strong>16vos de final</strong>, los <strong>inscriptos</strong> en la Liga Premium
+              reciben <strong>5 cambios gratis</strong> esa fecha (en lugar de 1), para emparejar a
+              cuentas nuevas y veteranas que entran a la Copa. Es un beneficio{" "}
+              <strong>exclusivo de los inscriptos</strong> y <strong>solo</strong> en esa fecha; el
+              resto de los usuarios (y los inscriptos en las demás fechas) tiene su 1 cambio gratis
+              habitual.
+            </li>
+          </ul>
+          <p className="pt-1">
+            <strong>Si entrás a la Copa ya empezado el torneo:</strong>
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              Si <strong>ya tenías equipo armado</strong> de una fecha anterior (por ejemplo, lo
+              armaste en la Fecha 2), llegás a los 16vos con tus <strong>5 cambios gratis</strong> de
+              Copa, igual que todos los usuarios de la Liga Premium.
+            </li>
+            <li>
+              Si <strong>recién armás tu equipo para sumar desde 16vos</strong> (por ejemplo, entrás
+              en la Fecha 3 y ese es tu primer equipo), tenés <strong>cambios ilimitados y gratis
+              hasta que arranquen los 16vos</strong>: partís de cero y recién ahí empieza a contar tu
+              alineación. De los <strong>8vos en adelante</strong>, volvés a tener{" "}
+              <strong>1 cambio gratis por fecha</strong> (no acumulable), como todos.
             </li>
           </ul>
         </Section>
@@ -133,8 +183,9 @@ export default function BasesPage() {
             </li>
             <li>
               <strong>Cupo:</strong> 100 participantes por copa. Al completarse, se cierra y se
-              habilita la siguiente copa idéntica. Si no quedan cupos, podés pedir la apertura de una
-              nueva por Instagram (a criterio del organizador).
+              habilita una 2da copa idéntica. Si no quedan cupos, podés comunicarte a través del
+              Instagram oficial para demostrar interés en una 3ra Liga Premium (a criterio del
+              organizador).
             </li>
             <li>
               <strong>Ranking:</strong> la Liga Premium puntúa desde los <strong>16vos de final</strong>{" "}
@@ -145,6 +196,37 @@ export default function BasesPage() {
               kickoff de los 16vos de final, lo que ocurra primero.
             </li>
           </ul>
+        </Section>
+
+        <Section title="Pines" id="pines">
+          <p>
+            Los <strong>pines</strong> son la unidad interna del juego que se usa para hacer{" "}
+            <strong>cambios extra</strong> de jugadores en una fecha (más allá del cambio gratis).
+            No son obligatorios para jugar ni para competir en la Liga Premium.
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              <strong>No son dinero:</strong> no tienen valor fuera del juego, <strong>no se
+              convierten a efectivo</strong> ni se canjean por dinero, y <strong>no son
+              transferibles</strong> a otra cuenta o usuario.
+            </li>
+            <li>
+              <strong>La entrada a la Copa no incluye pines:</strong> la inscripción ("GOLDEN
+              TICKET") y la compra de pines son <strong>operaciones separadas</strong>.
+            </li>
+            <li>
+              <strong>No vencen</strong> mientras tu cuenta esté activa; tu saldo se acumula entre
+              fechas. Si se cierra o elimina la cuenta, el saldo de pines se pierde.
+            </li>
+            <li>
+              El saldo y cada movimiento (compra, gasto en cambios, reintegros) quedan registrados
+              en tu cuenta. Los cambios y su costo se calculan y validan siempre del lado del
+              servidor.
+            </li>
+          </ul>
+          <p>
+            Reembolsos de compras de pines: ver <strong>Arrepentimiento y reembolsos</strong>.
+          </p>
         </Section>
 
         <Section title="Premio">
@@ -198,11 +280,40 @@ export default function BasesPage() {
 
         <Section title="Datos, puntajes y decisiones del organizador">
           <p>
-            Los puntajes se calculan a partir de datos de proveedores externos (estadísticas
-            oficiales de los partidos). El organizador sincroniza y publica los puntos de cada fecha,
-            y puede <strong>corregir errores de carga o de datos hasta el corte oficial</strong> del
-            ranking. La definición de la figura del partido, la resolución de empates y la
-            interpretación de estas bases quedan a cargo del organizador.
+            <strong>Todos los datos deportivos vienen de un proveedor externo independiente:{" "}
+            <a href="https://www.api-football.com/" target="_blank" rel="noopener noreferrer" className="font-semibold text-blue hover:underline">API-Football</a>{" "}
+            (api-football.com).</strong> De ahí salen los resultados y marcadores, los minutos
+            jugados, los goles, asistencias, tarjetas, atajadas, la valla invicta, el{" "}
+            <strong>rating de cada jugador</strong> y la <strong>figura del partido</strong>. El
+            rating lo calcula el propio proveedor a partir del rendimiento real en la cancha, y es
+            el <strong>insumo base</strong> de nuestra tabla de puntaje (ver{" "}
+            <Link href="/como-funciona" className="font-semibold text-blue hover:underline">Cómo funciona</Link>).
+          </p>
+          <p>
+            <strong>El organizador NO modifica los datos reportados por el proveedor.</strong> No
+            cambiamos ratings, goles, minutos ni ninguna estadística: lo que API-Football reporta es
+            lo que entra al cálculo. Nuestro rol se limita a <strong>sincronizar</strong> (bajar los
+            datos del proveedor) y <strong>publicar</strong> los puntos de cada fecha, aplicando la
+            tabla de puntaje y las reglas del juego (auto-sustitución, capitán, técnico) de forma
+            automática e igual para todos.
+          </p>
+          <p>
+            Si el proveedor corrige un dato (por ejemplo, ajusta un rating o un gol después del
+            partido), volvemos a sincronizar para reflejar esa corrección; y podemos corregir{" "}
+            <strong>errores propios de carga</strong> hasta el corte oficial del ranking (ver{" "}
+            <strong>Momento de corte del ranking</strong>). En ningún caso alteramos la estadística
+            de origen. Estas correcciones de buena fe no generan derecho a reclamo.
+          </p>
+          <p>
+            <strong>Puntos provisorios vs. oficiales:</strong> mientras una fecha no está publicada,
+            los puntos que veas son <strong>provisorios</strong> y pueden ajustarse al sincronizar
+            (datos que el proveedor completa o corrige tras el partido). El puntaje queda firme
+            recién al <strong>publicarse</strong> la fecha.
+          </p>
+          <p>
+            La <strong>definición de la figura del partido</strong> ante empates de rating, la
+            resolución de empates en el ranking y la interpretación de estas bases quedan a cargo del
+            organizador.
           </p>
         </Section>
 
@@ -215,12 +326,39 @@ export default function BasesPage() {
           </p>
         </Section>
 
-        <Section title="Pagos sin lugar / reembolsos">
+        <Section title="Arrepentimiento y reembolsos">
           <p>
-            Si abonás la entrada pero <strong>no entrás por falta de cupo</strong> o por haberse
-            cerrado la inscripción, <strong>te reembolsamos</strong> el importe de la entrada (por
-            Mercado Pago). La entrada de quien sí quedó inscripto no es reembolsable por
-            arrepentimiento una vez comenzada la competencia.
+            Tenés un <strong>derecho de arrepentimiento de 10 días corridos</strong> desde la compra
+            (art. 34 de la Ley 24.240 y Res. SCI 424/2020), tanto para la entrada a la Copa como para
+            las compras de pines, con los siguientes alcances:
+          </p>
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              <strong>Entrada a la Copa:</strong> te reembolsamos el 100% si te arrepentís{" "}
+              <strong>antes de que la Copa empiece a jugarse</strong> (kickoff de los 16vos de
+              final), porque hasta ese momento el servicio —competir— todavía no comenzó a prestarse.
+              Una vez <strong>iniciada la competencia</strong>, el derecho de arrepentimiento{" "}
+              <strong>ya no aplica</strong> (excepción del art. 1116 del Código Civil y Comercial,
+              para servicios cuya ejecución ya empezó con tu conformidad). Es decir: no se puede
+              competir y luego pedir el reintegro por ir perdiendo.
+            </li>
+            <li>
+              <strong>Pines:</strong> te reembolsamos los pines <strong>no utilizados</strong> dentro
+              de los 10 días. Los pines que ya gastaste (contenido digital ya consumido con tu
+              conformidad) no son reintegrables.
+            </li>
+            <li>
+              <strong>Pago sin lugar (cupo lleno):</strong> si abonás la entrada pero{" "}
+              <strong>no entrás por falta de cupo</strong> (por ejemplo, dos pagos simultáneos por el
+              último lugar) o por haberse cerrado la inscripción, te{" "}
+              <strong>reembolsamos</strong> el importe completo, sin importar el plazo.
+            </li>
+          </ul>
+          <p>
+            Los reembolsos se procesan por el mismo medio de pago (Mercado Pago). Para ejercer el
+            arrepentimiento, escribinos por nuestro{" "}
+            <Link href="/soporte" className="font-semibold text-blue hover:underline">canal de soporte</Link>{" "}
+            (Instagram {SITE.instagram.handle} o email <Mailto />).
           </p>
         </Section>
 

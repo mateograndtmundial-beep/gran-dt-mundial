@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { headers } from "next/headers";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { ValidationCallout } from "@/components/editorial";
@@ -65,6 +66,16 @@ export default async function PinesPage({
           }))}
         />
       )}
+
+      <p className="text-sm text-ink-3">
+        Los pines no son dinero: no se convierten a efectivo ni se transfieren a otra cuenta, y no
+        vencen mientras tu cuenta esté activa. Podés pedir el reembolso del saldo no usado dentro de
+        los 10 días de la compra. Más detalle en las{" "}
+        <Link href="/bases#pines" className="font-semibold text-blue hover:underline">
+          Bases y Condiciones
+        </Link>
+        .
+      </p>
     </div>
   );
 }

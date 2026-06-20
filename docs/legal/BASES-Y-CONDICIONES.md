@@ -13,9 +13,14 @@ de soporte del sitio (`/soporte` → Instagram [@los11desampa](https://www.insta
 y email soporte@los11desampa.com). `[REVISAR CON ABOGADO: razón social / CUIT del organizador]`
 
 ## 2. Quién puede participar
-Personas mayores de 18 años con una cuenta válida en Los 11 de Sampa. Un (1) equipo por usuario:
-la Liga Premium se juega con el **mismo equipo** del juego, no con un equipo nuevo. No pueden
-participar los organizadores ni personas vinculadas a la administración del juego.
+Personas **mayores de 18 años** con una cuenta válida en Los 11 de Sampa. (El juego en general es
+apto desde los 13 años, pero la Liga Premium —al involucrar un pago y un premio en dinero— es
+**solo para mayores de 18**.) Un (1) equipo y **una (1) inscripción por persona**: la Liga Premium
+se juega con el **mismo equipo** del juego, no con un equipo nuevo. No pueden participar los
+organizadores ni personas vinculadas a la administración del juego.
+
+El usuario es responsable de la seguridad de su cuenta y del correo registrado en ella: con ese
+correo se valida la identidad para entregar el premio (ver punto 12).
 `[REVISAR CON ABOGADO: requisitos de edad/residencia]`
 
 ## 3. El equipo y las reglas del juego
@@ -36,31 +41,67 @@ mismas reglas que el resto del torneo. En resumen:
 - **Suplentes (auto-sustitución):** si un titular **no juega** el mínimo de minutos requerido
   (20' de tiempo reglamentario), **puntúa en su lugar, automáticamente, un suplente de su misma
   posición** que sí haya jugado. Así nunca se pierde el lugar por una ausencia.
+- **Si no editás una fecha, tu equipo se mantiene:** la última alineación guardada sigue puntuando
+  en las fechas siguientes hasta que la cambies (carry-over). No hace falta rearmar el equipo cada
+  fecha.
+- **Jugadores eliminados o que no juegan:** un jugador cuya selección quedó eliminada (o que no es
+  convocado/juega) no suma esa fecha; la auto-sustitución cubre la ausencia. Gestionar el plantel y
+  reemplazar a esos jugadores es responsabilidad del usuario (con sus cambios de la fecha).
 - **Puntaje:** los puntos salen del **rendimiento real** de cada jugador en cada partido del
   Mundial, según la **tabla de puntaje** del juego (goles por puesto, asistencias, valla invicta,
   tarjetas, figura del partido, puntos del DT, etc.). El detalle completo está en
   [Cómo funciona](/como-funciona) y forma parte de estas bases.
 
 ## 4. Cambios entre fechas
-- Cada fecha tenés **1 cambio gratis** de jugadores respecto de la fecha anterior. Los cambios
-  **adicionales** cuestan **pines** (la moneda del juego).
-- **Beneficio Liga Premium:** en los **16vos de final**, los **inscriptos en la Liga Premium**
-  reciben **5 cambios gratis** esa fecha (en lugar de 1), para emparejar a cuentas nuevas y
-  veteranas que entran a la Copa. Los usuarios **no inscriptos** mantienen su 1 cambio gratis.
-- Los cambios gratis son **por fecha** y **no se acumulan**: se reinician al arrancar cada fecha;
-  los que no uses se pierden.
+- **Tu primer equipo es gratis:** la primera fecha en la que armás tu equipo, lo podés editar
+  cuanto quieras sin costo (no se cuenta ningún cambio mientras no hayas guardado una fecha
+  posterior).
+- **De ahí en más, 1 cambio gratis por fecha:** a partir de tener una fecha anterior guardada, cada
+  fecha tenés **1 cambio gratis** respecto de esa alineación. Los cambios **adicionales** cuestan
+  **pines** (ver punto 5 bis).
+- **Los cambios gratis NO se acumulan:** son por fecha y se reinician al arrancar cada una; el que
+  no uses **se pierde** (no se traslada a la siguiente).
+- **Los pines SÍ se acumulan:** el saldo persiste entre fechas, no se reinicia ni vence mientras la
+  cuenta esté activa. Lo que no se gasta queda disponible para más adelante.
+- **Beneficio Liga Premium (solo en 16vos):** en los **16vos de final**, los **inscriptos** reciben
+  **5 cambios gratis** esa fecha (en lugar de 1), para emparejar a cuentas nuevas y veteranas que
+  entran a la Copa. Es un beneficio **exclusivo de los inscriptos** y **solo** en esa fecha; el
+  resto de los usuarios (y los inscriptos en las demás fechas) mantiene su 1 cambio gratis habitual.
+
+**Si entrás a la Copa con el torneo empezado:**
+- Si **ya tenías equipo armado** de una fecha anterior (p. ej. lo armaste en la Fecha 2), llegás a
+  los 16vos con tus **5 cambios gratis** de Copa, igual que todos los usuarios de la Liga Premium.
+- Si **recién armás tu equipo para sumar desde 16vos** (p. ej. entrás en la Fecha 3 y ese es tu
+  primer equipo), tenés **cambios ilimitados y gratis hasta que arranquen los 16vos**: partís de
+  cero y recién ahí empieza a contar tu alineación. De los **8vos en adelante**, volvés a tener
+  **1 cambio gratis por fecha** (no acumulable), como todos.
 
 ## 5. Mecánica de la Liga Premium
 - **Entrada:** $5.000 ARS por usuario, abonada por **Mercado Pago** (en el checkout figura como
   "GOLDEN TICKET"). La inscripción se confirma automáticamente al acreditarse el pago.
 - **Cupo:** **100 participantes por copa.** Cuando una copa llega a 100, se cierra y se habilita
-  la siguiente copa idéntica. No hay un número ilimitado de copas: si no quedan cupos, se podrá
-  solicitar la apertura de una nueva por Instagram, a criterio del organizador.
+  una 2da copa idéntica. No hay un número ilimitado de copas: si no quedan cupos, podés comunicarte
+  a través del Instagram oficial para demostrar interés en una 3ra Liga Premium, a criterio del
+  organizador.
 - **Inicio del ranking:** la Liga Premium **puntúa desde los 16vos de final** en adelante (la fase
   de grupos no cuenta). Se rankea por los puntos que tu equipo obtiene fecha a fecha según las
   reglas de puntaje del juego (ver punto 3 y `/como-funciona`).
 - **Cierre de inscripción:** al **completarse el cupo de 100** o al llegar el **kickoff de los
   16vos de final**, lo que ocurra primero.
+
+## 5 bis. Pines
+Los **pines** son la unidad interna del juego para hacer **cambios extra** de jugadores en una
+fecha (más allá del cambio gratis). No son obligatorios para jugar ni para competir en la Copa.
+
+- **No son dinero:** no tienen valor fuera del juego, **no se convierten a efectivo** ni se canjean
+  por dinero, y **no son transferibles** a otra cuenta o usuario.
+- **La entrada a la Copa no incluye pines:** la inscripción ("GOLDEN TICKET") y la compra de pines
+  son **operaciones separadas**.
+- **No vencen** mientras la cuenta esté activa; el saldo se acumula entre fechas. Si se cierra o
+  elimina la cuenta, el saldo de pines se pierde.
+- El saldo y cada movimiento (compra, gasto, reintegro) quedan registrados; los cambios y su costo
+  se calculan y validan siempre del lado del servidor.
+- Reembolsos de compras de pines: ver punto 11 (Arrepentimiento y reembolsos).
 
 ## 6. Premio
 **Premio fijo garantizado de $400.000 ARS**, aportado por el organizador (**no es un pozo** que
@@ -92,15 +133,27 @@ Mundial. Ese es el estado que se usa para determinar los 10 premiados; los cambi
 sincronizaciones posteriores no alteran el resultado ya congelado.
 
 ## 9. Datos, puntajes y decisiones del organizador
-- Los puntajes se calculan a partir de **datos de proveedores externos** (estadísticas oficiales
-  de los partidos vía API-Football). El organizador **sincroniza y publica** los puntos de cada
+- **Todos los datos deportivos vienen de un proveedor externo independiente: API-Football
+  (https://www.api-football.com/).** De ahí salen resultados/marcadores, minutos jugados, goles,
+  asistencias, tarjetas, atajadas, valla invicta, el **rating de cada jugador** y la **figura del
+  partido**. El rating lo calcula el propio proveedor a partir del rendimiento real, y es el
+  **insumo base** de la tabla de puntaje del juego (ver /como-funciona).
+- **El organizador NO modifica los datos reportados por el proveedor.** No cambiamos ratings, goles,
+  minutos ni ninguna estadística: lo que API-Football reporta es lo que entra al cálculo. El rol del
+  organizador se limita a **sincronizar** (bajar los datos) y **publicar** los puntos de cada fecha,
+  aplicando la tabla de puntaje y las reglas del juego (auto-sustitución, capitán, técnico) de forma
+  automática e igual para todos.
+- Si el proveedor **corrige un dato** después del partido, se vuelve a sincronizar para reflejarlo; y
+  el organizador puede corregir **errores propios de carga** hasta el corte oficial del ranking
+  (punto 8). En ningún caso se altera la estadística de origen. Las correcciones de buena fe no
+  generan derecho a reclamo.
+- **Puntos provisorios vs. oficiales:** mientras una fecha no está publicada, los puntos visibles
+  son **provisorios** y pueden ajustarse al sincronizar; quedan firmes recién al **publicarse** la
   fecha.
-- Si se detectan **errores de carga o de datos**, el organizador podrá **corregirlos hasta el
-  corte oficial** del ranking (punto 8). Las correcciones razonables de buena fe no generan
-  derecho a reclamo.
-- La **definición de la figura del partido**, la resolución de **empates** y la **interpretación
-  de estas bases** quedan a cargo del organizador y son **definitivas**. `[REVISAR CON ABOGADO:
-  alcance de "decisión definitiva" frente a defensa del consumidor]`
+- La **definición de la figura del partido** ante empates de rating, la resolución de **empates** en
+  el ranking y la **interpretación de estas bases** quedan a cargo del organizador y son
+  **definitivas**. `[REVISAR CON ABOGADO: alcance de "decisión definitiva" frente a defensa del
+  consumidor]`
 
 ## 10. Suspensión, reprogramación o cancelación del torneo (fuerza mayor)
 Si el Mundial o alguno de sus partidos se **suspenden, reprograman o cancelan** por causas ajenas
@@ -110,12 +163,26 @@ causas, el organizador podrá definir una **alternativa equitativa** (por ejempl
 ranking en la última instancia válida). `[REVISAR CON ABOGADO: política de reembolso total/parcial
 si el torneo no se completa]`
 
-## 11. Pagos sin lugar / reembolsos
-Si un usuario abona la entrada pero **no logra ingresar por falta de cupo** (por ejemplo, dos
-pagos simultáneos por el último lugar) o por haberse cerrado la inscripción, **se le reembolsa el
-importe de la entrada**. Los reembolsos se procesan por Mercado Pago. La entrada de quien **sí
-quedó inscripto no es reembolsable** por arrepentimiento una vez comenzada la competencia.
-`[REVISAR CON ABOGADO: plazo de reembolso, botón de arrepentimiento (Res. 424/2020), contracargos]`
+## 11. Arrepentimiento y reembolsos
+Hay un **derecho de arrepentimiento de 10 días corridos** desde la compra (art. 34 Ley 24.240 y
+Res. SCI 424/2020), tanto para la entrada a la Copa como para las compras de pines, con estos
+alcances:
+
+- **Entrada a la Copa:** reembolso del 100% si el usuario se arrepiente **antes de que la Copa
+  empiece a jugarse** (kickoff de los 16vos), porque hasta ese momento el servicio —competir— no
+  comenzó a prestarse. **Una vez iniciada la competencia, el derecho de arrepentimiento ya no
+  aplica** (excepción del art. 1116 CCyC, servicios cuya ejecución empezó con conformidad del
+  consumidor). No se puede competir y luego pedir el reintegro por ir perdiendo.
+- **Pines:** reembolso de los pines **no utilizados** dentro de los 10 días. Los pines ya gastados
+  (contenido digital ya consumido con conformidad) no son reintegrables.
+- **Pago sin lugar (cupo lleno):** si se abona la entrada pero **no se ingresa por falta de cupo**
+  (p. ej. dos pagos simultáneos por el último lugar) o por inscripción cerrada, se **reembolsa el
+  importe completo**, sin importar el plazo.
+
+Los reembolsos se procesan por el mismo medio de pago (Mercado Pago). Para ejercer el
+arrepentimiento, el usuario escribe por el canal de soporte (`/soporte`).
+`[REVISAR CON ABOGADO: plazo de acreditación del reembolso, implementación del botón de
+arrepentimiento (Res. 424/2020), contracargos, validez de la excepción art. 1116 en este caso]`
 
 ## 12. Entrega del premio (claim)
 Los ganadores se publican en **Instagram** y se notifican por **email**. El premio se paga por
