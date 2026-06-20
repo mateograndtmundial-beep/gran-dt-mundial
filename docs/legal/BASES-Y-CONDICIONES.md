@@ -142,15 +142,33 @@ errores). Los cambios se publican en esta página con su **fecha de última actu
 cambios no alteran de forma retroactiva y en perjuicio del participante las condiciones esenciales
 (entrada, premio y distribución) de una copa ya iniciada. `[REVISAR CON ABOGADO]`
 
-## 16. Aspectos legales y fiscales
+## 16. No afiliación con FIFA y uso de marcas
+Los 11 de Sampa es un juego **independiente**: **no está afiliado, patrocinado ni avalado por la
+FIFA** ni por ninguna entidad organizadora del Mundial. Los nombres de selecciones, jugadores,
+clubes y competiciones se usan con fines **informativos e identificatorios** dentro del juego, sin
+pretender derechos sobre marcas de terceros. `[REVISAR CON ABOGADO: redacción del disclaimer de
+marcas / uso de nombres y escudos]`
+
+## 17. Limitación de responsabilidad
+En la máxima medida permitida por la ley aplicable, el organizador **no será responsable** por
+interrupciones o fallas del servicio, por errores u omisiones de **proveedores externos** (datos de
+partidos, procesador de pagos, hosting, autenticación) ni por hechos de **fuerza mayor**. Nada de lo
+anterior limita los derechos que la normativa de **defensa del consumidor** reconozca al
+participante. `[REVISAR CON ABOGADO: alcance y tope de la limitación; su validez frente a la Ley
+24.240]`
+
+## 18. Aspectos legales y fiscales
 `[REVISAR CON ABOGADO: encuadre legal del cobro de entrada + premio en dinero (posible juego
 regulado / concurso), facturación de entradas, pago de premios y retenciones impositivas según
 jurisdicción. Este es el punto bloqueante: no publicar ni cobrar sin este visto.]`
 
-## 17. Ley aplicable y jurisdicción
-`[REVISAR CON ABOGADO: ley aplicable y tribunales competentes (p. ej. domicilio del organizador),
-y relación con la Ley de Defensa del Consumidor 24.240.]`
+## 19. Ley aplicable y jurisdicción
+Estas Bases se rigen por las **leyes de la República Argentina**. Ante cualquier controversia, las
+partes se someten a los **tribunales ordinarios competentes** que correspondan, sin perjuicio de los
+derechos y el fuero que la normativa de **defensa del consumidor (Ley 24.240)** reconozca al
+participante. `[REVISAR CON ABOGADO: fuero/tribunal exacto según domicilio del organizador y del
+consumidor]`
 
-## 18. Aceptación
+## 20. Aceptación
 La inscripción implica la **aceptación total** de estas Bases y Condiciones, que el usuario declara
 haber leído antes de pagar.

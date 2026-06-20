@@ -6,6 +6,7 @@ import { products, orders, leagues, leagueMembers } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getProvider, providerForCountry, isProviderConfigured } from "@/lib/payments";
 import { getPinBalance } from "@/lib/pins";
+import { getAppBaseUrl } from "@/lib/site";
 import { getGoldenTicketCopas } from "@/lib/queries";
 import { isCopaPastDeadline } from "@/lib/copa/lifecycle";
 import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
@@ -60,7 +61,7 @@ export async function createPinOrder(productSku: string, country?: string) {
   )[0];
   if (!order) throw new Error("No se pudo crear la orden");
 
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const provider = getProvider(providerName);
   try {
     const checkout = await provider.createCheckout({
@@ -161,7 +162,7 @@ export async function createEntryOrder(productSku: string) {
   )[0];
   if (!order) throw new Error("No se pudo crear la orden");
 
-  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const base = getAppBaseUrl();
   const provider = getProvider(providerName);
   try {
     const checkout = await provider.createCheckout({

@@ -261,6 +261,31 @@ export default function BasesPage() {
           </p>
         </Section>
 
+        <Section title="No afiliación con FIFA y uso de marcas">
+          <p>
+            Los 11 de Sampa es un juego independiente: <strong>no está afiliado, patrocinado ni
+            avalado por la FIFA</strong> ni por ninguna entidad organizadora del Mundial. Los nombres
+            de selecciones, jugadores y competiciones se usan con fines informativos e
+            identificatorios, sin pretender derechos sobre marcas de terceros.
+          </p>
+        </Section>
+
+        <Section title="Limitación de responsabilidad">
+          <p>
+            En la máxima medida permitida por la ley, el organizador no será responsable por
+            interrupciones o fallas del servicio, por errores de proveedores externos (datos de
+            partidos, procesador de pagos, hosting) ni por hechos de fuerza mayor. Esto no limita los
+            derechos que la normativa de defensa del consumidor te reconoce.
+          </p>
+        </Section>
+
+        <Section title="Ley aplicable">
+          <p>
+            Estas Bases se rigen por las leyes de la República Argentina, sin perjuicio de los
+            derechos que la normativa de defensa del consumidor (Ley 24.240) te reconoce.
+          </p>
+        </Section>
+
         <Section title="Aceptación">
           <p>
             La inscripción implica la aceptación total de estas Bases y Condiciones, que declarás
