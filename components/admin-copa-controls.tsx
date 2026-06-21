@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setCopaStatus, snapshotCopaRanking } from "@/lib/admin-actions";
+import { setCopaStatus, setCopaEntryActive, snapshotCopaRanking } from "@/lib/admin-actions";
 import { Card } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,7 @@ type Copa = {
   status: string;
   capacity: number | null;
   enrolled: number;
+  entryActive: boolean;
 };
 type Orphan = {
   orderId: number;
@@ -60,7 +61,7 @@ export function AdminCopaControls({ copas, orphans }: { copas: Copa[]; orphans: 
     <Card className="p-4">
       <div className="mb-3">
         <div className="text-sm font-semibold text-ink">Copas premium (Liga Premium)</div>
-        <Eyebrow>Abrir/cerrar copas a mano y congelar el ranking final para el payout</Eyebrow>
+        <Eyebrow>Abrir/cerrar copas, activar la entrada (cobro) y congelar el ranking final</Eyebrow>
       </div>
 
       <div className="space-y-2">
@@ -76,6 +77,9 @@ export function AdminCopaControls({ copas, orphans }: { copas: Copa[]; orphans: 
                     <Eyebrow>{STATUS_LABEL[c.status] ?? c.status}</Eyebrow>
                     <span className="text-[11px] font-medium text-ink-2">
                       {c.enrolled}{c.capacity != null ? ` / ${c.capacity}` : ""} inscriptos
+                    </span>
+                    <span className={cn("text-[11px] font-semibold", c.entryActive ? "text-success" : "text-ink-3")}>
+                      · entrada {c.entryActive ? "ACTIVA" : "inactiva"}
                     </span>
                     {result && (
                       <span className={cn("text-[11px] font-medium", result.ok ? "text-success" : "text-danger")}>
@@ -95,6 +99,28 @@ export function AdminCopaControls({ copas, orphans }: { copas: Copa[]; orphans: 
                       {s.label}
                     </button>
                   ))}
+                  <button
+                    disabled={isBusy}
+                    onClick={() => {
+                      if (c.entryActive) {
+                        run(c.id, () => setCopaEntryActive(c.id, false));
+                      } else if (
+                        confirm(
+                          `¿Activar la entrada de "${c.name}"? Esto HABILITA el cobro real por Mercado Pago. Activá solo con el visto legal.`,
+                        )
+                      ) {
+                        run(c.id, () => setCopaEntryActive(c.id, true));
+                      }
+                    }}
+                    className={cn(
+                      "rounded-[6px] border px-3 py-1.5 text-xs font-semibold transition-all disabled:opacity-50",
+                      c.entryActive
+                        ? "border-border bg-surface text-ink hover:bg-surface-2 hover:border-border-strong"
+                        : "border-success bg-success/10 text-success hover:bg-success/20",
+                    )}
+                  >
+                    {c.entryActive ? "Desactivar entrada" : "Activar entrada"}
+                  </button>
                   <button
                     disabled={isBusy}
                     onClick={() => {

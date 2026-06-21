@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { and, eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { players, matches, playerMatchStats, countries, rounds, leagues, leagueMembers } from "@/lib/db/schema";
+import { players, matches, playerMatchStats, countries, rounds, leagues, leagueMembers, products } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getCopaStanding } from "@/lib/queries";
 import { syncRound, syncMatch } from "@/lib/api-football/sync";
@@ -408,6 +408,33 @@ export async function setCopaStatus(leagueId: number, status: string) {
   revalidatePath("/ligas");
   revalidatePath("/copa");
   return { ok: true as const, info: `Copa ${league.name} → ${status}` };
+}
+
+/**
+ * Activa/desactiva el PRODUCTO DE ENTRADA de una copa (`products.active`). active=true
+ * habilita el cobro real por Mercado Pago (createEntryOrder exige el producto activo);
+ * active=false lo gatea. Es el control del "play" del cobro, sin SQL manual — usar al
+ * go-live (con visto legal) y para apagarlo si hace falta. Ver docs/MONETIZACION.md.
+ */
+export async function setCopaEntryActive(leagueId: number, active: boolean) {
+  const admin = await currentAdmin();
+  if (!admin) return { ok: false as const, error: "forbidden" };
+  if (!Number.isInteger(leagueId) || leagueId <= 0) return { ok: false as const, error: "copa inválida" };
+  const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
+  if (!league || league.kind !== "golden_ticket") return { ok: false as const, error: "no es una copa premium" };
+
+  const updated = await db
+    .update(products)
+    .set({ active })
+    .where(eq(products.entryLeagueId, leagueId))
+    .returning({ id: products.id });
+  if (updated.length === 0) return { ok: false as const, error: "la copa no tiene producto de entrada" };
+
+  logAdmin("setCopaEntryActive", admin.id, { leagueId, active });
+  revalidatePath("/admin");
+  revalidatePath("/copa");
+  revalidatePath("/ligas");
+  return { ok: true as const, info: active ? "Entrada ACTIVADA (ya se puede pagar)" : "Entrada desactivada" };
 }
 
 /**

@@ -981,6 +981,8 @@ export async function getCopasForAdmin() {
       status: leagues.status,
       capacity: leagues.capacity,
       enrolled: sql<number>`(select count(*) from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id})`,
+      // Estado del producto de ENTRADA (active=true → se puede pagar). Para el toggle de /admin.
+      entryActive: sql<boolean>`coalesce((select ${products.active} from ${products} where ${products.entryLeagueId} = ${leagues.id} limit 1), false)`,
     })
     .from(leagues)
     .where(eq(leagues.kind, "golden_ticket"))
