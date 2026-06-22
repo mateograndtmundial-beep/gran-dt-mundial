@@ -53,3 +53,6 @@ next-env.d.ts
 databricks_mcp.log
 # Stories generadas localmente
 out/
+
+# PDFs generados desde markdown (npm run pdf) — se regeneran, no se versionan
+docs/**/*.pdf

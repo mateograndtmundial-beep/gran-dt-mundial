@@ -26,6 +26,7 @@
     "get:user-teams": "tsx scripts/get-user-teams.ts",
     "stories": "tsx scripts/generate-stories.ts",
     "scoreboards": "tsx scripts/generate-scoreboards.ts",
+    "pdf": "node scripts/md-to-pdf.mjs",
     "highlights": "tsx scripts/generate-highlights.ts"
   },
   "dependencies": {
