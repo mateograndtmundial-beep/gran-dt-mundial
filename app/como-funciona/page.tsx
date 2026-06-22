@@ -16,7 +16,13 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
-import { FORMATIONS } from "@/lib/game/config";
+import {
+  FORMATIONS,
+  POSITION_COLORS,
+  POSITION_BG,
+  POSITION_ABBR,
+  type Position,
+} from "@/lib/game/config";
 
 export const metadata: Metadata = {
   title: "¿Cómo funciona? · Los 11 de Sampa",
@@ -65,15 +71,66 @@ const NEGATIVES: Row[] = [
   { concept: "Penal errado", gk: "−4", def: "−4", mid: "−4", fwd: "−4" },
 ];
 
+/* Orden de posiciones y de qué campo de la fila sale cada valor. */
+const POS_ORDER: { pos: Position; key: keyof Pick<Row, "gk" | "def" | "mid" | "fwd"> }[] = [
+  { pos: "GK", key: "gk" },
+  { pos: "DEF", key: "def" },
+  { pos: "MID", key: "mid" },
+  { pos: "FWD", key: "fwd" },
+];
+
+/* Pin de valor por posición (mobile): chip de color Panini + el puntaje. */
+function ValuePill({ pos, value }: { pos: Position; value: string }) {
+  return (
+    <span
+      className="inline-flex items-center gap-0.5 rounded-[4px] px-1 py-0.5 text-[11px] font-bold tabular-nums"
+      style={{ color: POSITION_COLORS[pos], backgroundColor: POSITION_BG[pos] }}
+    >
+      <span className="opacity-70">{POSITION_ABBR[pos]}</span>
+      {value}
+    </span>
+  );
+}
+
+/* Vista mobile de una fila: solo las posiciones que puntúan (saltea "—" y "0").
+   Si las 4 posiciones valen lo mismo, lo colapsa en un único "Todas". */
+function ScoringRowMobile({ row }: { row: Row }) {
+  const scoring = POS_ORDER.map((p) => ({ pos: p.pos, value: row[p.key] })).filter(
+    (e) => e.value !== "—" && e.value !== "0",
+  );
+  const allFour =
+    scoring.length === 4 && scoring.every((e) => e.value === scoring[0].value);
+
+  return (
+    <div className="rounded-[6px] border border-border bg-surface-2/40 p-2.5">
+      <span className="block text-[13px] font-semibold leading-tight text-ink">{row.concept}</span>
+      {row.note && <span className="mt-0.5 block text-[10px] leading-tight text-ink-3">{row.note}</span>}
+      <div className="mt-1.5 grid grid-cols-2 justify-items-start gap-1">
+        {allFour ? (
+          <span className="col-span-2 inline-flex items-center gap-1 rounded-[4px] border border-border bg-surface px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-ink">
+            <span className="text-ink-3">Todas</span>
+            {scoring[0].value}
+          </span>
+        ) : (
+          scoring.map((e) => <ValuePill key={e.pos} pos={e.pos} value={e.value} />)
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ScoringTable({ rows }: { rows: Row[] }) {
   return (
-    <div className="relative">
-      {/* La tabla mide 420px de ancho mínimo (5 columnas) y en mobile no entra
-          completa: agregamos una pista de que se puede deslizar + un degradé
-          sobre el borde derecho para que no parezca que el contenido corta ahí. */}
-      <p className="mb-1.5 text-[11px] text-ink-3 sm:hidden">Deslizá para ver todas las posiciones →</p>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[420px] border-collapse text-sm">
+    <>
+      {/* Mobile: grilla 2-up de mini-tarjetas — compacta y sin scroll horizontal. */}
+      <div className="grid grid-cols-2 gap-2 sm:hidden">
+        {rows.map((r) => (
+          <ScoringRowMobile key={r.concept} row={r} />
+        ))}
+      </div>
+
+      {/* Desktop: tabla clásica (sobra el ancho, no necesita scroll). */}
+      <table className="hidden w-full border-collapse text-sm sm:table">
         <thead>
           <tr className="border-b-2 border-border text-center">
             <th className="py-2 pr-3 text-left">
@@ -109,13 +166,8 @@ function ScoringTable({ rows }: { rows: Row[] }) {
             </tr>
           ))}
         </tbody>
-        </table>
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent sm:hidden"
-      />
-    </div>
+      </table>
+    </>
   );
 }
 
@@ -154,13 +206,12 @@ export default function ComoFuncionaPage() {
       {/* ─── De qué va ─── */}
       <Card className="p-6">
         <Eyebrow className="mb-3">DE QUÉ VA</Eyebrow>
-        <p className="max-w-2xl text-[15px] leading-relaxed text-ink-2">
+        <p className="text-[15px] leading-relaxed text-ink-2">
           Sos el DT. Armás un plantel de <strong>15 jugadores</strong> (11 titulares y 4
-          suplentes) más un técnico, todo dentro de un presupuesto. Cada fecha tus jugadores
-          puntúan según lo que hacen en sus partidos reales del Mundial: goles, asistencias,
-          vallas invictas, la figura del partido. Sumás esos puntos durante las{" "}
-          <strong>8 fechas</strong> del torneo (3 de grupos + 5 playoffs) y competís
-          con tus amigos en tu liga.
+          suplentes) más un técnico, dentro de un presupuesto. Cada fecha tus jugadores puntúan por
+          lo que hacen en sus partidos reales del Mundial —goles, asistencias, vallas, figura— a lo
+          largo de las <strong>8 fechas</strong> (3 de grupos + 5 playoffs), y competís con tus
+          amigos en tu liga.
         </p>
       </Card>
 
@@ -177,9 +228,9 @@ export default function ComoFuncionaPage() {
               jugador tiene un precio según su valor de mercado.
             </RuleItem>
             <RuleItem icon={<Shirt size={22} strokeWidth={1.5} />} title="15 jugadores">
-              11 titulares y 4 suplentes. Si un titular no llega a jugar 20 minutos, entra{" "}
-              <strong>automáticamente</strong> el primer suplente de su misma posición que sí haya
-              jugado, y puntúa en su lugar (no tenés que hacer nada vos).
+              11 titulares y 4 suplentes. Si un titular no juega 20 minutos, entra{" "}
+              <strong>automáticamente</strong> el suplente de su misma posición que sí jugó, y
+              puntúa por él.
             </RuleItem>
             <RuleItem icon={<Users size={22} strokeWidth={1.5} />} title="Máximo por país">
               En la <strong>fase de grupos</strong> no podés tener más de{" "}
@@ -219,26 +270,23 @@ export default function ComoFuncionaPage() {
         <Card className="space-y-6 p-6">
           <div className="space-y-3 text-[15px] leading-relaxed text-ink-2">
             <p>
-              La base del puntaje de cada jugador es su{" "}
-              <strong>rating del partido (0 a 10, redondeado al entero más cercano)</strong>, siempre que haya jugado al menos{" "}
-              <strong>20 minutos</strong> de tiempo reglamentario (90' o 120' si hay tiempo extra;
-              el agregado no cuenta). Si jugó menos de 20', <strong>no suma absolutamente nada</strong>{" "}
-              —ni el rating, ni goles, asistencias, tarjetas ni nada de lo que hizo en la cancha—:
-              puntúa en su lugar el suplente de su misma posición que sí haya jugado ≥20'. Así tu
-              equipo nunca suma más de 11 jugadores por fecha.
+              La base de cada jugador es su{" "}
+              <strong>rating del partido</strong> (0 a 10, redondeado al entero), siempre que juegue{" "}
+              <strong>al menos 20 minutos</strong> de tiempo reglamentario (90' o 120' con tiempo
+              extra; el agregado no cuenta). Si jugó menos, <strong>no suma nada</strong> —ni rating
+              ni bonos— y puntúa en su lugar el suplente de su misma posición que sí jugó ≥20'. Así
+              nunca sumás más de 11 jugadores por fecha.
             </p>
             <p>
-              A esa base se le suman (o restan) bonos según lo que hizo en la cancha. Los goles
-              valen distinto según la posición: un gol de un arquero o un defensor vale mucho más
-              que el de un delantero.
+              A esa base se le suman o restan bonos. Los goles valen distinto según la posición: el
+              de un arquero o un defensor vale más que el de un delantero.
             </p>
           </div>
 
           <ValidationCallout type="success">
-            El capitán <strong>duplica solo su puntaje base</strong> (el rating del partido), no
-            los bonos por goles, asistencias ni la figura. Si no llega a jugar 20 minutos, ese
-            bonus se <strong>pierde</strong> —no pasa al suplente que entra por él—, aunque el
-            suplente sí puntúa normalmente en su lugar.
+            El capitán <strong>duplica solo su puntaje base</strong> (el rating), no los bonos. Si
+            no juega 20 minutos, ese duplicado se <strong>pierde</strong> (no pasa al suplente),
+            aunque el suplente sí puntúa normal.
           </ValidationCallout>
 
           <div>
@@ -264,6 +312,20 @@ export default function ComoFuncionaPage() {
               pierde y <strong>0</strong> si empata.
             </p>
           </div>
+
+          <p className="text-sm leading-relaxed text-ink-3">
+            Todos los datos deportivos (resultados, minutos, goles, ratings y figura del partido)
+            los provee{" "}
+            <a
+              href="https://www.api-football.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-blue hover:underline"
+            >
+              API-Football
+            </a>
+            ; el organizador no los modifica.
+          </p>
         </Card>
       </section>
 
@@ -275,33 +337,31 @@ export default function ComoFuncionaPage() {
             icon={<ArrowLeftRight size={22} strokeWidth={1.5} />}
             title="1 cambio libre por fecha"
           >
-            Antes de cada fecha podés hacer 1 cambio gratis en tu plantel. Cada cambio extra
-            cuesta <strong>1 pin</strong>, la moneda del juego que podés conseguir en la sección{" "}
+            Antes de cada fecha tenés <strong>1 cambio gratis</strong>. Cada cambio extra cuesta{" "}
+            <strong>1 pin</strong>, la moneda del juego (sección{" "}
             <Link href="/pines" className="font-semibold text-blue hover:underline">
               Pines
             </Link>
-            . Si tenés el <strong>pack premium de cambios ilimitados</strong>, no pagás pines por
-            los cambios extra.
+            ). Con el <strong>pack premium de cambios ilimitados</strong> no pagás pines por los
+            extra.
           </RuleItem>
           <RuleItem icon={<Coins size={22} strokeWidth={1.5} />} title="Pines acumulables, cambio gratis no">
-            Los pines son tuyos: si no los gastás en una fecha, quedan guardados para las
-            siguientes (no vencen). El <strong>cambio gratis es distinto</strong>: es 1 por fecha y
-            no se acumula — si no lo usás en una fecha, se pierde, no pasa a la siguiente.
+            Los pines <strong>no vencen</strong>: si no los gastás, quedan para las siguientes
+            fechas. El <strong>cambio gratis no se acumula</strong>: es 1 por fecha y si no lo usás,
+            se pierde.
           </RuleItem>
           <ValidationCallout type="success">
-            Cuando armás tu equipo por primera vez (o todavía no jugaste ninguna fecha puntuable),
-            los cambios son <strong>ilimitados y gratis</strong> hasta que arranque tu primera
-            fecha. A partir de ahí entra a regir el esquema de 1 cambio gratis por fecha.
+            Al armar tu equipo por primera vez (o si todavía no jugaste una fecha puntuable), los
+            cambios son <strong>ilimitados y gratis</strong> hasta que arranque tu primera fecha.
           </ValidationCallout>
           <ValidationCallout type="warning">
-            Cada fecha se cierra cuando arranca su primer partido: el equipo que tenés en ese
-            momento es el que suma los puntos de esa fecha. La ventana para los cambios de la
-            fecha siguiente va <strong>desde que arranca una fecha hasta el primer partido de la
-            siguiente</strong> — fijate el horario exacto en el armador.
+            Cada fecha cierra cuando arranca su primer partido: el equipo que tengas en ese momento
+            es el que puntúa. La ventana de cambios para la fecha siguiente va desde que arranca una
+            fecha hasta el primer partido de la próxima — el horario exacto está en el armador.
           </ValidationCallout>
           <p className="text-sm leading-relaxed text-ink-3">
-            Si no hacés cambios, no perdés nada: tu equipo se mantiene tal cual y sigue sumando
-            fecha tras fecha. Los puntajes se publican una vez que termina cada fecha.
+            Si no hacés cambios no perdés nada: tu equipo sigue sumando fecha tras fecha. Los
+            puntajes se publican al terminar cada fecha.
           </p>
         </Card>
       </section>
@@ -315,9 +375,8 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Cuándo se actualizan los puntos?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Los puntajes se calculan y publican cuando termina cada fecha, en base a las
-                  estadísticas reales de los partidos. Hasta ese momento ves tu equipo, pero no el
-                  puntaje final de la fecha.
+                  Al terminar cada fecha, con las estadísticas reales de los partidos. Hasta
+                  entonces ves tu equipo, pero no el puntaje final de la fecha.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -325,11 +384,9 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿El capitán duplica todos los puntos?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  No. El capitán duplica únicamente su puntaje base (el rating del partido). Los
-                  bonos por goles, asistencias, valla o figura se suman una sola vez. Y si el
-                  capitán no llega a jugar 20 minutos, ese bonus de duplicación se{" "}
-                  <strong>pierde</strong> —no se transfiere a nadie— aunque el suplente que entra
-                  por él sí suma sus puntos normalmente.
+                  No: duplica solo su puntaje base (el rating). Los bonos (goles, asistencias,
+                  valla, figura) suman una vez. Si no juega 20 minutos, el duplicado se{" "}
+                  <strong>pierde</strong>, pero el suplente que entra sí puntúa.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -337,11 +394,10 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Qué pasa si un jugador no juega?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Si un titular jugó menos de 20 minutos, entra <strong>automáticamente</strong> el
-                  primer suplente de su misma posición que sí haya jugado, y puntúa en su lugar
-                  (vos no hacés nada, es automático). El orden de tu banco define a quién le toca
-                  primero. Si no hay un suplente válido de esa posición, el titular queda con 0. Por
-                  eso conviene armar bien el banco y revisar tu equipo antes del cierre de la fecha.
+                  Entra <strong>automáticamente</strong> el primer suplente de su misma posición que
+                  sí haya jugado, y puntúa en su lugar. El orden de tu banco define la prioridad. Si
+                  no hay suplente válido de esa posición, el titular queda en 0 — por eso conviene
+                  armar bien el banco.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -349,9 +405,17 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Puedo cambiar de formación?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Sí, podés cambiar de formación todas las veces que quieras antes de que cierre
-                  la fecha. Mover entre formaciones no consume tu cambio libre; eso es para entrar
-                  y salir jugadores del plantel.
+                  Sí, las veces que quieras antes del cierre. Cambiar de formación no consume tu
+                  cambio libre; eso es para entrar y sacar jugadores del plantel.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="capitan-dt">
+              <AccordionTrigger>¿Cambiar de capitán o técnico gasta un cambio?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  No. Cambiar de capitán, técnico o formación es gratis y no consume tu cambio
+                  libre: solo cuenta como cambio entrar o sacar jugadores del plantel.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -359,12 +423,20 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Para qué sirven los pines?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Tenés 1 cambio gratis por fecha. Si querés hacer más cambios en una misma fecha,
-                  cada cambio extra cuesta <strong>1 pin</strong>. Si comprás el pack premium de
-                  cambios ilimitados, dejás de pagar pines por los cambios extra. Los pines que
-                  comprás <strong>no vencen</strong>: si no los usás en una fecha, quedan
-                  disponibles para las siguientes. El cambio gratis, en cambio, es por fecha y no
-                  se acumula.
+                  Para hacer más de 1 cambio por fecha: cada cambio extra cuesta <strong>1 pin</strong>{" "}
+                  (o nada, con el pack de cambios ilimitados). Los pines <strong>no vencen</strong>;
+                  el cambio gratis no se acumula.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="cuesta-dinero">
+              <AccordionTrigger>¿Cuesta dinero jugar?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  No, jugar es <strong>gratis</strong>. Los pines son opcionales: solo los necesitás
+                  para hacer más de 1 cambio por fecha, y se compran con dinero real (o conseguís el
+                  pack premium de cambios ilimitados). Sin gastar un peso competís igual en el
+                  ranking y en tus ligas.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -381,11 +453,9 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Hasta cuándo puedo cambiar mi equipo?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Cada fecha se cierra cuando arranca su primer partido: el equipo que tenés en ese
-                  momento es el que suma los puntos de esa fecha. Apenas arranca, ya podés hacer los
-                  cambios para la fecha siguiente (1 gratis, los extra con pines), y tenés tiempo
-                  hasta el primer partido de esa fecha siguiente. El horario exacto del cierre lo
-                  ves siempre en el armador.
+                  Cada fecha cierra al arrancar su primer partido. Apenas arranca, ya podés hacer
+                  cambios para la siguiente (1 gratis, los extra con pines) hasta su primer partido.
+                  El horario exacto está en el armador.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -393,9 +463,21 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Qué pasa si no hago cambios entre fechas?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Nada malo: tu equipo se mantiene tal cual y sigue sumando puntos fecha tras
-                  fecha. No hace falta volver a guardarlo. Eso sí, conviene revisarlo entre fecha y
-                  fecha: si una selección quedó eliminada, sus jugadores ya no suman.
+                  Nada: tu equipo se mantiene y sigue sumando, no hace falta volver a guardarlo.
+                  Conviene revisarlo igual: si una selección quedó eliminada, sus jugadores ya no
+                  suman.
+                </p>
+              </AccordionContent>
+            </AccordionItem>
+            <AccordionItem value="eliminada">
+              <AccordionTrigger>¿Qué pasa si una de mis selecciones queda eliminada?</AccordionTrigger>
+              <AccordionContent>
+                <p className="text-ink-2">
+                  Sus jugadores dejan de sumar desde que quedan afuera. Podés reemplazarlos como
+                  cualquier cambio (1 gratis por fecha, los extra con pines); no hay cambios gratis
+                  adicionales por eliminación. A favor: desde los 16avos el tope sube a{" "}
+                  <strong>5 jugadores por país</strong>, así que tenés más margen para rearmar con
+                  las selecciones que siguen en carrera.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -403,10 +485,9 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>Me sumo con el Mundial ya empezado, ¿desde cuándo sumo puntos?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Si armás tu equipo cuando una fecha ya está en juego, empezás a sumar desde la{" "}
-                  <strong>fecha siguiente</strong> (la primera que todavía no arrancó). Por ejemplo,
-                  si te registrás con la Fecha 1 ya iniciada, tu equipo compite desde la Fecha 2 en
-                  adelante. El ranking es por puntos acumulados, así que cuanto antes entres, mejor.
+                  Empezás a sumar desde la <strong>fecha siguiente</strong> (la primera que todavía
+                  no arrancó): si entrás con la Fecha 1 en juego, competís desde la Fecha 2. Como el
+                  ranking es por acumulado, cuanto antes entres, mejor.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -414,12 +495,10 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Cómo se cuentan el tiempo extra y los penales?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Lo que pasa en el tiempo suplementario cuenta normal (goles, asistencias,
-                  tarjetas), porque es parte del partido. En cambio, los goles de la tanda de penales
-                  (la definición) no suman como gol a tus jugadores, y la valla invicta se mira por
-                  los goles en juego —90 minutos más tiempo extra—, no por la tanda. Para el técnico,
-                  la selección que avanza por penales cuenta como que ganó (+2) y la que queda
-                  afuera, como que perdió (−2).
+                  El tiempo suplementario cuenta normal (es parte del partido). Los goles de la
+                  tanda de penales no suman como gol, y la valla invicta se mira por los goles en
+                  juego (90' más tiempo extra), no por la tanda. Para el técnico, quien avanza por
+                  penales cuenta como ganador (+2) y quien queda afuera, como perdedor (−2).
                 </p>
               </AccordionContent>
             </AccordionItem>
