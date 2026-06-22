@@ -923,11 +923,17 @@ export async function getGoldenTicketCopas(userId?: number) {
 
   return rows.map((r) => {
     const enrolled = Number(r.enrolled);
+    const pct = r.capacity != null && r.capacity > 0 ? (enrolled / r.capacity) * 100 : 0;
     return {
       ...r,
       enrolled,
       // Lugares libres (nunca negativo); null si la copa no tiene cupo.
       spotsLeft: r.capacity != null ? Math.max(0, r.capacity - enrolled) : null,
+      // Señal de escasez (qué tan llena está la copa) SIN revelar el número exacto.
+      // La UI de no inscriptos muestra solo esto: "low" → "Quedan pocos cupos",
+      // "last" → "Últimos lugares". Es la única info de cupo que viaja al cliente
+      // para quien no está dentro (ver getCopasStatus, que oculta enrolled/spotsLeft).
+      scarcity: (pct >= 95 ? "last" : pct >= 80 ? "low" : "none") as "none" | "low" | "last",
       // ¿Ya cerró por tiempo? (pasó el kickoff de los 16vos).
       deadlinePassed: r.closesAt != null && Date.now() >= new Date(r.closesAt).getTime(),
     };

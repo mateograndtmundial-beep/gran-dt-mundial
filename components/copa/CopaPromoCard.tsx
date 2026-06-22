@@ -3,13 +3,16 @@ import { Eyebrow } from "@/components/editorial";
 import type { CopaStatus } from "@/lib/queries";
 import { formatArs } from "./format";
 import { EnrollButton } from "./EnrollButton";
-import { CupoLive } from "./CupoLive";
+import { CupoScarcity } from "./CupoScarcity";
 
 /**
  * Card de promoción de la Liga Premium para usuarios NO inscriptos, insertada en
- * `/ligas` encima de las ligas privadas. Muestra premio garantizado, entrada y cupo en
- * vivo (estático, del server). El CTA está en TODO (ver EnrollButton). Mobile-first:
- * stack vertical en celular, fila en desktop.
+ * `/ligas` encima de las ligas privadas. Muestra premio garantizado y entrada. A
+ * propósito NO mostramos el cupo en vivo (inscriptos/total): daría sensación de "vacío"
+ * al arranque y desconfianza. Solo se enciende una leyenda de escasez ("Quedan pocos
+ * cupos" / "Últimos lugares") cuando de verdad falta poco (ver CupoScarcity). El número
+ * exacto solo lo ve quien ya está inscripto (CopaLeagueRow). Mobile-first: stack vertical
+ * en celular, fila en desktop.
  */
 export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
   const capacity = copa.capacity ?? 100;
@@ -35,9 +38,9 @@ export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
         </div>
       </div>
 
-      {/* Barra de cupo EN VIVO (arranca con el valor del server, refresca por polling) */}
-      <div className="mt-4">
-        <CupoLive copaId={copa.id} initialEnrolled={copa.enrolled} capacity={capacity} />
+      {/* Sin cupo en vivo: solo una leyenda de escasez cuando de verdad falta poco. */}
+      <div className="mt-4 empty:mt-0">
+        <CupoScarcity copaId={copa.id} initialScarcity={copa.scarcity} />
       </div>
 
       <div className="mt-4">

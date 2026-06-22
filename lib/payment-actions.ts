@@ -218,10 +218,16 @@ export async function getOrderStatus(orderId: number) {
 
 /**
  * Estado en vivo de las copas GOLDEN TICKET (cupo, inscripción del usuario), para que
- * el front lo muestre y lo refresque (polling). Devuelve el array de copas visibles con
- * su cupo actual; `isEnrolled` marca si el usuario logueado ya está dentro.
+ * el front lo muestre y lo refresque (polling). `isEnrolled` marca si el usuario ya está
+ * dentro. PRIVACIDAD: el número exacto (enrolled/spotsLeft) solo viaja al cliente para
+ * las copas en las que el usuario YA está inscripto; para el resto se anula y solo se
+ * expone `scarcity` ("none"/"low"/"last"), para no revelar cuántos lugares quedan a
+ * quien todavía no entró (evita la sensación de "vacío" al arranque).
  */
 export async function getCopasStatus() {
   const user = await getCurrentUser();
-  return getGoldenTicketCopas(user?.id);
+  const copas = await getGoldenTicketCopas(user?.id);
+  return copas.map((c) =>
+    c.isEnrolled ? c : { ...c, enrolled: null, spotsLeft: null },
+  );
 }
