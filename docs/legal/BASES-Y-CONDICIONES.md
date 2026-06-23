@@ -79,10 +79,11 @@ mismas reglas que el resto del torneo. En resumen:
 ## 5. Mecánica de la Liga Premium
 - **Entrada:** $5.000 ARS por usuario, abonada por **Mercado Pago** (en el checkout figura como
   "GOLDEN TICKET"). La inscripción se confirma automáticamente al acreditarse el pago.
-- **Cupo:** **100 participantes por copa.** Cuando una copa llega a 100, se cierra y se habilita
-  una 2da copa idéntica. No hay un número ilimitado de copas: si no quedan cupos, podés comunicarte
-  a través del Instagram oficial para demostrar interés en una 3ra Liga Premium, a criterio del
-  organizador.
+- **Cupo:** **100 participantes.** Cuando la copa llega a 100, **la inscripción se cierra**
+  automáticamente. La apertura de copas adicionales (Liga II, III, etc.) **no es automática**:
+  queda **a criterio del organizador**. Si no quedan cupos disponibles, podés comunicarte a través
+  del Instagram oficial para demostrar interés en una nueva Liga Premium; el organizador evaluará
+  abrirla a su sola discreción.
 - **Inicio del ranking:** la Liga Premium **puntúa desde los 16vos de final** en adelante (la fase
   de grupos no cuenta). Se rankea por los puntos que tu equipo obtiene fecha a fecha según las
   reglas de puntaje del juego (ver punto 3 y `/como-funciona`).

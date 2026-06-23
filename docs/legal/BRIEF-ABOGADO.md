@@ -14,7 +14,8 @@
 
 ## Cómo funciona la Liga Premium
 - **Entrada:** $5.000 ARS por persona, cobrada por **Mercado Pago**.
-- **Cupo:** 100 personas por copa; al completarse se abre otra copa idéntica.
+- **Cupo:** 100 personas; al completarse, la inscripción se cierra. La organización puede, a su
+  criterio, abrir copas adicionales más adelante (no es automático).
 - **Premio:** **monto fijo garantizado de $400.000 ARS** aportado por la organización (NO es un
   pozo que dependa de cuántos se inscriban: se reparte **sí o sí**). Se distribuye entre los
   **10 primeros**.

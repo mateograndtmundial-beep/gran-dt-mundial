@@ -88,22 +88,23 @@ plata no gastada queda disponible, no es una pérdida).
 **Ligas de 100, premio fijo $400.000.** Se descartó balancear la demanda en N ligas parejas (ej.
 220 → 3 de ~73): con premio fijo, **cada liga por debajo de ~80 pagos pierde plata** (break-even
 80), así que 3 ligas de 73 darían **−$100.000**. Ligas de 100 dejan **+$100.000** cada una. Como
-el tamaño es fijo, **no hace falta** el "pool"/reparto al cierre: se llena una liga, se abre la
-siguiente (es lo que ya hace el backend).
+el tamaño es fijo, **no hace falta** el "pool"/reparto al cierre: se llena una liga y, **si se
+decide**, se abre otra **a mano** (el backend NO abre la siguiente solo: al llenarse, cierra la
+inscripción y muestra "agotado").
 
 **Escalado por oleadas (según round de arranque):**
 
 | Oleada | Copas | Arranca / rankea desde | Inscripción cierra | Cuándo se abre |
 |---|---|---|---|---|
-| **1 (16vos)** | #1, #2, … | **16vos** (order 4) | **kickoff de 16vos = 28/06** | Se abre la siguiente cuando la anterior llega a 100. |
+| **1 (16vos)** | #1 (+ #2 reserva manual) | **16vos** (order 4) | **kickoff de 16vos = 28/06** | Al llegar a 100 se cierra. Abrir la #2 es **manual** (admin), no automático. |
 | **2 (8vos)** | nuevas | **8vos de Final** (order 5) | **kickoff de 8vos** (unos días después) | **Si al cerrar la oleada 1 quedan muchos interesados.** |
 
 - **Por qué oleadas:** una liga que arranca en 8vos **cierra en el kickoff de 8vos** → da **más días
   para llenarla**. Resuelve el caso "quedan interesados pero ya no hay tiempo antes del 28/06".
 - **Cierre de inscripciones = manual/discrecional.** El cupo de 100 frena cada liga sola; **abrir
   una nueva (misma oleada u oleada siguiente) lo decidís vos** mirando demanda y días restantes.
-- **Hook de marketing** que cae redondo y respeta el break-even: **"cada 100 que entran, se abre
-  otra copa de $400.000"**.
+- **Hook de marketing** (escasez real, sin prometer una 2da copa automática): **"son 100 lugares y
+  nada más; cuando se llena, se cierra"**. Si después se decide abrir otra, se comunica aparte.
 - **El usuario ve a sus rivales recién al kickoff** → no le molesta en qué liga puntual quedó
   mientras tanto; la inscripción es a "la Copa", la liga concreta es detalle interno.
 

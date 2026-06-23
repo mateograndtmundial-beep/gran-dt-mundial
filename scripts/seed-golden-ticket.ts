@@ -3,10 +3,12 @@ import { eq } from "drizzle-orm";
 import { db } from "../lib/db";
 import { leagues, products, rounds, users } from "../lib/db/schema";
 
-// Crea (idempotente) las 2 copas GOLDEN TICKET y sus productos de entrada.
-// Ver docs/MONETIZACION.md. ⚠️ Corre contra la DB de producción (no hay staging):
-// leé docs/PRODUCCION.md §2 antes de ejecutarlo, y NO lo corras hasta tener el visto
-// legal para cobrar (el producto de entrada se cobra por Mercado Pago).
+// Crea (idempotente) la copa GOLDEN TICKET activa + una copa de RESERVA y sus productos
+// de entrada. Hay UNA sola Liga Premium activa (cupo 100); la #2 queda en `draft` como
+// reserva MANUAL: NO se abre sola al llenarse la #1 (esa decisión es del admin desde
+// /admin). Ver docs/MONETIZACION.md. ⚠️ Corre contra la DB de producción (no hay
+// staging): leé docs/PRODUCCION.md §2 antes de ejecutarlo, y NO lo corras hasta tener el
+// visto legal para cobrar (el producto de entrada se cobra por Mercado Pago).
 
 const ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // sin O/0/I/1 ambiguos (igual que genCode)
 function genCode(): string {
@@ -21,8 +23,9 @@ const ENTRY_FEE_ARS = 5000;
 const PRIZE_ARS = 400000;
 const R16_ORDER = 4; // 16vos de Final en ROUNDS (lib/game/config.ts)
 
-// La 1ra copa arranca 'open' (admite inscripciones); la 2da queda 'draft' (inactiva)
-// y se habilita a mano si la 1ra llena los 100.
+// La 1ra copa arranca 'open' (admite inscripciones); la 2da queda 'draft' (oculta,
+// reserva). La 2da NO se abre automáticamente al llenarse la 1ra: si se quiere abrir una
+// Liga II, se habilita a mano desde /admin (setCopaStatus, draft → open).
 //
 // Nombres desacoplados a propósito:
 // - `name`         = nombre PÚBLICO de la liga, el que se ve en la app ("Liga Premium").

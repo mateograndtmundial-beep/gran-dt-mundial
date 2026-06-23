@@ -87,7 +87,7 @@ export default async function CopaPage({
             <ul className="space-y-1.5 text-sm text-ink-2">
               <li>· Competís con tu equipo de siempre — rankea desde los 16vos de final.</li>
               <li>· Entrada $5.000 · premio $400.000 garantizado al top 10 (lo pone la casa).</li>
-              <li>· Cupo de 100 por copa. Cuando se llena, abre la siguiente.</li>
+              <li>· Cupo de 100. Cuando se llena, se cierra la inscripción; si querés que abramos otra, escribinos por Instagram.</li>
               <li>· Si pagás y no entrás por falta de cupo, te reembolsamos.</li>
             </ul>
             <Link href="/bases" className="mt-3 inline-block text-sm font-semibold text-gold-ink underline">

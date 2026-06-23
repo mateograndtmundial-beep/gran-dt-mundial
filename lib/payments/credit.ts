@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { orders, products, users, leagues, leagueMembers } from "@/lib/db/schema";
 import { addPins, isUniqueViolation } from "@/lib/pins";
 import { notifyPaymentPaid, notifyError } from "@/lib/notify/slack";
-import { isCopaPastDeadline, markCopaFullAndActivateNext } from "@/lib/copa/lifecycle";
+import { isCopaPastDeadline, markCopaFull } from "@/lib/copa/lifecycle";
 
 /**
  * Acredita los pines de una orden pagada. Idempotente: solo transiciona si la
@@ -63,8 +63,8 @@ export async function creditOrder(orderId: number, providerRef?: string): Promis
  * Si el usuario pagó pero NO entra (copa llena por la carrera del último lugar, o el
  * pago llegó después del kickoff de los 16vos), la orden se marca `refunded` y se avisa
  * a Slack para REEMBOLSAR a mano en Mercado Pago (ver markOrderForRefund + la vista de
- * reconciliación en /admin). Al inscribir al último cupo, marca la copa `full` y activa
- * la copa de reserva. Ver docs/MONETIZACION.md.
+ * reconciliación en /admin). Al inscribir al último cupo, marca la copa `full` (cierra
+ * la inscripción); NO se abre otra copa automáticamente. Ver docs/MONETIZACION.md.
  */
 async function enrollInLeague(userId: number, leagueId: number, orderId: number) {
   const existing = (
@@ -107,13 +107,14 @@ async function enrollInLeague(userId: number, leagueId: number, orderId: number)
 
   await db.insert(leagueMembers).values({ leagueId, userId }).onConflictDoNothing();
 
-  // ¿Esta inscripción llenó la copa? → marcarla `full` y activar la de reserva.
+  // ¿Esta inscripción llenó la copa? → marcarla `full` (cierra la inscripción).
+  // No se abre otra copa automáticamente (abrir una Liga II es manual desde /admin).
   if (league.capacity != null) {
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(leagueMembers)
       .where(eq(leagueMembers.leagueId, leagueId));
-    if (Number(count) >= league.capacity) await markCopaFullAndActivateNext(leagueId);
+    if (Number(count) >= league.capacity) await markCopaFull(leagueId);
   }
 }
 

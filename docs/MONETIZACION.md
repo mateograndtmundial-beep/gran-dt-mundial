@@ -47,9 +47,11 @@ Entrada $5.000 · premio fijo $400.000 · cupo 100. A cupo lleno la casa deja **
 2. **Entrada $5.000.**
 3. **Cupo 100 personas** por copa. Objetivo: llenarlo.
 4. **Premio al top 10**, distribución confirmada (abajo).
-5. **Dos copas IGUALES.** Una activa; la segunda se **habilita AUTOMÁTICAMENTE** cuando la
-   primera llena los 100 (`markCopaFullAndActivateNext`; hay fallback manual con `setCopaStatus`).
-   Misma entrada/premio/cupo. Estructura lista desde el arranque.
+5. **UNA sola Liga Premium activa (cupo 100).** Cuando se llena, la inscripción se **cierra**
+   (`markCopaFull` la pasa a `full`) y la UI muestra "cupos agotados → escribinos por Instagram".
+   **No se abre otra copa automáticamente.** Hay una copa de **reserva** seedeada en `draft`
+   (oculta); si se quiere abrir una **Liga II/III**, es una decisión **manual** del admin desde
+   `/admin` (`setCopaStatus`, draft → open).
 6. **Arranca en 16vos.** Rankea desde 16vos en adelante (grupos no cuenta). → técnicamente
    `leagues.scoringStartRoundId` apuntando a 16vos (infra ya existe y probada en prod).
 7. **Un equipo por usuario.** Es un ranking sobre el equipo actual, no un equipo nuevo.
@@ -108,8 +110,8 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
   `products.entryLeagueId`. **Migración APLICADA en prod** (aditiva, retrocompatible).
 - **Inscripción/cobro:** `createEntryOrder` (entrada por MP, gate de cupo y de **deadline**) +
   `creditOrder → enrollInLeague` (webhook): al pagar inscribe (idempotente). Si paga sin
-  lugar/fuera de término → orden `refunded` + alerta Slack (reembolso manual). Auto-activa la copa
-  de reserva al llenarse (`markCopaFullAndActivateNext`, `lib/copa/lifecycle.ts`).
+  lugar/fuera de término → orden `refunded` + alerta Slack (reembolso manual). Al llenarse, cierra
+  la inscripción (`markCopaFull` → `full`, `lib/copa/lifecycle.ts`); **no** abre otra copa sola.
 - **Tope 5 por país desde 16vos:** `MAX_PER_COUNTRY_KNOCKOUT` (regla general, todos los usuarios).
 - **Ranking desde 16vos** (`scoringStartRoundId`) + **desempate** (mejor pico de fecha →
   `joinedAt`, en `getLeagueRanking`) + **snapshot de corte** (`snapshotCopaRanking`, admin).
@@ -135,8 +137,9 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 ---
 
 ## Resumen
-- **Liga Premium** en **16vos**, **cupo 100**, **2 copas iguales** (1 activa + 1 reserva que se
-  abre sola al llenarse la 1ra), **entrada $5.000**, **premio FIJO $400.000** al **top 10**.
+- **Liga Premium** en **16vos**, **cupo 100**, **UNA sola copa activa** (al llenarse cierra la
+  inscripción; hay una reserva en `draft` que se abre **a mano** si se decide una Liga II),
+  **entrada $5.000**, **premio FIJO $400.000** al **top 10**.
 - **No es pozo**: lo pone la casa. Vamos a **llenar los 100**; si no, la casa cubre.
 - **El negocio son los pines**; la entrada es secundaria.
 - **Cobro por MP** con **alta automática** por webhook. **Único bloqueante: visto legal antes
@@ -167,15 +170,15 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 
 ### ✅ Decisiones tomadas (cerradas)
 - Entrada **$5.000**, premio **fijo garantizado $400.000** al **top 10** (lo pone la casa, no es pozo).
-- **Cupo 100** por copa. **2 copas iguales**: una `open`, la `#2` en `draft` (se habilita manual si la 1ra llena).
+- **Cupo 100.** **UNA sola copa activa**; hay una `#2` en `draft` (reserva oculta) que **NO se abre sola** — solo a mano desde `/admin` si se decide una Liga II.
 - Arranca y rankea desde **16vos** (`scoringStartRoundId`). Un equipo por usuario.
 - Cobro por **Mercado Pago**, alta automática por **webhook** (reusa infra de pines).
 - En 16vos, **5 cambios gratis solo para inscriptos** (premium conservan su pack). ✅ implementado.
 - **Inscripción abre** con la **primera publicación en Instagram** (y quizás Twitter).
 - **Inscripción cierra** con el **kickoff de los 16vos** **o** al llegar a **100 inscriptos** (lo que pase primero).
 - **Payout manual:** publicamos ganadores en **Instagram + mail**; los ganadores se comunican con nosotros para cobrar.
-- **Ligas de 100, premio fijo $400.000** (no se balancea en ligas chicas: bajo ~80 pagos pierden plata). Se llena una y se abre la siguiente.
-- **Escalado por oleadas:** oleada **16vos** (cierra 28/06); si quedan muchos interesados, se abre una **nueva copa que arranca en 8vos** (cierra en el kickoff de 8vos → más días para llenarla). **Cierre de inscripciones manual/discrecional** (el cupo 100 frena cada liga sola).
+- **Ligas de 100, premio fijo $400.000** (no se balancea en ligas chicas: bajo ~80 pagos pierden plata). Se llena UNA; abrir otra es **decisión manual** (no automática).
+- **Escalado por oleadas (manual):** oleada **16vos** (cierra 28/06); si quedan muchos interesados, se puede abrir **a mano** una **nueva copa que arranca en 8vos** (cierra en el kickoff de 8vos → más días para llenarla). **Apertura y cierre de copas siempre manual/discrecional** (el cupo 100 frena la copa sola; abrir otra lo decide el admin).
 - **`MAX_PER_COUNTRY` en 16avos** (`lib/actions.ts`): Quiero que el tope de 3 jugadores por país se libere desde 16avos (32 selecciones vivas) y pase a 5 jugadores por pais. Este tope de 5 por pais ya permite tener equipos 100% funcionales hasta la ultima instancia (4 selecciones vivas. 20 jugadores posibles sobre 15 totales.). El anterior de 3, no.
 
 ---
@@ -199,7 +202,7 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 - [x] **Cierre de inscripción por tiempo**: `createEntryOrder` y `enrollInLeague` rechazan después del kickoff de 16vos (`isCopaPastDeadline`, `lib/copa/lifecycle.ts`). Acción admin `setCopaStatus` para abrir/cerrar a mano.
 - [x] **Overflow / pago-sin-lugar → reembolso**: si se paga sin lugar (carrera por el último cupo) o fuera de término, `enrollInLeague` marca la orden `refunded` + alerta Slack con todos los datos → reembolso manual en MP.
 - [x] **Reconciliación de órdenes pagas no inscriptas**: `getOrphanedEntryOrders` + vista en `/admin` (`AdminCopaControls`).
-- [x] **Activación de copas (misma oleada)**: automática — `markCopaFullAndActivateNext` pasa la copa llena a `full` y la copa de reserva `draft → open`. Fallback manual con `setCopaStatus`.
+- [x] **Cierre de copa por cupo**: `markCopaFull` pasa la copa llena a `full` (cierra la inscripción). **No** abre otra copa: abrir una Liga II/III es **manual** con `setCopaStatus` (draft → open) desde `/admin`.
 - [x] **Desempates**: mejor puntaje en una sola fecha → inscripción más temprana (`getLeagueRanking`). Documentado en Bases y Condiciones.
 - [x] **Momento de corte del ranking**: snapshot tras publicar la Final — `snapshotCopaRanking` (admin) congela `leagueMembers.currentRank`.
 - [ ] **Merge a `main` + deploy** con build verde. *(aún no)*
