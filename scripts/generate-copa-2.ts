@@ -162,6 +162,7 @@ const ICON = {
   ticket: (s = 44, c = "#7A5C10") => lucide('<path d="M2 9a3 3 0 0 1 0 6v2a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-2a3 3 0 0 1 0-6V7a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2Z"/><path d="M13 5v2"/><path d="M13 17v2"/><path d="M13 11v2"/>', s, c),
   trophy: (s = 46, c = "#7A5C10") => lucide('<path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978"/><path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978"/><path d="M18 9h1.5a1 1 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z"/><path d="M6 9H4.5a1 1 0 0 1 0-5H6"/>', s, c),
   pin: (s = 30, c = "#7A5C10") => lucide('<path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>', s, c),
+  gift: (s = 34, c = "#7A5C10") => lucide('<rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5A4.8 8 0 0 1 12 8a4.8 8 0 0 1 4.5-5 2.5 2.5 0 0 1 0 5"/>', s, c),
 };
 
 function numBadge(n: number, accent = "var(--gold)", ink = "var(--gold-ink)") {
@@ -230,7 +231,7 @@ function slide2() {
       </div>
     </div>
     <p class="body" style="font-size:23px;line-height:1.3;margin-top:10px;max-width:940px;"><b>15 figuras + DT</b> con un presupuesto de <b>700M</b> (cada jugador, de 5M a 150M). Entrás a <b>los11desampa.com</b> — no cuesta nada.</p>
-    <div style="margin-top:12px;">${pitch(556, 1.12)}</div>
+    <div style="margin-top:12px;">${pitch(648, 1.22)}</div>
     <div style="display:flex;gap:16px;justify-content:center;margin-top:10px;">${legend}</div>
 
     <div class="eyebrow" style="font-size:16px;margin-top:14px;color:var(--gold-ink);">Tu banco · 4 suplentes + DT</div>
@@ -282,7 +283,7 @@ function slide3() {
   </div>`;
 }
 
-// 4 · Paso 3: Jugá por $400.000 — bracket 16vos→Final + bloque de premio
+// 4 · Paso 3: Jugá por $400.000 — bracket 16vos→Final + bonus 5 cambios + bloque de premio
 function slide4() {
   const fases = ["16vos", "8vos", "4tos", "Semis", "Final"];
   const tl = fases
@@ -296,21 +297,29 @@ function slide4() {
     </div>
     <p class="body" style="font-size:25px;line-height:1.32;margin-top:14px;max-width:940px;">Tu mismo equipo <b>rankea desde los 16vos hasta la final</b>. Hacés cambios fecha a fecha: <b>el que mejor dirige, gana</b>.</p>
 
-    <div class="card" style="margin-top:22px;padding:28px 26px;background:var(--blue-light);border-color:var(--blue);box-shadow:7px 7px 0 var(--blue-border);">
+    <div style="margin-top:18px;background:var(--gold-bg);border:2px solid var(--gold);border-radius:14px;box-shadow:5px 5px 0 var(--gold-border);padding:16px 22px;display:flex;align-items:center;gap:18px;">
+      <div style="flex:0 0 auto;width:56px;height:56px;border-radius:50%;background:#fff;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:3px 3px 0 rgba(17,24,39,.3);">${ICON.gift(32)}</div>
+      <div style="flex:1;">
+        <div class="eyebrow" style="font-size:15px;color:var(--gold-ink);">Bonus al entrar</div>
+        <p class="body" style="font-size:22px;line-height:1.22;margin-top:2px;"><b>5 cambios gratis</b> en los 16vos para rearmar tu equipo <span style="color:var(--ink3);">(en vez de 1).</span></p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px;padding:24px 26px;background:var(--blue-light);border-color:var(--blue);box-shadow:7px 7px 0 var(--blue-border);">
       <div class="eyebrow" style="font-size:17px;color:var(--blue);text-align:center;">Tu Liga Premium corre toda esta ruta</div>
       <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:18px;flex-wrap:nowrap;">${tl}</div>
     </div>
 
-    <div style="margin-top:24px;background:var(--dark);border:2px solid var(--gold);border-radius:18px;padding:34px 42px;box-shadow:9px 9px 0 rgba(17,24,39,.5);">
+    <div style="margin-top:16px;background:var(--dark);border:2px solid var(--gold);border-radius:18px;padding:26px 40px;box-shadow:9px 9px 0 rgba(17,24,39,.5);">
       <div style="display:flex;align-items:center;justify-content:space-between;">
         <div class="eyebrow" style="font-size:18px;color:var(--gold);">Premio garantizado · al top 10</div>
-        <div style="flex:0 0 auto;width:62px;height:62px;border-radius:50%;background:#fff;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:3px 3px 0 rgba(17,24,39,.4);">${ICON.trophy(40)}</div>
+        <div style="flex:0 0 auto;width:58px;height:58px;border-radius:50%;background:#fff;border:2px solid var(--gold);display:flex;align-items:center;justify-content:center;box-shadow:3px 3px 0 rgba(17,24,39,.4);">${ICON.trophy(38)}</div>
       </div>
-      <div class="num" style="color:#fff;font-size:112px;line-height:0.92;margin-top:10px;">$400.000</div>
-      <p class="body" style="font-size:22px;color:#C7CFE0;margin-top:14px;">Se reparte <b style="color:#fff;">sí o sí</b>, aunque no se llenen los 100. Con Bases y Condiciones.</p>
+      <div class="num" style="color:#fff;font-size:96px;line-height:0.92;margin-top:8px;">$400.000</div>
+      <p class="body" style="font-size:21px;color:#C7CFE0;margin-top:10px;">Se reparte <b style="color:#fff;">sí o sí</b>, aunque no se llenen los 100. Con Bases y Condiciones.</p>
     </div>
 
-    <div style="margin-top:22px;background:var(--gold);border-radius:14px;box-shadow:7px 7px 0 var(--ink);padding:26px 38px;text-align:center;">
+    <div style="margin-top:16px;background:var(--gold);border-radius:14px;box-shadow:7px 7px 0 var(--ink);padding:22px 38px;text-align:center;">
       <div style="color:var(--gold-ink);font-weight:800;font-size:24px;">Entrá ahora</div>
       <div class="num" style="color:#3D2E08;font-size:46px;margin-top:6px;">LOS11DESAMPA.COM/COPA</div>
     </div>

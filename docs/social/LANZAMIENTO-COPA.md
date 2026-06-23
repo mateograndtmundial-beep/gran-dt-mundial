@@ -1,22 +1,26 @@
 # Plan de comunicación en redes — Lanzamiento Liga Premium
 
-> **Nombre público de la feature: Liga Premium** (las copas se llaman **"Liga Premium I"** y
-> **"Liga Premium II"**). El marketing **no** gira en torno a "GOLDEN TICKET": ese nombre
-> aparece **solo** en el checkout de Mercado Pago (rótulo del cobro), para no explicitar que
-> es una liga premium paga. En este doc "copa" se usa como sinónimo casual de cada Liga Premium.
->
-> Estrategia de redes para llenar las **Ligas Premium** (cupo 100 c/u, entrada $5.000,
-> premio fijo $400.000 al top 10) antes del **cierre = kickoff de 16vos (28/06)**.
-> Modelo de presupuesto: **escalonado por demanda** — **$100.000 por copa**, se libera el
-> siguiente tramo solo cuando la copa anterior se llena. Hoy es **21/06 a la noche** → la inscripción
-> abre con la 1ra publicación (el lanzamiento se corrió un día respecto del plan original del 20/06,
-> así que **#1 sale esta noche, solo**). Quedan **7 días + el día del cierre**. Para no perder ninguna
-> de las 9 piezas, el **22/06 lleva 2 carruseles** (#2 cómo entrás a la mañana + #3 distribución del
-> premio a la tarde/noche, espaciados); de ahí en más, una pieza por día. Ver §7 y el ANEXO.
->
-> Contexto del producto, estado/pendientes y UI: [`../MONETIZACION.md`](../MONETIZACION.md) ·
-> voz y formatos: [`COPY-VOICE.md`](./COPY-VOICE.md), [`FORMATS.md`](./FORMATS.md),
-> [`VISUAL-SYSTEM.md`](./VISUAL-SYSTEM.md).
+**Qué es este doc:** el playbook de redes para **llenar la Liga Premium** (la liga paga del juego):
+qué publicar, cuándo y con qué mensaje, más las **placas y captions listas para usar**. El producto
+en sí (reglas, cupo, premio, cobro, estado técnico) vive en
+[`../MONETIZACION.md`](../MONETIZACION.md) — este doc es solo el marketing.
+
+**La oferta, en una línea:** cupo **100**, entrada **$5.000**, premio **fijo $400.000 garantizado**
+al **top 10**; se juega con tu equipo de siempre y rankea **desde los 16vos** hasta la final.
+
+**Cómo usar este doc (orden de lectura sugerido):**
+1. **§7 — Calendario:** qué pieza sale cada día.
+2. **ANEXO A — Las 9 piezas:** ángulo, slides y cómo regenerar la placa de cada una.
+3. **ANEXO B — Captions:** el texto listo para copiar y pegar al publicar.
+4. Las §1–§6 son la **estrategia** (presupuesto, cadencia, ángulo, anatomía de cada pieza); leelas
+   una vez para entender el porqué.
+
+**Nombre:** de cara al usuario la feature es **Liga Premium**. "GOLDEN TICKET" aparece **solo** en
+el checkout de Mercado Pago (rótulo del cobro), para no explicitar que es una liga paga. En este doc
+"copa" se usa como sinónimo casual de Liga Premium.
+
+> 📐 Voz y diseño de las placas: [`COPY-VOICE.md`](./COPY-VOICE.md), [`FORMATS.md`](./FORMATS.md),
+> [`VISUAL-SYSTEM.md`](./VISUAL-SYSTEM.md), [`PLACAS-GUIDELINES.md`](./PLACAS-GUIDELINES.md).
 
 ---
 
@@ -62,7 +66,7 @@ Por qué es lo correcto:
 
 | Tramo | Monto | Se activa cuando… | Qué financia |
 |---|---|---|---|
-| **Tramo 1** | **$100.000** | Al lanzar (21/06) | Promoción de la **Copa #1**. |
+| **Tramo 1** | **$100.000** | Al lanzar (23/06) | Promoción de la **Copa #1**. |
 | **Tramo 2** | **$100.000** | Copa #1 **llena (o ~80%+ con ritmo claro)** y **quedan días útiles** | Habilitar (`draft→open`) y promocionar la **Copa #2**. |
 | **Tramo 3+** | **$100.000** c/u | Idem, copa anterior llena + días | Requiere **seedear más copas** + definir si arrancan más tarde (octavos). |
 
@@ -84,7 +88,7 @@ plata no gastada queda disponible, no es una pérdida).
 
 ---
 
-## 1.5 Tamaño de liga y escalado por oleadas (DECIDIDO)
+## 1.5 Tamaño de liga y escalado por oleadas
 **Ligas de 100, premio fijo $400.000.** Se descartó balancear la demanda en N ligas parejas (ej.
 220 → 3 de ~73): con premio fijo, **cada liga por debajo de ~80 pagos pierde plata** (break-even
 80), así que 3 ligas de 73 darían **−$100.000**. Ligas de 100 dejan **+$100.000** cada una. Como
@@ -115,7 +119,7 @@ inscripción y muestra "agotado").
 
 ---
 
-## 1.6 Ángulo central de comunicación: surfear el furor de los prodes (DECIDIDO)
+## 1.6 Ángulo central de comunicación: surfear el furor de los prodes
 **Estamos en el pico del Mundial y todo el mundo está en algún prode.** Es el comportamiento
 caliente del momento: grupos de WhatsApp, planillas de Excel, quinielas de oficina. **No competimos
 contra el prode: lo usamos como rampa de entrada.** El prode es el lenguaje que la gente ya entiende
@@ -177,11 +181,11 @@ contenido** — son tu alcance orgánico gratis. La Copa se monta encima así:
 **No más de 1 post dedicado/día en feed** (en condiciones normales): más que eso fatiga y compite con
 tus propios scoreboards. La frecuencia alta va por **stories**, donde el público caliente convierte.
 
-> ⚠️ **Excepción puntual — 22/06:** como el lanzamiento se corrió al 21/06 a la noche (#1 sale solo
-> esa noche), el **22/06** lleva **2 carruseles dedicados** (#2 cómo entrás + #3 distribución del
-> premio) para no perder ninguna pieza. Mitigá la fatiga **espaciándolos** (#2 a la mañana, #3 a la
-> tarde/noche, ~8 h de diferencia) — así no compiten por alcance entre sí. Del 23/06 en adelante se
-> vuelve a 1 post dedicado/día.
+> ⚠️ **Excepción — 24, 25 y 26/06 llevan 2 piezas cada uno:** con el lanzamiento el **23/06 a la
+> noche** (#1 solo) y el cierre fijo el 28/06, las 9 piezas entran duplicando esos tres días.
+> Mitigá la fatiga **espaciando** las dos piezas del día (una a la mañana, otra a la tarde/noche,
+> ~8 h de diferencia) — así no compiten por alcance entre sí. El **27/06** y el **28/06** vuelven a
+> 1 pieza. Si igual satura, **#6 (jugar gratis) es la sacrificable** (a stories o post-28/06).
 
 ---
 
@@ -249,22 +253,24 @@ Toda publicación/aviso de la Copa, sin excepción, lleva:
 
 ---
 
-## 7. Calendario día por día (21/06 → 28/06) — Copa #1
+## 7. Calendario día por día (23/06 → 28/06) — Copa #1 (ventana comprimida)
 Fases: **Lanzamiento → Educación/Prueba → Escasez → Último llamado.** Cada día = scoreboards de
-siempre (con CTA Copa) + 1 post dedicado + stories. **#1 sale el 21/06 a la noche (solo)** y el
-**22/06 lleva 2 carruseles** (#2 + #3) porque el lanzamiento se corrió un día; el resto, 1 por día.
-**El tramo 2 (Copa #2) reusa este mismo calendario comprimido** según los días que queden cuando se libere.
+siempre (con CTA Copa) + post(s) dedicado(s) + stories. Como el lanzamiento real es el **23/06 a la
+noche** y el cierre (28/06) es fijo, las **9 piezas** entran en ~5 días **duplicando 24, 25 y 26**
+(mañana + tarde). Las piezas de countdown (#7/#8/#9) quedan ancladas a fecha exacta. **El tramo 2
+(Copa #2, si se decide abrir a mano) reusa este calendario comprimido** según los días que queden.
 
-| Día | Fecha | Fase | Post dedicado (ángulo) | Stories | Pauta (Tramo 1) |
+| Día | Fecha | Fase | Post(s) dedicado(s) | Stories | Pauta (Tramo 1) |
 |---|---|---|---|---|---|
-| **D-7** | 21/06 (noche) | 🚀 Lanzamiento | **HERO 1 — "Llegó la Liga Premium"**: lanzamiento (antes gratis entre amigos → ahora por premios). Premio $400k al top 10, cupo 100, entrada $5.000, abre HOY, **desde 16vos**, te sumás **hasta 28/06**. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
-| **D-6** | 22/06 | Educación/Acción + Prueba (**2 carruseles**) | **Cómo entrás (3 pasos)** (a la mañana): armá tu equipo (gratis) → entrá a /copa ($5.000) → rankeás desde 16vos por $400.000; remite al fijado *¿Qué es?*. **+ La distribución del premio** (a la tarde/noche): gráfico top 10 (1°=$120k…). | Los 3 pasos + link al fijado · Desglose del premio + link | Sigue HERO 1 a retargeting + prospecting |
-| **D-5** | 23/06 | Prueba/Confianza | **"El premio se reparte sí o sí"** (anti-objeción "¿es real?": repartimos los $400.000 aunque no se llenen los 100 + B&C). | Q&A / FAQ | Cortar el creativo que peor convierte |
-| **D-4** | 24/06 | Escasez | **Cupo en vivo**: "Ya se anotaron X. Quedan Y de 100." | Cupo en vivo | Subir al mejor creativo · **chequear gatillo Tramo 2** |
-| **D-3** | 25/06 | Escasez | **Social proof** / "los equipos que ya están adentro". | Cupo + countdown + encuesta | Empuje si vas atrasado |
-| **D-2** | 26/06 | Urgencia | **"Faltan 2 días"** — recordatorio fuerte con deadline. | Countdown intensivo + link | Empuje final (HERO escasez) |
-| **D-1** | 27/06 | Urgencia | **"Última chance, cierra mañana"**. | Cupo + countdown | Máximo del empuje 48 h |
-| **D-0** | 28/06 | 🔔 Último llamado | **"CIERRA HOY antes del primer partido"** (a la mañana). | Cuenta regresiva por horas | Última pauta corta; cortar al cerrar |
+| **D-5** | 23/06 (noche) | 🚀 Lanzamiento | **#1 HERO — "Llegó la Liga Premium"**: lanzamiento (antes gratis entre amigos → ahora por premios). Premio $400k al top 10, cupo 100, entrada $5.000, abre HOY, **desde 16vos**, te sumás **hasta 28/06**. | Anuncio + countdown + link a `/copa` | **Activar retargeting + prospecting** (HERO 1) |
+| **D-4** | 24/06 (**2 piezas**) | Educación/Acción + Prueba | **#2 Cómo entrás (3 pasos)** (mañana): armá gratis → entrá a /copa ($5.000) → rankeás desde 16vos por $400.000 (**+ bonus: 5 cambios gratis en 16vos al entrar**); remite al fijado *¿Qué es?*. **+ #3 La distribución del premio** (tarde): gráfico top 10 (1°=$120k…). | Los 3 pasos + link al fijado · Desglose del premio + link | Sigue HERO 1 a retargeting + prospecting |
+| **D-3** | 25/06 (**2 piezas**) | Confianza + General | **#4 "El premio se reparte sí o sí"** (mañana): anti-objeción "¿es real?" — repartimos los $400.000 aunque no se llenen los 100 + B&C. **+ #6 "Jugá gratis con amigos"** (tarde, general): capta jugador nuevo. | Q&A / FAQ · Liga con amigos | Cortar el creativo que peor convierte |
+| **D-2** | 26/06 (**2 piezas**) | Escasez + Urgencia | **#5 Cupo en vivo** (mañana): "Ya se anotaron X. Quedan Y de 100." **+ #7 "Faltan 2 días"** (tarde): recordatorio fuerte con deadline (26→28 = 2 días). | Cupo en vivo + countdown | Subir al mejor creativo · **empuje final 48 h** |
+| **D-1** | 27/06 | Urgencia | **#8 "Última chance, cierra mañana"**. | Cupo + countdown | Máximo del empuje 48 h |
+| **D-0** | 28/06 (mañana) | 🔔 Último llamado | **#9 "CIERRA HOY antes del primer partido"**. | Cuenta regresiva por horas | Última pauta corta; cortar al cerrar |
+
+> **#6 (general / jugar gratis) es la pieza flexible:** si los días dobles saturan, moverla a
+> stories o correrla *después* del 28/06 (el juego gratis sigue) sin afectar la secuencia premium.
 
 **Reusá tu tooling**: las placas de la Copa siguen `VISUAL-SYSTEM.md`; el gráfico de premio y el
 contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz de `COPY-VOICE.md`.
@@ -272,7 +278,7 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 ---
 
 ## 8. Métricas y la regla que dispara el tramo siguiente
-- **Ritmo objetivo por copa**: 100 inscriptos en los días disponibles. Para la #1 (~7 días, tras correrse el lanzamiento al 21/06) ≈ **14–15/día**.
+- **Ritmo objetivo por copa**: 100 inscriptos en los días disponibles. Para la #1 (~5 días, con el lanzamiento el 23/06 a la noche) ≈ **20/día**.
 - **Gatillo del Tramo 2**: Copa #1 **llena (o ~80%+ con ritmo sostenido)** **y** quedan **≥ 3–4 días
   útiles** antes del 28/06 → liberás $100k, hacés `draft→open` la Copa #2 y arrancás su calendario.
 - **Si NO se cumple el gatillo**: no liberás (la plata queda; cero pérdida). Si la #1 va lenta,
@@ -299,7 +305,7 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 
 ---
 
-## ANEXO — Las 9 publicaciones de IG, una por una
+## ANEXO A — Las 9 publicaciones de IG, una por una
 
 ### Nombre público y prode (recordatorio)
 - **Nombre público: Liga Premium.** "GOLDEN TICKET" **no** aparece nunca en copy público — es solo
@@ -320,16 +326,20 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 
 | # | Día · Fecha | Fase | Ángulo | Objetivo | CTA principal |
 |---|---|---|---|---|---|
-| 1 | D-7 · 21/06 (noche) | 🚀 Lanzamiento | "Llegó la Liga Premium" — antes gratis entre amigos, ahora por premios (desde 16vos, hasta 28/06) | 🏆 Liga Premium | Sumate: los11desampa.com/copa |
-| 2 | D-6 · 22/06 (mañana) | Educación/Acción | Cómo entrás a la Liga Premium (en 3 pasos; paso 1 gratis) | 🏆🎮 Ambos | Armá tu equipo / Entrá a la Copa |
-| 3 | D-6 · 22/06 (tarde) | Educación/Prueba | La distribución del premio (top 10, transparente) | 🏆 Liga Premium | Anotate antes que se llene |
-| 4 | D-5 · 23/06 | Confianza | "El premio se reparte sí o sí" (aunque no se llenen los 100) | 🏆 Liga Premium | Sumate con confianza |
-| 5 | D-4 · 24/06 | Escasez | Cupo en vivo: quedan Y de 100 | 🏆 Liga Premium | Asegurá tu lugar |
-| 6 | D-3 · 25/06 | Prueba/General | "Jugá gratis con tus amigos" (el prode del grupo, bien hecho) | 🎮 General | Creá tu liga con amigos |
-| 7 | D-2 · 26/06 | Urgencia | "Faltan 2 días" | 🏆 Liga Premium | Entrá antes del cierre |
-| 8 | D-1 · 27/06 | Urgencia | "Última chance, cierra mañana" | 🏆 Liga Premium | Último día para anotarte |
-| 9 | D-0 · 28/06 | 🔔 Último llamado | "Cierra HOY" + jugá gratis igual | 🏆🎮 Ambos | Cierra hoy / Jugá gratis igual |
+| 1 | D-5 · 23/06 (mar, noche) | 🚀 Lanzamiento | "Llegó la Liga Premium" — antes gratis entre amigos, ahora por premios (desde 16vos, hasta 28/06) | 🏆 Liga Premium | Sumate: los11desampa.com/copa |
+| 2 | D-4 · 24/06 (mié, mañana) | Educación/Acción | Cómo entrás a la Liga Premium (en 3 pasos; paso 1 gratis; **+ 5 cambios gratis en 16vos**) | 🏆🎮 Ambos | Armá tu equipo / Entrá a la Copa |
+| 3 | D-4 · 24/06 (mié, tarde) | Educación/Prueba | La distribución del premio (top 10, transparente) | 🏆 Liga Premium | Anotate antes que se llene |
+| 4 | D-3 · 25/06 (jue, mañana) | Confianza | "El premio se reparte sí o sí" (aunque no se llenen los 100) | 🏆 Liga Premium | Sumate con confianza |
+| 6 | D-3 · 25/06 (jue, tarde) | Prueba/General | "Jugá gratis con tus amigos" (el prode del grupo, bien hecho) | 🎮 General | Creá tu liga con amigos |
+| 5 | D-2 · 26/06 (vie, mañana) | Escasez | Cupo en vivo: quedan Y de 100 | 🏆 Liga Premium | Asegurá tu lugar |
+| 7 | D-2 · 26/06 (vie, tarde) | Urgencia | "Faltan 2 días" | 🏆 Liga Premium | Entrá antes del cierre |
+| 8 | D-1 · 27/06 (sáb) | Urgencia | "Última chance, cierra mañana" | 🏆 Liga Premium | Último día para anotarte |
+| 9 | D-0 · 28/06 (dom, mañana) | 🔔 Último llamado | "Cierra HOY" + jugá gratis igual | 🏆🎮 Ambos | Cierra hoy / Jugá gratis igual |
 
+> **Orden de publicación:** 23 → #1 · 24 → #2 (mañana) + #3 (tarde) · 25 → #4 (mañana) + #6 (tarde) ·
+> 26 → #5 (mañana) + #7 (tarde) · 27 → #8 · 28 → #9. La tabla está ordenada por número de pieza, no
+> por fecha de salida.
+>
 > **Reparto de objetivos:** los posts **6 y 9** abren a usuario general (jugar gratis) y el **2**
 > (cómo entrás) tiene el **primer paso gratis** como rampa; el resto sostiene el foco premium. El
 > **1** (lanzamiento) y el **4** (confianza) usan el contraste con el prode; el **3** (premio) y el
@@ -338,17 +348,16 @@ contador de cupo pueden ser plantillas nuevas en `assets/`. Captions con la voz 
 
 ---
 
-### 1 · D-7 · domingo 21/06 (a la noche) — 🚀 Lanzamiento (HERO 1)
-> **Nota de cadencia:** el lanzamiento se corrió del 20 al **21/06** y sale **esta noche, solo**. El
-> día perdido se recupera el **22/06**, que lleva **2 carruseles** (#2 *Cómo entrás* a la mañana + #3
-> *Distribución del premio* a la tarde/noche), sin descartar ninguna pieza. **No hay que regenerar la
-> placa**: el slide dice "Abre HOY" (sigue siendo cierto) y "cierra 28/06" (sin cambios).
+### 1 · D-5 · martes 23/06 (a la noche) — 🚀 Lanzamiento (HERO 1)
+> **Nota de cadencia:** lanzamiento real **martes 23/06 a la noche**, sale **solo**. Como el cierre
+> (28/06) es fijo, los días **24, 25 y 26 llevan 2 piezas** cada uno para no descartar ninguna. **No
+> hay que regenerar esta placa**: el slide dice "Abre HOY" (sigue siendo cierto) y "cierra 28/06"
+> (sin cambios).
 **Objetivo:** 🏆 Liga Premium. **Ángulo LANZAMIENTO** (no se abre "de base" con el prode): se
 presenta la Liga Premium como algo **nuevo**. Hasta ahora se jugaba **gratis entre amigos**; ahora
 llega la posibilidad de **competir por premios** y **demostrar quién sabe de verdad**. Le habla a
 todo el jugador actual + al futbolero que viene siguiendo el Mundial.
-**Formato:** carrusel 4 slides (generado: `scripts/generate-copa-1.ts` → `out/copa-1/copa-1_01..04.png`).
-**Estado:** GENERADO con los slides de abajo.
+**Formato:** carrusel 4 slides — `scripts/generate-copa-1.ts` → `out/copa-1/copa-1_01..04.png`.
 
 **Slides (idea de cada uno):**
 1. **Portada / lanzamiento:** "**Llegó la Liga Premium.**" + "Hasta ahora jugabas gratis con tus
@@ -364,21 +373,7 @@ todo el jugador actual + al futbolero que viene siguiendo el Mundial.
    no se llenen los 100. Con **Bases y Condiciones**. Cierra el 28/06 o al llenar los 100.
    Sumate: los11desampa.com/copa."
 
-**Qué dice (caption):**
-> 🏆 **Lanzamos la Liga Premium** del Mundial.
->
-> Hasta ahora jugabas **gratis con tus amigos**. Ahora podés **competir por premios de verdad** y
-> demostrar quién sabe más de fútbol: armás tu equipo, lo dirigís fecha a fecha y jugás por
-> **$400.000** repartidos entre los 10 primeros.
->
-> 💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Rankea desde 16vos · 🛡️ Repartimos el premio **sí o sí**,
-> aunque no se llenen los 100.
->
-> Te sumás **hasta el 28/06** (o hasta que se llenen los 100). Link en bio 👉 los11desampa.com/copa
->
-> ¿Te animás a demostrar que sos el que más sabe? 👇 *(Bases y Condiciones en bio.)*
->
-> #Mundial2026 #WorldCup2026 #Los11DeSampa #FantasyFutbol #LigaPremium
+**Caption:** lista para copiar tal cual en el **ANEXO B (#1)** (al final del doc).
 
 **Idea que transmite:** llegó algo nuevo y en serio — lo que jugabas gratis entre amigos ahora se
 juega por premios, y acá se demuestra **quién sabe de verdad**.
@@ -394,13 +389,13 @@ a B&C sí o sí.
 
 ---
 
-### 2 · D-6 · lunes 22/06 (a la mañana) — Cómo entrás a la Liga Premium (en 3 pasos)
-**Objetivo:** 🏆🎮 Ambos. **Primer carrusel del día doble (22/06)** — la mañana siguiente al
-lanzamiento: explica **cómo se entra**, no "qué es" (eso ya lo cubre el carrusel **fijado *¿Qué
+### 2 · D-4 · miércoles 24/06 (a la mañana) — Cómo entrás a la Liga Premium (en 3 pasos)
+**Objetivo:** 🏆🎮 Ambos. **Primer carrusel del día doble (24/06, a la mañana)** — al día siguiente
+del lanzamiento: explica **cómo se entra**, no "qué es" (eso ya lo cubre el carrusel **fijado *¿Qué
 es?***). El **paso 1 es gratis** (armar el equipo), así que también capta jugador nuevo; el paso 2 es
 la inscripción paga. Le habla al que vio el lanzamiento anoche y se pregunta "¿y cómo me sumo?".
 **Formato:** carrusel 4 slides (pasos), generado: `scripts/generate-copa-2.ts` → `out/copa-2/copa-2_01..04.png`.
-**Estado:** GENERADO. Cada slide lleva una **figura** (sin texto suelto): roadmap de 3 nodos → cancha
+**Diseño:** cada slide lleva una **figura** (sin texto suelto): roadmap de 3 nodos → cancha
 real con figuritas (reusa el tooling de `generate-que-es.ts`) → "ticket" de entrada → bracket
 16vos→Final + bloque de premio.
 
@@ -414,39 +409,30 @@ real con figuritas (reusa el tooling de `generate-que-es.ts`) → "ticket" de en
    100 · cierra 28/06). "Desde los11desampa.com/copa asegurás tu lugar."
 4. **Paso 3 — Jugá por $400.000:** **bracket** 16vos→Final (rankea toda la ruta) + bloque $400.000
    "se reparte sí o sí". "Quedás rankeado desde 16vos hasta la final. El que mejor dirige, gana."
+   **Bonus de inscripción** (chip dorado): al entrar a la Copa, **arrancás los 16vos con 5 cambios
+   gratis** para rearmar tu equipo (vs. 1 normal). Pensado para quien ya tiene equipo de grupos; el
+   que recién arma ya edita libre.
 
 **Regenerar:** `npx tsx scripts/generate-copa-2.ts` (las imágenes van a `out/copa-2/`, gitignored).
 
-**Qué dice (caption):**
-> 🎟️ Te lo simplificamos: **entrar a la Liga Premium son 3 pasos.**
->
-> 1️⃣ Armá tu equipo en los11desampa.com (gratis: 15 figuras + DT).
-> 2️⃣ Entrá a la Copa en los11desampa.com/copa y asegurá tu lugar ($5.000, cupo 100).
-> 3️⃣ Listo: quedás rankeado **desde 16vos hasta la final**, jugando por **$400.000** al top 10.
->
-> ¿Todavía no sabés cómo se juega? Mirá el carrusel fijado 📌
->
-> Te sumás **hasta el 28/06** (o hasta que se llenen los 100). 🔗 bio · los11desampa.com/copa
->
-> ¿Ya tenés tu equipo armado? 👇 *(Bases y Condiciones en bio.)*
->
-> #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
+**Caption:** lista para copiar tal cual en el **ANEXO B (#2)** (al final del doc). Incluye la línea
+de **bonus de 5 cambios** en 16vos.
 
 **Idea que transmite:** entrar es simple y rápido — armás (gratis), pagás la entrada, jugás por la plata.
 **Por qué:** convierte la curiosidad del lanzamiento en acción concreta (mata la fricción del "¿cómo
-me anoto?") y aprovecha el primer paso gratis para sumar jugadores nuevos. Va la **mañana siguiente**
-al lanzamiento (primer carrusel del día doble 22/06), capitalizando el envión de la apertura.
+me anoto?") y aprovecha el primer paso gratis para sumar jugadores nuevos. Va la **mañana del 24/06**
+(primer carrusel del día doble), capitalizando el envión de la apertura.
 **Cuidados:** dejar claro que el **paso 1 es gratis** y el **2 es pago**; primera persona; link a B&C.
 
 ---
 
-### 3 · D-6 · lunes 22/06 (a la tarde/noche) — Educación/Prueba: la distribución del premio
-> **Nota de cadencia:** **segundo carrusel del día doble (22/06)**, ~8 h después del #2, para recuperar
-> el día que se corrió el lanzamiento sin descartar piezas. Del 23/06 en adelante vuelve 1 post/día.
+### 3 · D-4 · miércoles 24/06 (a la tarde/noche) — Educación/Prueba: la distribución del premio
+> **Nota de cadencia:** **segundo carrusel del día doble (24/06)**, ~8 h después del #2, para meter
+> las 9 piezas en la ventana comprimida sin descartar ninguna. El 27 y 28/06 vuelven a 1 post/día.
 
 **Objetivo:** 🏆 Liga Premium. Le habla al interesado que duda "¿y cuánto se lleva cada uno?".
 **Formato:** carrusel 3 slides, generado: `scripts/generate-copa-3.ts` → `out/copa-3/copa-3_01..03.png`.
-**Estado:** GENERADO. Figura por slide: **podio top-3** (portada) → **gráfico de barras del top 10**
+**Diseño:** figura por slide: **podio top-3** (portada) → **gráfico de barras del top 10**
 (transparencia) → CTA. Montos cableados desde `docs/MONETIZACION.md` (fuente de verdad).
 
 **Slides:**
@@ -460,19 +446,7 @@ al lanzamiento (primer carrusel del día doble 22/06), capitalizando el envión 
 
 **Regenerar:** `npx tsx scripts/generate-copa-3.ts` (las imágenes van a `out/copa-3/`, gitignored).
 
-**Qué dice (caption):**
-> 💰 Transparencia total: así se reparten los **$400.000** de la Liga Premium.
->
-> No es "el ganador se lleva todo y listo". **Premiamos al top 10**: desde $120.000 el 1° hasta
-> $15.000 el 10°. Y es **fijo** — repartimos los $400.000 completos, aunque no se llenen los 100.
->
-> 💵 Entrada $5.000 · 🎟️ Cupo 100 · 🏁 Cierra 28/06.
->
-> Link en bio 👉 los11desampa.com/copa
->
-> Si entrás, ¿a qué puesto apuntás? 👇 *(Bases y Condiciones en bio.)*
->
-> #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #Premio
+**Caption:** lista para copiar tal cual en el **ANEXO B (#3)** (al final del doc).
 
 **Idea que transmite:** el premio es real, repartido y transparente — entrar al top 10 (no solo
 ganar) ya paga.
@@ -482,13 +456,13 @@ ganar) ya paga.
 
 ---
 
-### 4 · D-5 · martes 23/06 — Por qué la Liga Premium (no el prode del grupo)
+### 4 · D-3 · jueves 25/06 (a la mañana) — Por qué la Liga Premium (no el prode del grupo)
 **Objetivo:** 🏆 Liga Premium. Le habla al que ya está en un prode del laburo/amigos: por qué jugar
 esto en serio. **Dos pilares** (NO "premio fijo vs pozo" — ver Cuidados): **(1) es skill** —
 estrategia, no adivinar: elegís jugadores con criterio de presupuesto y te medís con los mejores; y
 **(2) se paga seguro** — nadie se baja a mitad de camino, premio garantizado con B&C.
 **Formato:** carrusel 3 slides, generado: `scripts/generate-copa-4.ts` → `out/copa-4/copa-4_01..03.png`.
-**Estado:** GENERADO. Figura por slide: **2 pilares** (portada) → **plantel real + barra de
+**Diseño:** figura por slide: **2 pilares** (portada) → **plantel real + barra de
 presupuesto** (estrategia/criterio) → confianza + CTA.
 
 **Slides:**
@@ -501,22 +475,7 @@ presupuesto** (estrategia/criterio) → confianza + CTA.
 
 **Regenerar:** `npx tsx scripts/generate-copa-4.ts` (las imágenes van a `out/copa-4/`, gitignored).
 
-**Qué dice (caption):**
-> ⚽ ¿Por qué jugar la Liga Premium y no quedarte solo con el prode del laburo?
->
-> **1) Porque es estrategia, no suerte.** No marcás resultados al azar: elegís 15 cracks reales,
-> manejás un presupuesto (hay que tener criterio para no pasarte) y dirigís tu equipo fecha a fecha.
-> Te medís contra los mejores DT del país.
->
-> **2) Porque se paga, siempre.** Acá nadie se baja a mitad de camino ni "desaparece" con la plata: el
-> premio de **$400.000** está garantizado, se reparte **sí o sí** y con **Bases y Condiciones**.
->
-> Es la diferencia entre adivinar resultados y jugar en serio. 💵 $5.000 · 🎟️ 100 lugares · 🏁 28/06
-> 🔗 bio · los11desampa.com/copa
->
-> ¿Te pasó alguna vez que el prode del grupo no se pagó? Contá 👇
->
-> #LigaPremium #Prode #Mundial2026 #Los11DeSampa #FantasyFutbol
+**Caption:** lista para copiar tal cual en el **ANEXO B (#4)** (al final del doc).
 
 **Idea que transmite:** la Liga Premium es **más divertida y más seria** que el prode: se gana por
 saber (estrategia + presupuesto, no azar) y la plata **está asegurada** (nadie se baja).
@@ -528,10 +487,10 @@ baja) **+ es skill** (no azar). No usar "lo pone la casa"; primera persona; no i
 
 ---
 
-### 5 · D-4 · miércoles 24/06 — Escasez: cupo en vivo
+### 5 · D-2 · viernes 26/06 (a la mañana) — Escasez: cupo en vivo
 **Objetivo:** 🏆 Liga Premium. Le habla al indeciso ("lo pienso") — la escasez lo empuja.
 **Formato:** carrusel 2 slides, generado: `scripts/generate-copa-5.ts` → `out/copa-5/copa-5_01..02.png`.
-**Estado:** GENERADO (con **placeholder** de cupo). Figura hero: **grilla de 100 lugares** (ocupados
+**Diseño:** figura hero: **grilla de 100 lugares** (ocupados
 en dorado / libres en blanco) → el cupo finito se ve de un vistazo.
 
 > ⚠️ **El número es REAL.** Antes de publicar, sacá los anotados de `getCopasStatus` y regenerá con
@@ -543,17 +502,8 @@ en dorado / libres en blanco) → el cupo finito se ve de un vistazo.
 
 **Regenerar:** `npx tsx scripts/generate-copa-5.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-5/`, gitignored).
 
-**Qué dice (caption):**
-> 🎟️ El cupo se mueve: **quedan [Y] de 100** lugares en la Liga Premium.
->
-> No es marketing de humo — son **100 y nada más**. Cuando se llena, se cierra y listo. Los que
-> entran juegan por **$400.000** garantizados al top 10.
->
-> 💵 $5.000 · 🏁 Cierra 28/06 (o antes si se llena) · 🔗 bio · los11desampa.com/copa
->
-> ¿Entrás o te lo vas a perder? 👇 *(Bases y Condiciones en bio.)*
->
-> #LigaPremium #Mundial2026 #Los11DeSampa #CupoLimitado #FantasyFutbol
+**Caption:** lista para copiar en el **ANEXO B (#5)** (al final del doc). Completar `[Y]` con el
+dato real de `getCopasStatus` antes de publicar.
 
 **Idea que transmite:** los lugares son reales y finitos — si lo pensás mucho, te quedás afuera.
 **Por qué:** primer empujón de escasez con dato real; el cupo llenándose es la mejor prueba social
@@ -563,10 +513,10 @@ del Tramo 2 (`LANZAMIENTO-COPA.md` §8).
 
 ---
 
-### 6 · D-3 · jueves 25/06 — Prueba/General: "jugá gratis con tus amigos"
+### 6 · D-3 · jueves 25/06 (a la tarde) — Prueba/General: "jugá gratis con tus amigos"
 **Objetivo:** 🎮 General. Le habla al que no quiere pagar pero sí quiere competir con su grupo.
 **Formato:** carrusel 3 slides, generado: `scripts/generate-copa-6.ts` → `out/copa-6/copa-6_01..03.png`.
-**Estado:** GENERADO. Como es del **modo gratis**, el footer es **general** (`los11desampa.com`,
+**Diseño:** como es del **modo gratis**, el footer es **general** (`los11desampa.com`,
 tag "Jugá gratis"), **no** `/COPA`. Figura por slide: **mockup de chat** del grupo (portada) → **3
 pasos + mini-ranking** de liga privada en vivo → puente **gratis vs Premium** + CTA.
 
@@ -581,19 +531,7 @@ pasos + mini-ranking** de liga privada en vivo → puente **gratis vs Premium** 
 
 **Regenerar:** `npx tsx scripts/generate-copa-6.ts` (las imágenes van a `out/copa-6/`, gitignored).
 
-**Qué dice (caption):**
-> 👯 El grupo de fútbol de WhatsApp merece algo mejor que una planilla de Excel.
->
-> En Los 11 de Sampa armás tu **liga privada gratis**: pasás el código, se anotan los pibes y
-> compiten **todo el Mundial** con sus equipos. Sin que nadie tenga que cargar resultados a mano ni
-> perseguir a nadie para que pague.
->
-> Es el prode del grupo, pero **bien hecho**. Y si después quieren jugar fuerte, ahí está la **Liga
-> Premium** por $400.000. 🔗 bio.
->
-> Armá la liga gratis en los11desampa.com — etiquetá a los 3 que NO pueden faltar 👇
->
-> #Los11DeSampa #FantasyFutbol #Mundial2026 #LigaConAmigos #Prode
+**Caption:** lista para copiar tal cual en el **ANEXO B (#6)** (al final del doc).
 
 **Idea que transmite:** el corazón gratis del juego es jugar con tu grupo — sin fricción, mejor que
 el prode casero.
@@ -604,10 +542,10 @@ constante de la semana.
 
 ---
 
-### 7 · D-2 · viernes 26/06 — Urgencia: "faltan 2 días"
+### 7 · D-2 · viernes 26/06 (a la tarde) — Urgencia: "faltan 2 días"
 **Objetivo:** 🏆 Liga Premium. Le habla al interesado tibio que venía postergando.
 **Formato:** carrusel 2 slides, generado: `scripts/generate-copa-7.ts` → `out/copa-7/copa-7_01..02.png`.
-**Estado:** GENERADO (con **placeholder** de cupo). Figura por slide: **countdown** (numeral gigante
+**Diseño:** figura por slide: **countdown** (numeral gigante
 "2 DÍAS" + timeline VIE 26 / SÁB 27 / DOM 28 cierra) → **cupo en vivo (barra)** + recap oferta + CTA.
 
 > ⚠️ **El cupo es REAL.** Igual que la #5: sacá los anotados de `getCopasStatus` y regenerá con
@@ -621,18 +559,8 @@ constante de la semana.
 
 **Regenerar:** `npx tsx scripts/generate-copa-7.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-7/`, gitignored).
 
-**Qué dice (caption):**
-> ⏳ **Faltan 2 días.** La inscripción a la Liga Premium cierra el **28/06**, justo antes del primer
-> partido de 16vos.
->
-> Después no hay repechaje: o estás adentro jugando por **$400.000**, o lo mirás de afuera. Quedan
-> **[Y] de 100** lugares.
->
-> 💵 $5.000 · 🔗 bio · los11desampa.com/copa
->
-> ¿Lo dejás para último momento otra vez? 👇 *(Bases y Condiciones en bio.)*
->
-> #LigaPremium #Mundial2026 #Los11DeSampa #UltimosDias #FantasyFutbol
+**Caption:** lista para copiar en el **ANEXO B (#7)** (al final del doc). Completar `[Y]` con el
+dato real de `getCopasStatus` antes de publicar.
 
 **Idea que transmite:** la ventana se cierra; postergar = quedar afuera.
 **Por qué:** arranca el empuje final de 48 h (donde se concentra parte de la pauta). Combina deadline
@@ -644,7 +572,7 @@ constante de la semana.
 ### 8 · D-1 · sábado 27/06 — Urgencia: "última chance, cierra mañana"
 **Objetivo:** 🏆 Liga Premium. Le habla al que ya decidió pero no se anotó todavía.
 **Formato:** carrusel 2 slides, generado: `scripts/generate-copa-8.ts` → `out/copa-8/copa-8_01..02.png`.
-**Estado:** GENERADO (con **placeholder** de cupo). Más intensa que la #7 (rojo dominante). Figura por
+**Diseño:** más intensa que la #7 (rojo dominante). Figura por
 slide: hero **"1 DÍA"** (anillo gigante dorado + campanita + recap de la oferta) → cupo en vivo (barra) + CTA.
 
 > ⚠️ **El cupo es REAL.** Igual que la #5/#7: sacá los anotados de `getCopasStatus` y regenerá con
@@ -658,17 +586,8 @@ slide: hero **"1 DÍA"** (anillo gigante dorado + campanita + recap de la oferta
 
 **Regenerar:** `npx tsx scripts/generate-copa-8.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-8/`, gitignored).
 
-**Qué dice (caption):**
-> 🚨 **Última chance.** Mañana cierra la inscripción a la Liga Premium y no se reabre.
->
-> Si venías pensándolo: es **ahora**. $400.000 garantizados al top 10, cupo 100, entrada $5.000.
-> Quedan **[Y]** lugares.
->
-> 🔗 bio 👉 los11desampa.com/copa
->
-> Etiquetá al amigo indeciso antes de que sea tarde 👇 *(Bases y Condiciones en bio.)*
->
-> #LigaPremium #UltimaChance #Mundial2026 #Los11DeSampa #FantasyFutbol
+**Caption:** lista para copiar en el **ANEXO B (#8)** (al final del doc). Completar `[Y]` con el
+dato real de `getCopasStatus` antes de publicar.
 
 **Idea que transmite:** es literalmente el último llamado útil — decidir hoy.
 **Por qué:** pico del empuje de 48 h; el "etiquetá al indeciso" suma alcance y trae rezagados. Máxima
@@ -677,11 +596,11 @@ escasez antes del cierre.
 
 ---
 
-### 9 · D-0 · domingo 28/06 — 🔔 Último llamado + rescate al general
+### 9 · D-0 · domingo 28/06 (a la mañana) — 🔔 Último llamado + rescate al general
 **Objetivo:** 🏆🎮 Ambos. Cierra la Liga Premium **a la mañana** y, para los que no llegaron, los
 invita a jugar **gratis** igual (no perder el lead).
 **Formato:** carrusel 2 slides, generado: `scripts/generate-copa-9.ts` → `out/copa-9/copa-9_01..02.png`.
-**Estado:** GENERADO (con **placeholder** de cupo). Cada slide cambia de **footer/acento**: s1 premium
+**Diseño:** cada slide cambia de **footer/acento**: s1 premium
 (`/COPA`, rojo/dorado) → s2 general gratis (`los11desampa.com`, "Jugá gratis", verde). El puente lo
 arma la barra inferior de la s1 ("¿No llegás a la Premium? Igual jugás gratis").
 
@@ -699,16 +618,8 @@ arma la barra inferior de la s1 ("¿No llegás a la Premium? Igual jugás gratis
 
 **Regenerar:** `npx tsx scripts/generate-copa-9.ts --enrolled <N>` (real de `getCopasStatus`; `out/copa-9/`, gitignored).
 
-**Qué dice (caption):**
-> 🔔 **Hoy cierra la Liga Premium.** Antes de que ruede la pelota en 16vos. Últimas horas para entrar
-> y jugar por **$400.000**. 🔗 bio · los11desampa.com/copa
->
-> ¿No llegás a tiempo o no es lo tuyo lo de la plata? **No pasa nada**: el juego sigue **gratis**.
-> Armá tu equipo, metete en el ranking global y jugá con tus amigos hasta la final.
->
-> 🎮 los11desampa.com — la pelota no espera 👇
->
-> #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
+**Caption:** lista para copiar en el **ANEXO B (#9)** (al final del doc). Una vez cerrada la
+inscripción, editar la caption quitando el CTA de pago (dejar solo el de jugar gratis).
 
 **Idea que transmite:** se acabó el tiempo de la Premium — pero el juego (gratis) sigue para todos.
 **Por qué:** exprime las últimas horas de inscripción **y** convierte el cierre en captación general,
@@ -719,7 +630,7 @@ inscripto de la oleada 8vos). Cerrar la pauta al cierre de inscripción.
 ---
 
 ### Publicación ANCLADA #1 — "¿Qué es Los 11 de Sampa?" (evergreen)
-**Estado:** GENERADA. Carrusel **explicativo de 7 placas diseñadas** (sin screenshots) en
+**Diseño:** carrusel **explicativo de 7 placas diseñadas** (sin screenshots) en
 `out/que-es/que-es_01..07.png` (1080×1350), creado con `scripts/generate-que-es.ts` (mismo render
 que los scoreboards; cancha con el equipo real "Jogo Bonito", chips Panini, banderas de
 `flags.json`). Diseño de cada slide: cableado en el propio generador. Guía: [`PLACAS-GUIDELINES.md`](./PLACAS-GUIDELINES.md).
@@ -733,7 +644,7 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
 5) Capitán (duplica) y banco (auto-sustitución) · 6) 8 fechas + "sumate cuando quieras" · 7) Competí
 (ranking + ligas) + teaser de premios + CTA.
 
-**Caption (borrador):**
+**Caption:**
 > 🏆 ¿Qué es Los 11 de Sampa? El fantasy del Mundial 2026. Te lo explicamos en 1 minuto 👇
 >
 > Sos el DT: armás un equipo con 15 figuras reales del Mundial + un técnico, con un presupuesto.
@@ -760,8 +671,7 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
   `COPY-VOICE.md`.
 - **Apoyate en esquemas/figuras, no solo texto** (referencia: `out/que-es`, `scripts/generate-que-es.ts`):
   cancha con jugadores reales + chips Panini + banderas, barras del reparto del premio, iconos. Cada
-  pieza debería "mostrar", no solo "decir". El post #1 ya está generado (`generate-copa-1.ts`); ir
-  llevando el resto de las publicaciones a este nivel visual al iterarlas.
+  pieza debe "mostrar", no solo "decir". Las 9 placas se regeneran con su `generate-copa-N.ts`.
 - **Tono (decidido):** primera persona (**premiamos / repartimos / lanzamos**) y el premio siempre
   como **garantizado y repartido sí o sí, aunque no se llenen los 100** — **nunca** "lo pone la casa".
 - **Cupo "[X]/[Y]"**: completar con el dato real de `getCopasStatus` al momento de publicar.
@@ -779,7 +689,7 @@ presupuesto 700M + banco) · 4) Cómo sumás puntos (gol por puesto, valla, figu
 > todo lo premium. **No usar "lo pone la casa"**; premio siempre "se reparte sí o sí, aunque no se
 > llenen los 100". Primera persona (premiamos / repartimos / lanzamos).
 
-### #1 · 21/06 (noche) — Lanzamiento
+### #1 · 23/06 (noche) — Lanzamiento
 ```text
 🏆 Lanzamos la Liga Premium del Mundial.
 
@@ -794,13 +704,15 @@ Te sumás hasta el 28/06 (o hasta que se llenen los 100). Link en bio 👉 los11
 #Mundial2026 #WorldCup2026 #Los11DeSampa #FantasyFutbol #LigaPremium
 ```
 
-### #2 · 22/06 (mañana) — Cómo entrás (en 3 pasos)
+### #2 · 24/06 (mañana) — Cómo entrás (en 3 pasos)
 ```text
 🎟️ Te lo simplificamos: entrar a la Liga Premium son 3 pasos.
 
 1️⃣ Armá tu equipo en los11desampa.com (gratis: 15 figuras + DT).
 2️⃣ Entrá a la Copa en los11desampa.com/copa y asegurá tu lugar ($5.000, cupo 100).
 3️⃣ Listo: quedás rankeado desde 16vos hasta la final, jugando por $400.000 al top 10.
+
+🎁 Bonus: si ya tenés tu equipo, al entrar arrancás los 16vos con 5 cambios gratis para rearmarlo.
 
 ¿Todavía no sabés cómo se juega? Mirá el carrusel fijado 📌
 
@@ -811,7 +723,7 @@ Te sumás hasta el 28/06 (o hasta que se llenen los 100). 🔗 bio · los11desam
 #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
 ```
 
-### #3 · 22/06 (tarde) — La distribución del premio
+### #3 · 24/06 (tarde) — La distribución del premio
 ```text
 💰 Transparencia total: así repartimos los $400.000 de la Liga Premium.
 
@@ -826,7 +738,7 @@ Si entrás, ¿a qué puesto apuntás? 👇 (Bases y Condiciones en bio.)
 #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #Premio
 ```
 
-### #4 · 23/06 — Por qué la Liga Premium (no el prode del grupo)
+### #4 · 25/06 (mañana) — Por qué la Liga Premium (no el prode del grupo)
 ```text
 ⚽ ¿Por qué jugar la Liga Premium y no quedarte solo con el prode del laburo?
 
@@ -842,7 +754,7 @@ Es la diferencia entre adivinar resultados y jugar en serio. 💵 $5.000 · 🎟
 #LigaPremium #Prode #Mundial2026 #Los11DeSampa #FantasyFutbol
 ```
 
-### #5 · 24/06 — Cupo en vivo
+### #5 · 26/06 (mañana) — Cupo en vivo
 > ⚠️ Completar `[Y]` con el número real de `getCopasStatus` (lugares libres) antes de publicar. Mismo número que se usó en `--enrolled` al regenerar la placa. **Nunca inflar.**
 ```text
 🎟️ El cupo se mueve: quedan [Y] de 100 lugares en la Liga Premium.
@@ -856,7 +768,7 @@ No es marketing de humo — son 100 y nada más. Cuando se llena, se cierra y li
 #LigaPremium #Mundial2026 #Los11DeSampa #CupoLimitado #FantasyFutbol
 ```
 
-### #6 · 25/06 — Jugá gratis con tus amigos (general)
+### #6 · 25/06 (tarde) — Jugá gratis con tus amigos (general)
 ```text
 👯 El grupo de fútbol del celu merece algo mejor que una planilla de Excel.
 
@@ -869,7 +781,7 @@ Armá la liga gratis en los11desampa.com — etiquetá a los 3 que NO pueden fal
 #Los11DeSampa #FantasyFutbol #Mundial2026 #LigaConAmigos #Prode
 ```
 
-### #7 · 26/06 — Urgencia: faltan 2 días
+### #7 · 26/06 (tarde) — Urgencia: faltan 2 días
 > ⚠️ Completar `[Y]` con el número real de `getCopasStatus` (lugares libres), igual que en la placa (`--enrolled`). **Nunca inflar.**
 ```text
 ⏳ Faltan 2 días. La inscripción a la Liga Premium cierra el 28/06, justo antes del primer partido de 16vos.
@@ -897,7 +809,7 @@ Etiquetá al amigo indeciso antes de que sea tarde 👇 (Bases y Condiciones en 
 #LigaPremium #UltimaChance #Mundial2026 #Los11DeSampa #FantasyFutbol
 ```
 
-### #9 · 28/06 — Último llamado + rescate al modo gratis
+### #9 · 28/06 (mañana) — Último llamado + rescate al modo gratis
 > ⚠️ Subir **a la mañana**. Una vez cerrada la inscripción, **editar la caption** quitando el CTA de pago y dejando solo el de jugar gratis (la slide 2 ya lo sostiene).
 ```text
 🔔 Hoy cierra la Liga Premium. Antes de que ruede la pelota en 16vos. Últimas horas para entrar y jugar por $400.000. 🔗 bio · los11desampa.com/copa
