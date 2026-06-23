@@ -6,6 +6,7 @@ import { getGoldenTicketCopas, type CopaStatus } from "@/lib/queries";
 import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaSoldOutCard } from "@/components/copa/CopaSoldOutCard";
+import { CopaSignedOutHero } from "@/components/copa/CopaSignedOutHero";
 
 export const dynamic = "force-dynamic";
 
@@ -36,6 +37,8 @@ export default async function CopaPage({
     .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
     .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
   const soldOut = !promoCopa && enrolledCopas.length === 0 && copas.length > 0;
+  // Para el hero sin sesión, datos de premio/entrada de la copa abierta (o la primera).
+  const featured = promoCopa ?? copas[0] ?? null;
 
   return (
     <div className="space-y-5">
@@ -60,7 +63,11 @@ export default async function CopaPage({
       {error ? (
         <EmptyState title="No pudimos cargar la Liga Premium." hint="Probá recargar en un rato." />
       ) : !user ? (
-        <EmptyState title="Ingresá para sumarte a la Liga Premium." hint="Competí por el premio garantizado." />
+        <CopaSignedOutHero
+          prizeArs={featured?.prizeArs ?? null}
+          entryFeeArs={featured?.entryFeeArs ?? null}
+          capacity={featured?.capacity ?? null}
+        />
       ) : copas.length === 0 ? (
         <EmptyState title="La Liga Premium todavía no está abierta." hint="Seguinos en Instagram para enterarte." />
       ) : (
