@@ -86,15 +86,17 @@ function slide1() {
     <p class="body" style="font-size:29px;line-height:1.38;margin-top:22px;max-width:920px;">Hasta ahora jugabas <b>gratis con tus amigos</b>. Ahora competís <b>por premios de verdad</b> y demostrás quién sabe más de fútbol.</p>
 
     <p class="body" style="font-size:25px;line-height:1.32;margin-top:22px;max-width:920px;">Aunque el Mundial ya arrancó, la Liga Premium <b>rankea recién desde los 16vos</b>: por eso todavía estás a tiempo.</p>
-    <div class="card" style="margin-top:18px;padding:24px 32px;background:var(--blue-light);border-color:var(--blue);box-shadow:6px 6px 0 var(--blue-border);display:flex;align-items:center;justify-content:center;gap:32px;">
-      <div style="display:flex;align-items:baseline;gap:12px;">
-        <span class="eyebrow" style="font-size:16px;color:var(--ink3);">Arranca en</span>
-        <span class="title" style="font-size:60px;color:var(--blue);">16VOS</span>
+    <div class="card" style="position:relative;margin-top:18px;padding:26px 44px;background:var(--surf);border-color:var(--ink);box-shadow:8px 8px 0 rgba(17,24,39,0.85);display:flex;align-items:stretch;justify-content:center;gap:34px;overflow:hidden;">
+      <div style="position:absolute;left:0;top:0;bottom:0;width:8px;background:var(--gold);"></div>
+      <div style="position:absolute;right:0;top:0;bottom:0;width:8px;background:var(--gold);"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;align-items:center;text-align:center;">
+        <span class="eyebrow" style="font-size:15px;color:var(--gold-ink);background:var(--gold-bg);border:1.5px solid var(--gold-border);border-radius:999px;padding:5px 14px;">Arranca en</span>
+        <span class="title" style="font-size:74px;color:var(--ink);text-shadow:3px 3px 0 var(--gold-bg);">16VOS</span>
       </div>
-      <div style="width:2px;height:48px;background:var(--blue-border);"></div>
-      <div style="display:flex;align-items:baseline;gap:12px;">
-        <span class="eyebrow" style="font-size:16px;color:var(--ink3);">Te anotás hasta el</span>
-        <span class="title" style="font-size:60px;color:var(--gold-ink);">28/06</span>
+      <div style="width:3px;background:repeating-linear-gradient(to bottom,var(--gold) 0 8px,transparent 8px 16px);margin:6px 0;"></div>
+      <div style="display:flex;flex-direction:column;gap:6px;flex:1;align-items:center;text-align:center;">
+        <span class="eyebrow" style="font-size:15px;color:var(--gold-ink);background:var(--gold-bg);border:1.5px solid var(--gold-border);border-radius:999px;padding:5px 14px;">Te anotás hasta el</span>
+        <span class="title" style="font-size:74px;color:var(--ink);text-shadow:3px 3px 0 var(--gold-bg);">28/06</span>
       </div>
     </div>
   </div>
