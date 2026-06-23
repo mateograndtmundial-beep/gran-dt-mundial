@@ -11,7 +11,7 @@
 ---
 
 ## Qué es
-**Los 11 de Sampa** — fantasy football del **Mundial FIFA 2026**, para Argentina/LatAm. El usuario arma un equipo (15 jugadores + técnico) dentro de un presupuesto, suma puntos por el rendimiento real de los jugadores en cada fecha del Mundial, y compite en ranking global + ligas privadas.
+**Los 11 de Sampa** — fantasy football del **Mundial FIFA 2026**, para Argentina/LatAm. El usuario arma un equipo (15 jugadores + técnico) dentro de un presupuesto, suma puntos por el rendimiento real de los jugadores en cada fecha del Mundial, y compite en ranking global + ligas privadas. Monetización: **pines** (créditos para cambios extra) y la **Liga Premium** (liga paga con premio en dinero — ver [`docs/MONETIZACION.md`](./MONETIZACION.md)).
 
 **Estado: EN PRODUCCIÓN y funcionando.**
 - 🌐 Live: **https://www.los11desampa.com** (apex `los11desampa.com` redirige 308 → www)
@@ -44,6 +44,7 @@ npm run db:migrate     # aplicar migraciones a Neon
 npm run db:studio      # Drizzle Studio
 npm run seed           # seed del torneo desde API-Football (league=1, season=2026)
 npm run seed:products  # seed de los packs de pines
+npm run seed:golden-ticket  # seed de la Liga Premium (copa activa + reserva) — ver docs/MONETIZACION.md
 npm run prices:fetch   # baja market values de Transfermarkt → data/market-values.json
 npm run prices:apply   # cruza y escribe precios de jugadores (--dry para simular)
 npm run make-admin [username]  # marca usuario(s) como admin
@@ -69,12 +70,14 @@ npm run make-admin [username]  # marca usuario(s) como admin
 | `/mi-equipo` | Alineación guardada + puntos por fecha + puesto en ranking. |
 | `/jugadores` | Explorador con filtros/búsqueda. |
 | `/ranking` | Ranking global. |
-| `/ligas` (+ `/ligas/[code]`) | Ligas privadas: crear/unirse + ranking de cada liga. |
+| `/ligas` (+ `/ligas/[code]`) | Ligas privadas: crear/unirse + ranking. También muestra la Liga Premium (inscripta o card de promo). |
+| `/copa` | Landing de campaña de la **Liga Premium** (inscripción paga). No va en la nav; se llega por redes/banner. |
 | `/pines` | Tienda de pines + saldo + retorno de pago (`?status=`). |
 | `/como-funciona` | Reglas, puntaje, formaciones. |
-| `/admin` (+ `/admin/precios`) | Solo `isAdmin`: sincronizar/publicar fechas; editar precios. |
-| `/sign-in`, `/sign-up` | Clerk. |
-| `/api/payments/webhook/[provider]` | Webhook MP/dLocal → acredita pines (idempotente). |
+| `/bases`, `/privacidad`, `/soporte`, `/arrepentimiento` | Legales: Bases y Condiciones de la Liga Premium, privacidad, soporte, botón de arrepentimiento. |
+| `/admin` (+ `/admin/precios`) | Solo `isAdmin`: sincronizar/publicar fechas; editar precios; abrir/cerrar copas y activar su cobro. |
+| `/sign-in`, `/sign-up`, `/bienvenida` | Clerk + gate de nickname. |
+| `/api/payments/webhook/[provider]` | Webhook MP/dLocal → acredita pines o inscribe en la copa (idempotente). |
 
 > Onboarding: `getCurrentUser()` crea el user con `username = null`; hay un gate (referenciado como `/bienvenida` en `auth.ts`, vía header `x-pathname` que setea el `middleware.ts`) que obliga a elegir un **nickname único**. Verificar en `app/layout.tsx` / `auth.ts` / `middleware.ts`.
 
@@ -95,18 +98,20 @@ npm run make-admin [username]  # marca usuario(s) como admin
 - `entries` — equipo del user (1:1), name, totalPoints.
 - `entryRounds` — alineación por fecha (entryId+roundId únicos): formation, captainPlayerId, coachId, budgetUsed, points, **pinsSpent**, **changesMade**.
 - `entryRoundPlayers` — roster (isStarter, slot p.ej. `DEF_2` / `SUB_GK`).
-- `leagues` (code 6 chars único, ownerId) + `leagueMembers`.
+- `leagues` (code 6 chars único, ownerId, isPublic, **scoringStartRoundId**) + `leagueMembers` (joinedAt, **currentRank**). Campos de Liga Premium: **kind** `private|golden_ticket`, **status** `draft|open|full|closed`, **capacity**, **entryFeeArs**, **prizeArs**.
 - `pointTransactions` — ledger de puntos (auditoría).
 
-**Monetización (pines):**
-- `products` — packs (sku, pins, priceArs, priceUsd, active).
+**Monetización (pines + Liga Premium):**
+- `products` — packs (sku, pins, priceArs, priceUsd, active, **unlimited**, **entryLeagueId**). `unlimited` = pack de cambios ilimitados (marca `users.isPremium`); `entryLeagueId` ≠ null = es la **entrada a una copa** (no acredita pines: inscribe en la liga).
 - `orders` — (userId, productId, pins, amount, currency, provider mercadopago|dlocal, providerRef, status pending|paid|failed|expired|refunded, paidAt).
 - `pinTransactions` — **ledger de pines** (delta +/−, reason purchase|transfer|refund|grant). **Saldo = SUM(delta).**
 
 ---
 
 ## Constantes del juego (`lib/game/config.ts`)
-- `BUDGET = 600` · `SQUAD = {STARTERS:11, SUBS:4, TOTAL:15}` · `MAX_PER_COUNTRY = 3` (solo en grupos; en playoffs se libera) · `FREE_CHANGES_PER_ROUND = 1`.
+- `BUDGET = 700` · `SQUAD = {STARTERS:11, SUBS:4, TOTAL:15}` · `FREE_CHANGES_PER_ROUND = 1`.
+- **Máx por país:** `MAX_PER_COUNTRY = 3` en fase de grupos; desde 16vos sube a `MAX_PER_COUNTRY_KNOCKOUT = 5` (no se libera — con pocas selecciones vivas, 5 alcanza para armar equipos completos). Regla GENERAL (todos los usuarios).
+- **Cambios gratis:** 1 por fecha (`FREE_CHANGES_PER_ROUND`). Excepción: en 16vos, los inscriptos en la Liga Premium arrancan con 5 (`FREE_CHANGES_R16`, vía `getFreeChangesForRound(order, inCopa)`).
 - `PRICING = { MIN:5, ANCHOR:85, MAX:150, MV_REF_PERCENTILE:98, GAMMA:0.85 }`.
 - `FORMATIONS` — 4-4-2, 4-3-3, 4-2-4, 3-4-3, 3-3-4 (siempre 11 titulares; solo formaciones a 3 líneas con máx. 4 jugadores por línea, para que la cancha en mobile no corte figuritas).
 - `ROUNDS` — 8 fechas (3 grupos + 16avos + octavos + cuartos + semis + final).
@@ -125,7 +130,7 @@ npm run make-admin [username]  # marca usuario(s) como admin
 ## Lógica de negocio clave
 
 ### Guardar alineación — `saveLineup` (`lib/actions.ts`)
-Recalcula TODO desde la DB (no confía en el cliente): valida presupuesto, máx por país (solo grupos), que los jugadores existan. Cuenta los **cambios vs la fecha anterior**: el **1er cambio es gratis**, los extra **descuentan pines** (`reason:"transfer"`), reconciliando re-ediciones (`pinsSpent`). Si faltan pines devuelve `{ ok:false, error:"pins", needed, balance }`. Escribe todo en **`db.batch()`** (atómico). Otras actions: `createLeague`, `joinLeague`, `renameLeague`, `removeMember`.
+Recalcula TODO desde la DB (no confía en el cliente): valida presupuesto, máx por país (3 en grupos / 5 desde 16vos), que los jugadores existan. Cuenta los **cambios vs la fecha anterior**: los primeros son gratis (**1 normal, 5 en 16vos para inscriptos en la Liga Premium**), los extra **descuentan pines** (`reason:"transfer"`), reconciliando re-ediciones (`pinsSpent`). Los usuarios `isPremium` (pack ilimitado) no pagan nunca. Si faltan pines devuelve `{ ok:false, error:"pins", needed, balance }`. Escribe todo en **`db.batch()`** (atómico). Otras actions: `createLeague`, `joinLeague`, `renameLeague`, `removeMember`.
 
 ### Scoring (`lib/scoring/`)
 - `calcularPuntos(stats)` — puntos de un jugador en un partido según `SCORING` (sin capitán).
@@ -133,7 +138,10 @@ Recalcula TODO desde la DB (no confía en el cliente): valida presupuesto, máx 
 - `lib/api-football/sync.ts` — `syncRound(roundId)`: baja stats de cada partido desde API-Football, calcula `fantasyPoints`, detecta figura, actualiza marcador/estado. **No es tiempo real**: se corre después de los partidos; el admin sincroniza y luego publica.
 
 ### Pagos / pines (`lib/payment-actions.ts`, `lib/payments/`)
-`createPinOrder(sku, country?)` → crea `order` pending, elige proveedor por país (**AR→Mercado Pago / resto→dLocal**, país autodetectado por header geo de Vercel), llama `provider.createCheckout()` → devuelve `{ url }` (el front redirige). El proveedor (MP/dLocal) postea al webhook `/api/payments/webhook/[provider]` → `parseWebhook` confirma contra la API del proveedor → `creditOrder` (idempotente) marca la orden `paid` y `addPins(reason:"purchase")`. `notification_url`/`back_urls` se arman desde `NEXT_PUBLIC_APP_URL`. Adapters verificados contra docs (MP Checkout Pro; dLocal `POST /v1/payments`, auth `Bearer KEY:SECRET`, estados PENDING/PAID/REJECTED/CANCELLED/EXPIRED).
+`createPinOrder(sku, country?)` → crea `order` pending, elige proveedor por país (**AR→Mercado Pago / resto→dLocal**, país autodetectado por header geo de Vercel), llama `provider.createCheckout()` → devuelve `{ url }` (el front redirige). El proveedor (MP/dLocal) postea al webhook `/api/payments/webhook/[provider]` → `parseWebhook` confirma contra la API del proveedor → `creditOrder` (idempotente) marca la orden `paid` y, según el producto: `addPins(reason:"purchase")`, o marca `isPremium` (pack ilimitado), o **inscribe en la copa** (`enrollInLeague`, si `entryLeagueId`). `createEntryOrder(sku)` es el equivalente para la **entrada a la Liga Premium** (solo ARS por MP). `notification_url`/`back_urls` se arman desde `NEXT_PUBLIC_APP_URL`. Adapters verificados contra docs (MP Checkout Pro; dLocal `POST /v1/payments`, auth `Bearer KEY:SECRET`, estados PENDING/PAID/REJECTED/CANCELLED/EXPIRED).
+
+### Liga Premium / Copa (`lib/copa/`, `lib/payment-actions.ts`)
+Liga paga (`kind:"golden_ticket"`) con entrada en ARS y premio fijo garantizado, que rankea desde 16vos (`scoringStartRoundId`). **UNA sola copa activa**: al llenarse el cupo, `markCopaFull` la pasa a `full` (cierra la inscripción) y la UI muestra "agotado → Instagram"; **no se abre otra automáticamente** (abrir una Liga II es manual desde `/admin` con `setCopaStatus`). Si alguien paga sin lugar o fuera de término, la orden se marca `refunded` + alerta Slack (reembolso manual). Detalle completo y decisiones en [`docs/MONETIZACION.md`](./MONETIZACION.md); plan de lanzamiento en redes en [`docs/social/LANZAMIENTO-COPA.md`](./social/LANZAMIENTO-COPA.md).
 
 ### Precios (`lib/pricing/`, scripts)
 Precios reales derivados de **valores de mercado de Transfermarkt**. `prices:fetch` baja un CSV → `data/market-values.json`; `prices:apply` cruza con la DB (varios tiers de matching por nombre/club/año) y escribe `players.price` con la curva de `computePrice` (`pricing/map.ts`). Respeta `priceManual=true` (precios editados a mano en `/admin/precios` no se pisan).
@@ -143,9 +151,9 @@ Precios reales derivados de **valores de mercado de Transfermarkt**. `prices:fet
 ## Mapa de archivos
 **`lib/`**: `db/schema.ts` · `db/index.ts` (instancia drizzle) · `game/config.ts` · `actions.ts` (saveLineup, ligas) · `admin-actions.ts` (syncRound, publishRound, updatePlayerPrice) · `queries.ts` (todas las lecturas: getPlayersWithCountry, getCoaches, getEditableRound, getEditableLineup, getMyTeam, getGlobalLeaderboard, getUserGlobalRank, getLineupPlayers, getMyLeagues, getLeagueRanking, getActiveProducts) · `auth.ts` (getCurrentUser, suggestedUsername) · `pins.ts` (getPinBalance, addPins) · `pricing/{map,normalize}.ts` · `scoring/{calcular-puntos,publicar-fecha}.ts` · `api-football/{client,enrich,sync}.ts` · `payment-actions.ts` · `payments/{index,mercadopago,dlocal,credit,types}.ts` · `utils.ts` (cn, formatPoints, formatPrice).
 
-**`components/`**: `field-builder.tsx` (el armador, lo más grande) · `pitch.tsx` (cancha SVG + figuritas Panini + drag) · `players-explorer.tsx` · `player-card.tsx` · `pin-store.tsx` · `pin-balance.tsx` · `league-actions.tsx` · `league-management.tsx` · `admin-controls.tsx` · `price-editor.tsx` · `site-nav.tsx` · `countdown.tsx` · `welcome-banner.tsx` · `editorial/index.tsx` (primitivas: Eyebrow, PositionChip, StatNumeral, SectionHeader, CaptainBadge, PrimaryButton) · `domain/{LeagueRanking,PointsBreakdown}.tsx` · `ui/*` (shadcn) + `ui.tsx` (Card, PageTitle, Badge, Skeleton, EmptyState).
+**`components/`**: `field-builder.tsx` (el armador, lo más grande) · `pitch.tsx` (cancha SVG + figuritas Panini + drag) · `players-explorer.tsx` · `player-card.tsx` · `pin-store.tsx` · `pin-balance.tsx` · `league-actions.tsx` · `league-management.tsx` · `admin-controls.tsx` · `price-editor.tsx` · `site-nav.tsx` · `countdown.tsx` · `welcome-banner.tsx` · `editorial/index.tsx` (primitivas: Eyebrow, PositionChip, StatNumeral, SectionHeader, CaptainBadge, PrimaryButton) · `domain/{LeagueRanking,PointsBreakdown}.tsx` · `copa/*` (UI de la Liga Premium: `CopaPromoCard`, `CopaLeagueRow`, `CopaSoldOutCard`, `EnrollButton`, `CupoScarcity`, `CopaHomeBanner`, `CopaPrizeHeader`) + `admin-copa-controls.tsx` · `ui/*` (shadcn) + `ui.tsx` (Card, PageTitle, Badge, Skeleton, EmptyState).
 
-**`scripts/`**: `seed.ts`, `fetch-market-values.ts`, `price-players.ts`, `seed-products.ts`, `make-admin.ts`, `counts.ts`, `test-mp.ts`, `lib/csv.ts`.
+**`scripts/`**: `seed.ts`, `fetch-market-values.ts`, `price-players.ts`, `seed-products.ts`, `seed-golden-ticket.ts` (crea la copa + reserva), `make-admin.ts`, `counts.ts`, `test-mp.ts`, `lib/csv.ts`. **Generadores de placas de redes** (`generate-que-es.ts`, `generate-copa-1..9.ts`, `generate-highlights.ts`) → PNGs a `out/` (gitignored); ver [`docs/social/PLACAS-GUIDELINES.md`](./social/PLACAS-GUIDELINES.md). Hay además scripts ad-hoc de debug/consulta (no productivos).
 
 ---
 
@@ -162,6 +170,8 @@ Editorial claro estilo Gran DT + Panini. Fuentes: **Bebas Neue** (display), **Ma
 
 ## Estado: hecho ✅ / pendiente 🔜
 **Hecho:** app completa y live en prod · dominio + SSL · Clerk producción (+ Google) · backend de pines + UI (`/pines`) · Mercado Pago en producción (verificado: crea preferencia) · pricing real · scoring + auto-sub + admin · ligas · sistema de diseño editorial.
+
+**En curso (rama `feat/copa-golden-ticket`):** **Liga Premium** — código + UI + Bases + migración y seed (copas 103/104) ya en prod, con el cobro **gateado** hasta el visto legal. Falta: visto del abogado, proceso fiscal, activar el producto de entrada (`active=true`), crear la preferencia en MP y probar un pago real. Ver [`docs/MONETIZACION.md`](./MONETIZACION.md).
 
 **Pendiente / a futuro:**
 - 🔜 **Probar un pago real de pines** end-to-end en prod (pagar → webhook acredita). Ojo: en localhost el webhook NO llega (MP no alcanza tu compu) y mezclar token sandbox con tarjeta real da *"una de las partes es de prueba"* → probar en prod o con usuario de prueba MP.
