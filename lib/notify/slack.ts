@@ -236,6 +236,49 @@ export function notifyPaymentFailed(input: { orderId: number; status: string }):
   });
 }
 
+/**
+ * Inscripción a la Liga Premium acreditada → cae en #pagos con el **cupo en vivo**
+ * (X / capacity). Es el seguimiento de cuántos lugares de los 100 se van ocupando.
+ * Reemplaza a `notifyPaymentPaid` para las entradas de copa (un solo mensaje por
+ * inscripción, con la plata y el cupo juntos). Cuando llega al tope, marca CUPO LLENO.
+ */
+export function notifyCopaEnrollment(input: {
+  orderId: number;
+  copaName: string;
+  enrolled: number;
+  capacity: number;
+}): void {
+  fire(async () => {
+    const row = (
+      await db
+        .select({
+          amount: orders.amount,
+          currency: orders.currency,
+          userId: users.id,
+          username: users.username,
+        })
+        .from(orders)
+        .leftJoin(users, eq(orders.userId, users.id))
+        .where(eq(orders.id, input.orderId))
+        .limit(1)
+    )[0];
+    const who = row?.username ? `@${esc(row.username)}` : `Usuario #${row?.userId ?? "?"}`;
+    const amount = row ? ` · ${money(row.amount, row.currency)}` : "";
+    const left = Math.max(0, input.capacity - input.enrolled);
+    const full = input.enrolled >= input.capacity;
+    const headline = full
+      ? `:checkered_flag: *¡CUPO LLENO!* ${esc(input.copaName)} — *${input.enrolled}/${input.capacity}*\n${who} tomó el último lugar${amount}. La inscripción queda *cerrada*.`
+      : `:soccer: *Nueva inscripción a la Liga Premium* — ${who}${amount}\n*${esc(input.copaName)}:* \`${input.enrolled} / ${input.capacity}\` · quedan *${left}* lugares`;
+    await post("pagos", {
+      text: full
+        ? `Cupo lleno: ${input.copaName} ${input.enrolled}/${input.capacity}`
+        : `Inscripción Liga Premium ${input.enrolled}/${input.capacity}`,
+      color: full ? COLOR.gold : COLOR.green,
+      blocks: [section(headline), context(`Orden #${input.orderId}`)],
+    });
+  });
+}
+
 // ──────────────────────────────────────────────────────────────
 // Scoring / admin
 // ──────────────────────────────────────────────────────────────

@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { orders, products, users, leagues, leagueMembers } from "@/lib/db/schema";
 import { addPins, isUniqueViolation } from "@/lib/pins";
-import { notifyPaymentPaid, notifyError } from "@/lib/notify/slack";
+import { notifyPaymentPaid, notifyError, notifyCopaEnrollment } from "@/lib/notify/slack";
 import { isCopaPastDeadline, markCopaFull } from "@/lib/copa/lifecycle";
 
 /**
@@ -33,7 +33,10 @@ export async function creditOrder(orderId: number, providerRef?: string): Promis
     )[0];
     if (product?.entryLeagueId != null) {
       // Entrada a una copa premium: inscribe en la liga en vez de acreditar pines.
+      // La notificación a #pagos (inscripción + cupo X/100) la emite enrollInLeague,
+      // así que NO disparamos notifyPaymentPaid acá (evita el doble mensaje).
       await enrollInLeague(o.userId, product.entryLeagueId, o.id);
+      return true;
     } else if (product?.unlimited) {
       await db.update(users).set({ isPremium: true }).where(eq(users.id, o.userId));
     } else {
@@ -78,7 +81,7 @@ async function enrollInLeague(userId: number, leagueId: number, orderId: number)
 
   const league = (
     await db
-      .select({ capacity: leagues.capacity, scoringStartRoundId: leagues.scoringStartRoundId })
+      .select({ name: leagues.name, capacity: leagues.capacity, scoringStartRoundId: leagues.scoringStartRoundId })
       .from(leagues)
       .where(eq(leagues.id, leagueId))
       .limit(1)
@@ -107,14 +110,21 @@ async function enrollInLeague(userId: number, leagueId: number, orderId: number)
 
   await db.insert(leagueMembers).values({ leagueId, userId }).onConflictDoNothing();
 
-  // ¿Esta inscripción llenó la copa? → marcarla `full` (cierra la inscripción).
-  // No se abre otra copa automáticamente (abrir una Liga II es manual desde /admin).
   if (league.capacity != null) {
+    // Cupo en vivo: contamos los inscriptos tras esta alta y lo mandamos a #pagos
+    // (seguimiento X/100). Si esta inscripción llenó la copa, la marcamos `full`
+    // (cierra la inscripción). No se abre otra copa automáticamente (la Liga II es
+    // manual desde /admin).
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)` })
       .from(leagueMembers)
       .where(eq(leagueMembers.leagueId, leagueId));
-    if (Number(count) >= league.capacity) await markCopaFull(leagueId);
+    const enrolled = Number(count);
+    notifyCopaEnrollment({ orderId, copaName: league.name, enrolled, capacity: league.capacity });
+    if (enrolled >= league.capacity) await markCopaFull(leagueId);
+  } else {
+    // Copa sin cupo (no debería pasar): al menos registramos el pago en #pagos.
+    notifyPaymentPaid({ orderId });
   }
 }
 
