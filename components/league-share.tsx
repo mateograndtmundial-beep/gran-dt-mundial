@@ -12,7 +12,21 @@ import { cn } from "@/lib/utils";
  * feedback claro y, en mobile (donde entra la mayoría), el share nativo del
  * sistema con el link ya armado.
  */
-export function LeagueShare({ code, leagueName }: { code: string; leagueName: string }) {
+export function LeagueShare({
+  code,
+  leagueName,
+  href,
+  message: messageOverride,
+}: {
+  code: string;
+  leagueName: string;
+  /** Ruta a compartir (default `/ligas/{code}`). Para la Liga Premium se pasa `/copa`,
+   *  que lleva directo a la interfaz de inscripción (pago + aceptación de Bases). */
+  href?: string;
+  /** Texto a compartir (default invita con el código). Las copas premium no comparten
+   *  código: se pasa un mensaje sin código que invita a inscribirse. */
+  message?: string;
+}) {
   const [copied, setCopied] = useState(false);
   // Se detecta en el cliente (post-mount) para no divergir del render del
   // servidor — `navigator` no existe ahí y causaría un mismatch de hidratación.
@@ -20,10 +34,11 @@ export function LeagueShare({ code, leagueName }: { code: string; leagueName: st
   useEffect(() => {
     setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
   }, []);
-  const link = `${SITE.url}/ligas/${code}`;
+  const link = `${SITE.url}${href ?? `/ligas/${code}`}`;
   // El mensaje NO incluye el link: el link va aparte en `url`. Si va en los dos,
   // WhatsApp (y otras apps) lo pegan al texto y el link aparece DUPLICADO.
-  const message = `Unite a mi liga "${leagueName}" en Los 11 de Sampa con el código ${code}`;
+  const message =
+    messageOverride ?? `Unite a mi liga "${leagueName}" en Los 11 de Sampa con el código ${code}`;
 
   async function handleShare() {
     if (canShare) {

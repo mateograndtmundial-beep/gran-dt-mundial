@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow, ValidationCallout } from "@/components/editorial";
@@ -53,6 +54,14 @@ export default async function LeaguePage({
   }
 
   const isMember = user ? await isLeagueMember(data.league.id, user.id) : false;
+  const isGolden = data.league.kind === "golden_ticket";
+
+  // La Liga Premium es PRIVADA: el ranking solo lo ven los inscriptos (que pagaron) y los
+  // admins. Cualquier otro cae a /copa, la interfaz pública de inscripción. Así el código
+  // de la copa no sirve para espiar el ranking sin haber entrado.
+  if (isGolden && !isMember && !user?.isAdmin) {
+    redirect("/copa");
+  }
 
   return (
     <div className="space-y-5">
@@ -66,11 +75,27 @@ export default async function LeaguePage({
           </p>
         </div>
         <div className="text-right shrink-0">
-          <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
-          <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
-            {data.league.code}
-          </p>
-          <LeagueShare code={data.league.code} leagueName={data.league.name} />
+          {isGolden ? (
+            // La copa premium NO se comparte por código (la inscripción es paga). El link
+            // de invitación lleva directo a /copa: pago + aceptación de Bases y Condiciones.
+            <>
+              <Eyebrow>INVITÁ A LA COPA</Eyebrow>
+              <LeagueShare
+                code={data.league.code}
+                leagueName={data.league.name}
+                href="/copa"
+                message={`Sumate a la "${data.league.name}" en Los 11 de Sampa y competí por el premio garantizado`}
+              />
+            </>
+          ) : (
+            <>
+              <Eyebrow>CÓDIGO DE LIGA</Eyebrow>
+              <p className="font-display text-3xl text-ink-3 tracking-widest select-all">
+                {data.league.code}
+              </p>
+              <LeagueShare code={data.league.code} leagueName={data.league.name} />
+            </>
+          )}
         </div>
       </div>
 
@@ -157,7 +182,8 @@ export default async function LeaguePage({
         />
       )}
 
-      {user && isMember && user.id !== data.league.ownerId && (
+      {/* La copa premium es paga: no hay auto-salida. Solo un admin saca gente (LeagueManagement). */}
+      {user && isMember && !isGolden && user.id !== data.league.ownerId && (
         <LeagueLeaveButton leagueId={data.league.id} leagueName={data.league.name} />
       )}
     </div>

@@ -377,6 +377,9 @@ export async function leaveLeague(leagueId: number) {
   const league = (await db.select().from(leagues).where(eq(leagues.id, leagueId)).limit(1))[0];
   if (!league) return { ok: false as const, error: "not-found" as const };
   if (league.ownerId === user.id) return { ok: false as const, error: "owner" as const };
+  // Las copas premium (GOLDEN TICKET) son pagas: una vez adentro no se sale por cuenta
+  // propia (no habría reembolso automático). Solo un admin saca gente (removeMember).
+  if (league.kind === "golden_ticket") return { ok: false as const, error: "premium" as const };
   await db
     .delete(leagueMembers)
     .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, user.id)));
