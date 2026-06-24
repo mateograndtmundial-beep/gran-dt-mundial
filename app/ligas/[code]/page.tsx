@@ -9,28 +9,51 @@ import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
 import { LeagueJoinCTA } from "@/components/league-join-cta";
 import { LeagueLeaveButton } from "@/components/league-leave-button";
-import { getLeagueRanking, getLeagueMembersForManagement, isLeagueMember, getAllRounds } from "@/lib/queries";
+import { RoundFilterPills } from "@/components/domain/RoundFilterPills";
+import {
+  getLeagueRanking,
+  getLeagueUserStanding,
+  getLeagueMembersForManagement,
+  isLeagueMember,
+  getAllRounds,
+  getPublishedRounds,
+} from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { roundWithArticle } from "@/lib/game/round-format";
 
 export const dynamic = "force-dynamic";
+
+/** Link de paginación que preserva la fecha seleccionada (`?fecha=`). */
+function pageHref(code: string, page: number, fecha: number | null): string {
+  const qs = new URLSearchParams();
+  if (page > 1) qs.set("page", String(page));
+  if (fecha != null) qs.set("fecha", String(fecha));
+  const s = qs.toString();
+  return s ? `/ligas/${code}?${s}` : `/ligas/${code}`;
+}
 
 export default async function LeaguePage({
   params,
   searchParams,
 }: {
   params: Promise<{ code: string }>;
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; fecha?: string }>;
 }) {
   const { code } = await params;
-  const { page: pageParam, status } = await searchParams;
+  const { page: pageParam, status, fecha } = await searchParams;
   const page = Math.max(1, Number(pageParam) || 1);
+  const wantedOrder = Number.isFinite(Number(fecha)) ? Number(fecha) : null;
 
   let data: Awaited<ReturnType<typeof getLeagueRanking>> = null;
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
+  let publishedRounds: Awaited<ReturnType<typeof getPublishedRounds>> = [];
   let error = false;
   try {
-    [user, data] = await Promise.all([getCurrentUser(), getLeagueRanking(code, page)]);
+    [user, data, publishedRounds] = await Promise.all([
+      getCurrentUser(),
+      getLeagueRanking(code, page, wantedOrder ?? undefined),
+      getPublishedRounds(),
+    ]);
   } catch {
     error = true;
   }
@@ -53,8 +76,29 @@ export default async function LeaguePage({
     );
   }
 
+  // Fechas que la liga puntúa (publicadas y dentro de su ventana de scoring).
+  const startOrder = data.startOrder;
+  const selectedOrder = data.singleRoundOrder;
+  const windowRounds = publishedRounds.filter((r) => r.order >= startOrder);
+  const activeOrder =
+    selectedOrder != null && windowRounds.some((r) => r.order === selectedOrder)
+      ? selectedOrder
+      : null;
+  // Si pidieron una fecha fuera de la ventana de la liga (URL a mano), el ranking
+  // de arriba se calculó para esa fecha aislada → re-calcular como acumulado.
+  if (wantedOrder != null && activeOrder == null) {
+    data = (await getLeagueRanking(code, page)) ?? data;
+  }
+
   const isMember = user ? await isLeagueMember(data.league.id, user.id) : false;
   const isGolden = data.league.kind === "golden_ticket";
+
+  // "Tu posición": el puesto del usuario logueado en la vista actual (acumulado o
+  // por fecha), pineado arriba aunque esté en una página lejana del ranking.
+  const myStanding =
+    user && isMember
+      ? await getLeagueUserStanding(data.league.id, user.id, data.startOrder, activeOrder)
+      : null;
 
   // La Liga Premium es PRIVADA: el ranking solo lo ven los inscriptos (que pagaron) y los
   // admins. Cualquier otro cae a /copa, la interfaz pública de inscripción. Así el código
@@ -133,6 +177,30 @@ export default async function LeaguePage({
         />
       )}
 
+      {windowRounds.length > 0 && (
+        <RoundFilterPills
+          rounds={windowRounds}
+          active={activeOrder}
+          basePath={`/ligas/${data.league.code}`}
+        />
+      )}
+
+      {myStanding && (
+        <div className="space-y-2">
+          <Eyebrow>Tu posición</Eyebrow>
+          <LeagueRanking
+            startRank={myStanding.rank}
+            rows={[
+              {
+                entryName: myStanding.entryName,
+                username: myStanding.username,
+                totalPoints: myStanding.points,
+              },
+            ]}
+          />
+        </div>
+      )}
+
       <LeagueRanking
         currentUserId={user?.username ?? null}
         mineBadge
@@ -148,7 +216,7 @@ export default async function LeaguePage({
       {data.total > data.pageSize && (
         <div className="flex items-center justify-between gap-3">
           <Link
-            href={`/ligas/${data.league.code}${data.page > 2 ? `?page=${data.page - 1}` : ""}`}
+            href={pageHref(data.league.code, data.page - 1, activeOrder)}
             aria-disabled={data.page <= 1}
             className={`inline-flex items-center gap-1 rounded-[6px] border border-border px-3 py-2 text-xs font-semibold text-ink-2 transition-colors ${
               data.page <= 1 ? "pointer-events-none opacity-40" : "hover:bg-surface-2"
@@ -160,7 +228,7 @@ export default async function LeaguePage({
             Página {data.page} de {Math.ceil(data.total / data.pageSize)} · {data.total} miembros
           </span>
           <Link
-            href={`/ligas/${data.league.code}?page=${data.page + 1}`}
+            href={pageHref(data.league.code, data.page + 1, activeOrder)}
             aria-disabled={data.page * data.pageSize >= data.total}
             className={`inline-flex items-center gap-1 rounded-[6px] border border-border px-3 py-2 text-xs font-semibold text-ink-2 transition-colors ${
               data.page * data.pageSize >= data.total ? "pointer-events-none opacity-40" : "hover:bg-surface-2"

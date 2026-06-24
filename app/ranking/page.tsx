@@ -2,8 +2,18 @@ import type { Metadata } from "next";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
-import { getGlobalLeaderboard, getMyTeam, getUserGlobalRank, isRankingsVisible } from "@/lib/queries";
+import { RoundFilterPills } from "@/components/domain/RoundFilterPills";
+import {
+  getGlobalLeaderboard,
+  getGlobalLeaderboardByRound,
+  getMyTeam,
+  getUserGlobalRank,
+  getUserGlobalRankByRound,
+  getPublishedRounds,
+  isRankingsVisible,
+} from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
+import { roundWithArticle } from "@/lib/game/round-format";
 
 // Depende del usuario (fija su posición arriba), así que se renderiza por request.
 export const dynamic = "force-dynamic";
@@ -17,29 +27,52 @@ export const metadata: Metadata = {
   },
 };
 
-export default async function RankingPage() {
+export default async function RankingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ fecha?: string }>;
+}) {
+  const { fecha } = await searchParams;
+
   let rows: Awaited<ReturnType<typeof getGlobalLeaderboard>> = [];
   let me: { entryName: string | null; username: string | null; totalPoints: number; rank: number } | null = null;
   let error = false;
   let visible = false;
+  let publishedRounds: Awaited<ReturnType<typeof getPublishedRounds>> = [];
+  // Fecha seleccionada (su `order`): solo válida si está entre las publicadas.
+  let activeOrder: number | null = null;
+  let activeRoundName: string | null = null;
   try {
     visible = await isRankingsVisible();
     if (visible) {
+      publishedRounds = await getPublishedRounds();
+      const wanted = Number(fecha);
+      const sel = Number.isFinite(wanted) ? publishedRounds.find((r) => r.order === wanted) : undefined;
+      activeOrder = sel?.order ?? null;
+      activeRoundName = sel?.name ?? null;
+
       const user = await getCurrentUser();
       const [top, team] = await Promise.all([
-        getGlobalLeaderboard(100),
+        sel ? getGlobalLeaderboardByRound(sel.id, 100) : getGlobalLeaderboard(100),
         user ? getMyTeam(user.id) : Promise.resolve(null),
       ]);
       rows = top;
       if (user && team) {
-        const rank = await getUserGlobalRank(team.entry.id);
-        if (rank != null) {
-          me = {
-            entryName: team.entry.name,
-            username: user.username,
-            totalPoints: team.entry.totalPoints,
-            rank,
-          };
+        if (sel) {
+          const r = await getUserGlobalRankByRound(team.entry.id, sel.id);
+          if (r != null) {
+            me = { entryName: team.entry.name, username: user.username, totalPoints: r.points, rank: r.rank };
+          }
+        } else {
+          const rank = await getUserGlobalRank(team.entry.id);
+          if (rank != null) {
+            me = {
+              entryName: team.entry.name,
+              username: user.username,
+              totalPoints: team.entry.totalPoints,
+              rank,
+            };
+          }
         }
       }
     }
@@ -49,7 +82,14 @@ export default async function RankingPage() {
 
   return (
     <div className="space-y-5">
-      <PageTitle title="Ranking global" subtitle="Los mejores DT del Mundial 2026." />
+      <PageTitle
+        title="Ranking global"
+        subtitle={
+          activeRoundName
+            ? `Ranking de ${roundWithArticle(activeRoundName)}.`
+            : "Los mejores DT del Mundial 2026."
+        }
+      />
       {!visible ? (
         <EmptyState
           title="El ranking todavía no está disponible."
@@ -57,28 +97,35 @@ export default async function RankingPage() {
         />
       ) : error ? (
         <EmptyState title="No pudimos cargar el ranking." hint="Probá recargar la página en un rato." />
-      ) : rows.length === 0 ? (
-        <EmptyState title="Todavía no hay equipos en el ranking." />
       ) : (
         <div className="space-y-5">
-          {me && (
-            <div className="space-y-2">
-              <Eyebrow>Tu posición</Eyebrow>
-              <LeagueRanking
-                startRank={me.rank}
-                rows={[{ entryName: me.entryName, username: me.username, totalPoints: me.totalPoints }]}
-              />
-            </div>
+          {publishedRounds.length > 0 && (
+            <RoundFilterPills rounds={publishedRounds} active={activeOrder} basePath="/ranking" />
           )}
-          <LeagueRanking
-            currentUserId={me?.username ?? null}
-            rows={rows.map((r) => ({
-              entryId: r.entryId,
-              entryName: r.name,
-              username: r.username,
-              totalPoints: r.totalPoints,
-            }))}
-          />
+          {rows.length === 0 ? (
+            <EmptyState title="Todavía no hay equipos en el ranking." />
+          ) : (
+            <>
+              {me && (
+                <div className="space-y-2">
+                  <Eyebrow>Tu posición</Eyebrow>
+                  <LeagueRanking
+                    startRank={me.rank}
+                    rows={[{ entryName: me.entryName, username: me.username, totalPoints: me.totalPoints }]}
+                  />
+                </div>
+              )}
+              <LeagueRanking
+                currentUserId={me?.username ?? null}
+                rows={rows.map((r) => ({
+                  entryId: r.entryId,
+                  entryName: r.name,
+                  username: r.username,
+                  totalPoints: r.totalPoints,
+                }))}
+              />
+            </>
+          )}
         </div>
       )}
     </div>

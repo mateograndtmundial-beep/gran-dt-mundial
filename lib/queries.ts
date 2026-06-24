@@ -637,6 +637,76 @@ export const getUserGlobalRank = unstable_cache(
   { tags: ["global-rank"] },
 );
 
+/**
+ * Fechas ya publicadas (las únicas con puntajes visibles), para el selector
+ * "General / por fecha" del ranking global y de las ligas. Ordenadas por `order`.
+ * Cacheada con el tag `leaderboard` (cambia solo al publicar/despublicar fechas).
+ */
+export const getPublishedRounds = unstable_cache(
+  async (): Promise<{ id: number; order: number; name: string }[]> => {
+    return db
+      .select({ id: rounds.id, order: rounds.order, name: rounds.name })
+      .from(rounds)
+      .where(eq(rounds.status, "published"))
+      .orderBy(asc(rounds.order));
+  },
+  ["published-rounds"],
+  { tags: ["leaderboard"], revalidate: 300 },
+);
+
+/**
+ * Ranking global de UNA fecha: reordena por los puntos que cada equipo hizo en
+ * esa fecha (no el acumulado). Solo aparecen los equipos que jugaron la fecha
+ * (tienen `entryRound` para ella — el carry-over de `publishRound` ya materializa
+ * uno por cada equipo activo). Misma key de caché que el leaderboard general.
+ */
+export const getGlobalLeaderboardByRound = unstable_cache(
+  async (roundId: number, limit = 100, offset = 0) => {
+    return db
+      .select({
+        entryId: entries.id,
+        name: entries.name,
+        totalPoints: entryRounds.points,
+        username: users.username,
+      })
+      .from(entryRounds)
+      .innerJoin(entries, eq(entryRounds.entryId, entries.id))
+      .innerJoin(users, eq(entries.userId, users.id))
+      .where(eq(entryRounds.roundId, roundId))
+      .orderBy(desc(entryRounds.points), asc(entries.id))
+      .limit(Math.max(1, Math.min(limit, 200)))
+      .offset(Math.max(0, offset));
+  },
+  ["global-leaderboard-round"],
+  { tags: ["leaderboard"], revalidate: 300 },
+);
+
+/**
+ * Posición de un equipo en el ranking de UNA fecha: 1 + cuántos equipos hicieron
+ * más puntos que él en esa fecha. Devuelve null si el equipo no jugó la fecha.
+ */
+export const getUserGlobalRankByRound = unstable_cache(
+  async (entryId: number, roundId: number): Promise<{ rank: number; points: number } | null> => {
+    const me = (
+      await db
+        .select({ pts: entryRounds.points })
+        .from(entryRounds)
+        .where(and(eq(entryRounds.entryId, entryId), eq(entryRounds.roundId, roundId)))
+        .limit(1)
+    )[0];
+    if (!me) return null;
+    const r = (
+      await db
+        .select({ c: sql<number>`count(*)` })
+        .from(entryRounds)
+        .where(and(eq(entryRounds.roundId, roundId), gt(entryRounds.points, me.pts)))
+    )[0];
+    return { rank: Number(r?.c ?? 0) + 1, points: me.pts };
+  },
+  ["user-global-rank-round"],
+  { tags: ["leaderboard"], revalidate: 300 },
+);
+
 export async function getMyTeam(userId: number) {
   const entry = (await db.select().from(entries).where(eq(entries.userId, userId)).limit(1))[0];
   if (!entry) return null;
@@ -1031,7 +1101,7 @@ export const LEAGUE_RANKING_PAGE_SIZE = 50;
  * Ranking de una liga, paginado: una liga viral grande puede tener cientos de
  * miembros y antes se traían y renderizaban todos de una. `page` es 1-based.
  */
-export async function getLeagueRanking(code: string, page = 1) {
+export async function getLeagueRanking(code: string, page = 1, singleRoundOrder?: number) {
   const league = (
     await db.select().from(leagues).where(eq(leagues.code, code.toUpperCase())).limit(1)
   )[0];
@@ -1056,6 +1126,14 @@ export async function getLeagueRanking(code: string, page = 1) {
     }
   }
 
+  // Vista "por fecha": en vez de acumular desde startOrder, rankea solo por los
+  // puntos de UNA fecha (su `order`). Se ignora si la fecha cae antes del arranque
+  // de la liga (no puntúa) — eso lo filtra quien llama, vía las fechas publicadas
+  // dentro de la ventana de la liga.
+  const useSingleRound = singleRoundOrder != null;
+  const lo = useSingleRound ? singleRoundOrder : startOrder;
+  const hi = useSingleRound ? singleRoundOrder : Number.MAX_SAFE_INTEGER;
+
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
     .from(leagueMembers)
@@ -1067,12 +1145,12 @@ export async function getLeagueRanking(code: string, page = 1) {
 
   // Suma por miembro de los puntos de sus fechas desde startOrder en adelante.
   // Miembro sin entry o sin fechas en rango → 0.
-  const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} else 0 end), 0)`;
+  const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} else 0 end), 0)`;
   // Desempate (decisión del dueño, ver docs/legal/BASES-Y-CONDICIONES.md): a igualdad
   // de puntos totales gana quien tuvo el MEJOR puntaje en una sola fecha dentro de la
   // ventana de la liga; si siguen iguales, la inscripción más temprana (joinedAt).
   // `else null` excluye fechas fuera de rango; sentinela bajo para que el null ordene último.
-  const bestRoundExpr = sql<number>`coalesce(max(case when ${rounds.order} >= ${startOrder} then ${entryRounds.points} end), -1000000)`;
+  const bestRoundExpr = sql<number>`coalesce(max(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} end), -1000000)`;
   const rows = await db
     .select({
       userId: leagueMembers.userId,
@@ -1091,7 +1169,68 @@ export async function getLeagueRanking(code: string, page = 1) {
     .limit(LEAGUE_RANKING_PAGE_SIZE)
     .offset(offset);
 
-  return { league, rows, total, page: safePage, pageSize: LEAGUE_RANKING_PAGE_SIZE, scoringStart };
+  return {
+    league,
+    rows,
+    total,
+    page: safePage,
+    pageSize: LEAGUE_RANKING_PAGE_SIZE,
+    scoringStart,
+    startOrder,
+    singleRoundOrder: useSingleRound ? singleRoundOrder : null,
+  };
+}
+
+/**
+ * Puesto de un usuario DENTRO de una liga, para pinearlo arriba del ranking
+ * (como "Tu posición") aunque esté en una página lejana. Respeta la misma vista
+ * que el ranking: acumulado desde `startOrder`, o una sola fecha (`singleRoundOrder`).
+ * Rank = 1 + miembros con MÁS puntos (mismo criterio que el orden de la tabla;
+ * los desempates finos no afectan el número de puesto mostrado). Devuelve null si
+ * el usuario no es miembro.
+ */
+export async function getLeagueUserStanding(
+  leagueId: number,
+  userId: number,
+  startOrder: number,
+  singleRoundOrder?: number | null,
+): Promise<{ rank: number; points: number; username: string | null; entryName: string | null } | null> {
+  const lo = singleRoundOrder != null ? singleRoundOrder : startOrder;
+  const hi = singleRoundOrder != null ? singleRoundOrder : Number.MAX_SAFE_INTEGER;
+  const ptsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} else 0 end), 0)`;
+
+  // Puntos (y datos) del usuario en la vista actual.
+  const meRow = (
+    await db
+      .select({ userId: leagueMembers.userId, username: users.username, entryName: entries.name, points: ptsExpr })
+      .from(leagueMembers)
+      .innerJoin(users, eq(leagueMembers.userId, users.id))
+      .leftJoin(entries, eq(entries.userId, users.id))
+      .leftJoin(entryRounds, eq(entryRounds.entryId, entries.id))
+      .leftJoin(rounds, eq(rounds.id, entryRounds.roundId))
+      .where(and(eq(leagueMembers.leagueId, leagueId), eq(leagueMembers.userId, userId)))
+      .groupBy(leagueMembers.userId, users.username, entries.name)
+      .limit(1)
+  )[0];
+  if (!meRow) return null;
+
+  // Cuántos miembros tienen MÁS puntos que el usuario en la misma vista.
+  const aheadRows = await db
+    .select({ userId: leagueMembers.userId, points: ptsExpr })
+    .from(leagueMembers)
+    .leftJoin(entries, eq(entries.userId, leagueMembers.userId))
+    .leftJoin(entryRounds, eq(entryRounds.entryId, entries.id))
+    .leftJoin(rounds, eq(rounds.id, entryRounds.roundId))
+    .where(eq(leagueMembers.leagueId, leagueId))
+    .groupBy(leagueMembers.userId)
+    .having(gt(ptsExpr, meRow.points));
+
+  return {
+    rank: aheadRows.length + 1,
+    points: meRow.points,
+    username: meRow.username,
+    entryName: meRow.entryName,
+  };
 }
 
 /**
