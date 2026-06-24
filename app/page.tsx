@@ -94,8 +94,12 @@ export default async function Home() {
     // sin DB / sin auth: sin banner
   }
   const started = editable != null && editable.round.order > 1;
+  // La fecha editable puede no tener fixtures todavía (playoffs antes de que se
+  // publique el cuadro) → sin kickoff que contar: el hero muestra un cartel en vez
+  // del countdown numérico.
+  const hasDeadline = editable?.deadline != null;
   const roundShortName = editable?.round.name.split("—")[0]!.trim();
-  const deadlineLabel = editable?.deadline.toLocaleString("es-AR", {
+  const deadlineLabel = editable?.deadline?.toLocaleString("es-AR", {
     weekday: "long",
     day: "numeric",
     month: "long",
@@ -128,17 +132,30 @@ export default async function Home() {
             capitán y DT, y competí con tus amigos durante las 8 fechas.
           </p>
 
-          {/* Countdown: al arranque del Mundial, o al cierre de cambios de la fecha editable */}
+          {/* Countdown: al arranque del Mundial, o al cierre de cambios de la fecha
+              editable. Si la próxima fecha todavía no tiene fixtures (playoffs antes
+              del cuadro), no hay kickoff que contar → cartel en lugar del countdown. */}
           <div>
             <Eyebrow className="mb-3">
               {started ? `CIERRE DE CAMBIOS · ${roundShortName!.toUpperCase()}` : "EL MUNDIAL ARRANCA EN"}
             </Eyebrow>
-            <Countdown target={started ? editable!.deadline.toISOString() : TOURNAMENT_START} />
+            {started && !hasDeadline ? (
+              <p className="max-w-[420px] font-display text-2xl leading-tight tracking-tight text-ink-2">
+                SE DEFINE CUANDO TERMINEN LOS GRUPOS
+              </p>
+            ) : (
+              <Countdown target={started ? editable!.deadline!.toISOString() : TOURNAMENT_START} />
+            )}
           </div>
 
           {editable && (
             <p className="max-w-[420px] text-sm leading-relaxed text-ink-2">
-              {started ? (
+              {!started ? (
+                <>
+                  Armá tu equipo antes del <strong>{deadlineLabel}</strong> (hora Argentina) para
+                  sumar puntos desde la Fecha 1.
+                </>
+              ) : hasDeadline ? (
                 <>
                   El Mundial ya está en juego: armá tu equipo ahora y sumás desde{" "}
                   <strong>{roundShortName}</strong>. Tenés tiempo hasta el{" "}
@@ -147,8 +164,9 @@ export default async function Home() {
                 </>
               ) : (
                 <>
-                  Armá tu equipo antes del <strong>{deadlineLabel}</strong> (hora Argentina) para
-                  sumar puntos desde la Fecha 1.
+                  El Mundial ya está en juego: armá tu equipo para{" "}
+                  <strong>{roundShortName}</strong> y sumás desde ahí. La ventana ya está
+                  abierta; el cierre se define cuando termine la fase de grupos.
                 </>
               )}
             </p>

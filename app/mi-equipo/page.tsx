@@ -180,7 +180,8 @@ export default async function MiEquipoPage({
       {changesStatus &&
         (changesStatus.state === "limited" ||
           changesStatus.state === "unlimited" ||
-          changesStatus.state === "premium") && (
+          changesStatus.state === "premium") &&
+        changesStatus.deadline && (
           <DeadlineNotice deadline={changesStatus.deadline} roundName={changesStatus.roundName} />
         )}
 

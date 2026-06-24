@@ -539,10 +539,22 @@ export async function getLineupCoach(entryRoundId: number) {
 }
 
 /**
- * Fecha editable = la primera no publicada cuyo primer partido todavía no arrancó.
- * Su "deadline" es el kickoff de ese primer partido. Cuando ese partido empieza,
- * la fecha queda bloqueada y la editable pasa a la siguiente. Devuelve null si no
- * hay ninguna editable (todo arrancó/publicado → equipo bloqueado).
+ * Fecha editable = la primera no publicada que todavía no se cerró. Su "deadline"
+ * es el kickoff de su primer partido; cuando ese partido empieza, la fecha queda
+ * bloqueada y la editable pasa a la siguiente.
+ *
+ * Caso especial de los playoffs: entre la última fecha de grupos (ya en juego) y
+ * el alta de los fixtures de los 16vos, la próxima fecha NO tiene partidos cargados
+ * todavía (API-Football publica el cuadro recién cuando terminan los grupos). Esa
+ * fecha igual es editable —es la próxima a jugarse y todas las anteriores ya
+ * arrancaron o se publicaron— con el cierre dado por `rounds.deadline` si está
+ * cargado a mano, o "a definir" (`deadline: null`, sin countdown) hasta que se
+ * seedeen los fixtures. Antes acá devolvía null y dejaba el equipo BLOQUEADO + el
+ * countdown del home en 00:00:00 durante todo ese hueco.
+ *
+ * Devuelve null solo si NO queda ninguna fecha por jugar (todo publicado → torneo
+ * terminado). El `deadline` puede ser null (fecha editable sin fixtures todavía),
+ * así que los consumidores que lo usan para un countdown deben contemplarlo.
  */
 export async function getEditableRound(now: Date = new Date()) {
   // Una sola query: trae las rondas no publicadas con el kickoff de su primer
@@ -558,10 +570,22 @@ export async function getEditableRound(now: Date = new Date()) {
     .groupBy(rounds.id)
     .orderBy(asc(rounds.order));
   for (const c of candidates) {
-    const deadline = c.firstKickoff ? new Date(c.firstKickoff) : null;
-    // Sin fixtures todavía (deadline null) = NO editable: evita que una ronda
-    // sin fecha definida quede abierta indefinidamente.
-    if (deadline && deadline > now) return { round: c.round, deadline };
+    if (c.firstKickoff) {
+      // Fecha CON fixtures: editable hasta que arranque su primer partido. Si ya
+      // arrancó (en juego o cerrada sin publicar), la salteamos y probamos la próxima.
+      const deadline = new Date(c.firstKickoff);
+      if (deadline > now) return { round: c.round, deadline: deadline as Date | null };
+      continue;
+    }
+    // Fecha SIN fixtures todavía (playoffs antes de que se publique el cuadro): es
+    // la próxima a jugarse → editable. Si hay un deadline cargado a mano en la fecha
+    // (rounds.deadline) y todavía no pasó, lo usamos como cierre/countdown; si no
+    // (sin deadline, o ya pasó pero los fixtures aún no se seedearon), queda "a
+    // definir" (null, sin countdown). NUNCA la salteamos: sin partidos no hay nada
+    // en juego, así que siempre es la próxima fecha editable, no la siguiente — un
+    // deadline manual vencido no debe "adelantar" a la fecha que sigue.
+    const manualDeadline = c.round.deadline ? new Date(c.round.deadline) : null;
+    return { round: c.round, deadline: manualDeadline && manualDeadline > now ? manualDeadline : null };
   }
   return null;
 }
@@ -827,9 +851,11 @@ export async function getEditContext(userId: number, editableRoundId: number, ed
 export type ChangesStatus =
   | { state: "ended" }
   | { state: "waiting"; nextRoundName: string | null }
-  | { state: "premium"; roundName: string; deadline: string }
-  | { state: "unlimited"; roundName: string; deadline: string }
-  | { state: "limited"; roundName: string; deadline: string; freeLeft: number; pinBalance: number };
+  // deadline null = fecha editable sin fixtures todavía (playoffs antes del cuadro):
+  // la ventana está abierta pero el cierre es "a definir" → la UI omite el countdown.
+  | { state: "premium"; roundName: string; deadline: string | null }
+  | { state: "unlimited"; roundName: string; deadline: string | null }
+  | { state: "limited"; roundName: string; deadline: string | null; freeLeft: number; pinBalance: number };
 
 /**
  * Estado de "cambios disponibles" para mostrar en /mi-equipo, con el mismo
@@ -864,7 +890,8 @@ export async function getChangesStatus(userId: number, isPremium: boolean): Prom
     return { state: "waiting", nextRoundName: shortRoundName(pending.name) };
   }
   const roundName = shortRoundName(editable.round.name);
-  const deadline = editable.deadline.toISOString();
+  // null = fecha editable sin fixtures todavía (cierre a definir): la UI no muestra countdown.
+  const deadline = editable.deadline?.toISOString() ?? null;
   if (isPremium) return { state: "premium", roundName, deadline };
 
   const editContext = await getEditContext(userId, editable.round.id, editable.round.order);
@@ -898,8 +925,11 @@ export async function getChangeReminder(
   now: Date = new Date(),
 ): Promise<{ roundId: number; roundName: string; deadline: string } | null> {
   const editable = await getEditableRound(now);
-  if (!editable) return null;
-  const msLeft = editable.deadline.getTime() - now.getTime();
+  // Sin fecha editable, o con cierre "a definir" (playoffs sin fixtures todavía):
+  // no hay deadline contra el cual recordar → no se muestra el popup.
+  if (!editable || !editable.deadline) return null;
+  const deadline = editable.deadline;
+  const msLeft = deadline.getTime() - now.getTime();
   if (msLeft <= 0 || msLeft > CHANGE_REMINDER_WINDOW_MS) return null;
 
   const entry = (
@@ -922,7 +952,7 @@ export async function getChangeReminder(
     // Nombre completo de la DB: el popup lo formatea con `roundWithArticle`
     // ("La Fecha 2", "Los 16vos de Final", "La Final"…).
     roundName: editable.round.name,
-    deadline: editable.deadline.toISOString(),
+    deadline: deadline.toISOString(),
   };
 }
 

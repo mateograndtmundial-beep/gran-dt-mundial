@@ -89,7 +89,11 @@ export default async function EquipoPage({
           timeZone: "America/Argentina/Buenos_Aires",
         })
         .toUpperCase()}`
-    : "EDITÁ LIBRE HASTA QUE ARRANQUE EL MUNDIAL";
+    : editable
+      ? // Fecha editable sin fixtures todavía (playoffs antes del cuadro): la ventana
+        // está abierta pero el cierre se define al cargarse los partidos.
+        `${shortRoundName(editable.round.name).toUpperCase()} · CIERRE A DEFINIR`
+      : "EDITÁ LIBRE HASTA QUE ARRANQUE EL MUNDIAL";
   const locked = !error && players.length > 0 && !editable;
 
   return (
