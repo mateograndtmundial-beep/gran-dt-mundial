@@ -50,7 +50,7 @@ export default async function LigasPage() {
       ) : (
         <>
           {/* Liga Premium — card de promo si hay una abierta, o "cupos agotados" si no */}
-          {promoCopa && <CopaPromoCard copa={promoCopa} />}
+          {promoCopa && <CopaPromoCard copa={promoCopa} href="/copa" />}
           {soldOut && <CopaSoldOutCard />}
 
           {/* Liga global */}

@@ -1,4 +1,5 @@
-import { Trophy } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Trophy } from "lucide-react";
 import { Eyebrow } from "@/components/editorial";
 import type { CopaStatus } from "@/lib/queries";
 import { formatArs } from "./format";
@@ -13,15 +14,20 @@ import { CupoScarcity } from "./CupoScarcity";
  * cupos" / "Últimos lugares") cuando de verdad falta poco (ver CupoScarcity). El número
  * exacto solo lo ve quien ya está inscripto (CopaLeagueRow). Mobile-first: stack vertical
  * en celular, fila en desktop.
+ *
+ * `href`: si se pasa (en `/ligas`), toda la card es un link a esa ruta (`/copa`, donde
+ * está el detalle completo y la inscripción) en lugar de mostrar el flujo de pago inline.
+ * En `/copa` se omite `href` y la card muestra el `EnrollButton` directamente.
  */
-export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
+export function CopaPromoCard({ copa, href }: { copa: CopaStatus; href?: string }) {
   const capacity = copa.capacity ?? 100;
 
-  return (
-    <div className="rounded-[10px] border-2 border-gold-border bg-gold-bg p-5 card-shadow">
+  const inner = (
+    <>
       <div className="flex items-center gap-2">
         <Trophy size={18} className="text-gold shrink-0" aria-hidden />
         <Eyebrow className="text-gold-ink">{copa.name}</Eyebrow>
+        {href && <ChevronRight size={18} className="ml-auto text-gold shrink-0" aria-hidden />}
       </div>
 
       <div className="mt-3 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -43,9 +49,25 @@ export function CopaPromoCard({ copa }: { copa: CopaStatus }) {
         <CupoScarcity copaId={copa.id} initialScarcity={copa.scarcity} />
       </div>
 
-      <div className="mt-4">
-        <EnrollButton entrySku={copa.entrySku} />
-      </div>
-    </div>
+      {href ? (
+        <p className="mt-4 text-sm font-semibold text-gold-ink">Ver la copa e inscribirme →</p>
+      ) : (
+        <div className="mt-4">
+          <EnrollButton entrySku={copa.entrySku} />
+        </div>
+      )}
+    </>
   );
+
+  const className = "block rounded-[10px] border-2 border-gold-border bg-gold-bg p-5 card-shadow";
+
+  if (href) {
+    return (
+      <Link href={href} className={`${className} transition-colors hover:bg-gold-bg/70`}>
+        {inner}
+      </Link>
+    );
+  }
+
+  return <div className={className}>{inner}</div>;
 }
