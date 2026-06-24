@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { countPlayerChanges, pinsForChanges, freeChangesLeft, pinsDueNow, roundTally } from "./changes";
+import { countPlayerChanges, computeRosterDiff, pinsForChanges, freeChangesLeft, pinsDueNow, roundTally } from "./changes";
 
 describe("countPlayerChanges", () => {
   it("sin baseline (primer equipo / fecha 1) = 0 cambios", () => {
@@ -14,6 +14,38 @@ describe("countPlayerChanges", () => {
   });
   it("reemplazar todos = todos cambios", () => {
     expect(countPlayerChanges([4, 5, 6], [1, 2, 3])).toBe(3);
+  });
+});
+
+describe("computeRosterDiff", () => {
+  it("baseline vacío (armado inicial) = todos entran, ninguno sale", () => {
+    expect(computeRosterDiff([1, 2, 3], [])).toEqual({ in: [1, 2, 3], out: [] });
+  });
+  it("mismo conjunto (aunque cambie el orden) = sin diff", () => {
+    expect(computeRosterDiff([3, 1, 2], [1, 2, 3])).toEqual({ in: [], out: [] });
+  });
+  it("un swap 1↔1: registra quién entra y quién sale", () => {
+    expect(computeRosterDiff([1, 2, 9], [1, 2, 3])).toEqual({ in: [9], out: [3] });
+  });
+  it("dos swaps: in y out alineados en cantidad", () => {
+    const d = computeRosterDiff([7, 8, 3], [1, 2, 3]);
+    expect(d).toEqual({ in: [7, 8], out: [1, 2] });
+    expect(d.in.length).toBe(d.out.length);
+  });
+  it("reemplazo total", () => {
+    expect(computeRosterDiff([4, 5, 6], [1, 2, 3])).toEqual({ in: [4, 5, 6], out: [1, 2, 3] });
+  });
+  it("|in| === countPlayerChanges (consistencia con lo que cobra el server)", () => {
+    const cur = [1, 2, 9, 8];
+    const base = [1, 2, 3, 4];
+    expect(computeRosterDiff(cur, base).in.length).toBe(countPlayerChanges(cur, base));
+  });
+  it("no muta los arrays de entrada", () => {
+    const cur = [1, 2, 9];
+    const base = [1, 2, 3];
+    computeRosterDiff(cur, base);
+    expect(cur).toEqual([1, 2, 9]);
+    expect(base).toEqual([1, 2, 3]);
   });
 });
 

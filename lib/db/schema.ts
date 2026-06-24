@@ -339,3 +339,37 @@ export const pinTransactions = pgTable(
       .where(sql`${t.reason} = 'purchase'`),
   ],
 );
+
+// ---------- Auditoría: log de cambios de alineación ----------
+// Una fila por CADA guardado exitoso de saveLineup (append-only). Permite
+// reconstruir "quién cambió a qué jugador y cuándo" para disputas — algo que
+// entry_round_players (solo estado actual) y entry_rounds.updatedAt (se pisa en
+// cada UPDATE, incl. publishRound) no permiten. El insert vive DENTRO del mismo
+// db.batch() atómico que el roster y el débito de pines: si el guardado se
+// revierte (saldo insuficiente), el log NO queda — nunca registra algo que no pasó.
+// playersIn/playersOut = diff vs el baseline de ese save (computeRosterDiff):
+// el equipo confirmado de la fecha si es re-edición, o la fecha anterior si es el
+// primer save de la fecha. Ver lib/game/changes.ts y saveLineup.
+export const lineupChangeLog = pgTable(
+  'lineup_change_log',
+  {
+    id: serial('id').primaryKey(),
+    entryId: integer('entry_id').references(() => entries.id).notNull(),
+    roundId: integer('round_id').references(() => rounds.id).notNull(),
+    entryRoundId: integer('entry_round_id').references(() => entryRounds.id).notNull(),
+    // Arrays de playerId. jsonb (no array de pg) por portabilidad y simpleza.
+    playersIn: jsonb('players_in').notNull().$type<number[]>(),
+    playersOut: jsonb('players_out').notNull().$type<number[]>(),
+    formation: text('formation').notNull(),
+    captainPlayerId: integer('captain_player_id'),
+    coachId: integer('coach_id'),
+    // Pines cobrados EN ESTE save (el delta incremental, no el total de la fecha).
+    pinsDelta: integer('pins_delta').notNull().default(0),
+    // Cantidad de cambios de jugador en este save (= playersIn.length). Redundante
+    // con el array pero hace triviales los conteos/filtros sin desempaquetar jsonb.
+    changesInSave: integer('changes_in_save').notNull().default(0),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  // Consulta típica: historial de un equipo en una fecha, ordenado por tiempo.
+  (t) => [index('lcl_entry_round').on(t.entryId, t.roundId, t.createdAt)],
+);

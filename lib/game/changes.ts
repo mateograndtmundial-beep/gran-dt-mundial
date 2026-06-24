@@ -25,6 +25,29 @@ export function countPlayerChanges(
 }
 
 /**
+ * Diff de jugadores de una alineación respecto del baseline, para el log de
+ * auditoría (lineup_change_log). `in` = jugadores nuevos (están ahora, no estaban
+ * en el baseline); `out` = jugadores que salieron (estaban en el baseline, ya no).
+ *
+ * `|in| === |out|` salvo en el armado inicial (baseline vacío → `in` = los 15,
+ * `out` = []). Es PURO y simétrico a countPlayerChanges: `|in|` === el conteo de
+ * cambios que cobra el server. Conserva el orden de entrada (estable para tests).
+ * Mover titular↔suplente o cambiar capitán/técnico/formación NO aparece acá (el
+ * conjunto de 15 es el mismo) — eso se audita con los otros campos del log.
+ */
+export function computeRosterDiff(
+  currentPlayerIds: readonly number[],
+  baselinePlayerIds: readonly number[],
+): { in: number[]; out: number[] } {
+  const base = new Set(baselinePlayerIds);
+  const current = new Set(currentPlayerIds);
+  return {
+    in: currentPlayerIds.filter((id) => !base.has(id)),
+    out: baselinePlayerIds.filter((id) => !current.has(id)),
+  };
+}
+
+/**
  * Pines necesarios (TOTAL de la fecha) para `changes` cambios: los primeros
  * `freeChanges` son gratis, cada extra cuesta 1 pin. Los usuarios premium (pack
  * ilimitado) no pagan nunca. La reconciliación de lo ya gastado en re-ediciones

@@ -46,6 +46,9 @@ vi.mock("@/lib/db", () => {
       values(v: Record<string, unknown>) {
         h.inserts.push({ table, values: v });
         return {
+          // `__insert` etiqueta el op para poder localizarlo DENTRO del batch
+          // (los inserts que van al batch no se consumen con .returning()).
+          __insert: table,
           // El insert "ensure row" del primer guardado usa .returning({ id }).
           returning: (_x?: unknown) => Promise.resolve([{ id: 555 }]),
           then: (res: (v: unknown) => unknown) => Promise.resolve(undefined).then(res),
@@ -75,7 +78,7 @@ vi.mock("@/lib/db", () => {
 
 // Importa DESPUÉS de los mocks.
 import { saveLineup } from "./actions";
-import { entryRounds } from "./db/schema";
+import { entryRounds, lineupChangeLog } from "./db/schema";
 import { getCurrentUser } from "./auth";
 import { getEditableRound } from "./queries";
 import { getPinBalance } from "./pins";
@@ -213,5 +216,83 @@ describe("saveLineup — atomicidad de pines (regresión Bug B)", () => {
     expect(ops.some((o) => o.__op === "debit")).toBe(true);
     expect(ops.some((o) => o.__op === "update")).toBe(true);
     expect(ops.some((o) => o.__op === "delete")).toBe(true);
+  });
+});
+
+describe("saveLineup — log de cambios (auditoría)", () => {
+  it("registra el diff correcto (in/out) y va DENTRO del batch atómico", async () => {
+    // baseline difiere en 2: ids 1..13 + 900,901. La alineación nueva es 1..15
+    // → entran 14 y 15, salen 900 y 901. 2 cambios = 1 gratis + 1 pin.
+    h.selectQueue = [PLAYER_ROWS, [entryRow], [], [{ id: 99 }], BASELINE_DIFF_2];
+    h.batchThrows = false;
+
+    const res = await saveLineup(VALID_INPUT);
+    expect(res).toMatchObject({ ok: true });
+
+    const logInsert = h.inserts.find((i) => i.table === lineupChangeLog);
+    expect(logInsert).toBeTruthy();
+    expect(logInsert!.values).toMatchObject({
+      entryId: 7,
+      roundId: 2,
+      entryRoundId: 555, // id que devolvió el insert "ensure row"
+      playersIn: [14, 15],
+      playersOut: [900, 901],
+      formation: "4-4-2",
+      captainPlayerId: 1,
+      pinsDelta: 1,
+      changesInSave: 2,
+    });
+
+    // CLAVE: el insert del log está en el MISMO batch (atómico) que el resto.
+    const ops = h.lastBatch as Array<Record<string, unknown>>;
+    expect(ops.some((o) => o.__insert === lineupChangeLog)).toBe(true);
+  });
+
+  it("si el batch se revierte por saldo, el log va dentro del batch (se revierte con él)", async () => {
+    h.selectQueue = [PLAYER_ROWS, [entryRow], [], [{ id: 99 }], BASELINE_DIFF_2];
+    h.batchThrows = true; // el débito aborta el batch
+
+    const res = await saveLineup(VALID_INPUT);
+    expect(res).toMatchObject({ ok: false, error: "pins" });
+
+    // El op del log estaba en el batch que se abortó → en la DB real NO persiste.
+    const ops = h.lastBatch as Array<Record<string, unknown>>;
+    expect(ops.some((o) => o.__insert === lineupChangeLog)).toBe(true);
+  });
+
+  it("armado inicial (sin fecha previa): entran los 15, no sale nadie, 0 cambios/0 pines", async () => {
+    // er0 vacío y prevEr vacío → no hay baseline → diff = todos entran.
+    h.selectQueue = [PLAYER_ROWS, [entryRow], [], []];
+    h.batchThrows = false;
+
+    const res = await saveLineup(VALID_INPUT);
+    expect(res).toMatchObject({ ok: true });
+
+    const logInsert = h.inserts.find((i) => i.table === lineupChangeLog);
+    expect(logInsert!.values).toMatchObject({
+      playersIn: VALID_INPUT.players.map((p) => p.playerId),
+      playersOut: [],
+      pinsDelta: 0,
+      changesInSave: 0,
+    });
+  });
+
+  it("re-edición: el diff es vs el equipo confirmado de la fecha", async () => {
+    // er0 ya existe; baseline = roster confirmado (1..14 + 902). Nueva = 1..15
+    // → entra 15, sale 902. 1 cambio nuevo (gratis, ya había 1 prior → total 2, 1 pin).
+    const er0 = { id: 77, entryId: 7, roundId: 2, name: "FACUPIZZAS", pinsSpent: 0, changesMade: 1 };
+    const baseDiff1 = [...Array(14)].map((_, i) => ({ playerId: i + 1 })).concat([{ playerId: 902 }]);
+    h.selectQueue = [PLAYER_ROWS, [entryRow], [er0], [{ id: 99 }], baseDiff1];
+    h.batchThrows = false;
+
+    await saveLineup(VALID_INPUT);
+
+    const logInsert = h.inserts.find((i) => i.table === lineupChangeLog);
+    expect(logInsert!.values).toMatchObject({
+      entryRoundId: 77, // reusa el er existente, no crea uno nuevo
+      playersIn: [15],
+      playersOut: [902],
+      changesInSave: 1,
+    });
   });
 });

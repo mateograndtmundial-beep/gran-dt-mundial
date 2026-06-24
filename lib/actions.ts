@@ -3,7 +3,7 @@
 import { revalidatePath, revalidateTag } from "next/cache";
 import { and, desc, eq, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches } from "@/lib/db/schema";
+import { entries, entryRounds, entryRoundPlayers, leagues, leagueMembers, rounds, players, coaches, lineupChangeLog } from "@/lib/db/schema";
 import { getCurrentUser } from "@/lib/auth";
 import { getEditableRound, isEnrolledInGoldenTicket } from "@/lib/queries";
 import { getPinBalance, pinMovementOps, isInsufficientPinsError } from "@/lib/pins";
@@ -11,7 +11,7 @@ import { BUDGET, MAX_PER_COUNTRY, MAX_PER_COUNTRY_KNOCKOUT, getFreeChangesForRou
 import { validateLineupShape } from "@/lib/game/lineup";
 import { saveLineupSchema, type SaveLineupInput } from "@/lib/validation/lineup";
 import { round1 } from "@/lib/pricing/map";
-import { countPlayerChanges, roundTally } from "@/lib/game/changes";
+import { countPlayerChanges, computeRosterDiff, roundTally } from "@/lib/game/changes";
 
 type BatchOp = Parameters<typeof db.batch>[0][number];
 
@@ -116,6 +116,7 @@ export async function saveLineup(rawInput: SaveLineupInput) {
   )[0];
 
   let newChanges = 0;
+  let baselineIds: number[] = []; // roster del baseline (para el diff del log de auditoría)
   const priorChanges = prevEr ? (er0?.changesMade ?? 0) : 0;
   if (prevEr) {
     const baseErId = er0?.id ?? prevEr.id;
@@ -123,9 +124,10 @@ export async function saveLineup(rawInput: SaveLineupInput) {
       .select({ playerId: entryRoundPlayers.playerId })
       .from(entryRoundPlayers)
       .where(eq(entryRoundPlayers.entryRoundId, baseErId));
+    baselineIds = base.map((p) => p.playerId);
     newChanges = countPlayerChanges(
       input.players.map((p) => p.playerId),
-      base.map((p) => p.playerId),
+      baselineIds,
     );
   }
 
@@ -218,6 +220,28 @@ export async function saveLineup(rawInput: SaveLineupInput) {
       db.insert(entryRoundPlayers).values(playerRows.map((p) => ({ ...p, entryRoundId: erId }))),
     );
   }
+  // Log de auditoría (append-only): una fila por save, DENTRO del batch atómico —
+  // si el débito de pines aborta el batch, este insert también se revierte, así
+  // el log nunca registra un guardado que no se concretó. El diff es vs el baseline
+  // de este save (equipo confirmado de la fecha, o fecha anterior si es el 1er save).
+  const rosterDiff = computeRosterDiff(
+    input.players.map((p) => p.playerId),
+    baselineIds,
+  );
+  ops.push(
+    db.insert(lineupChangeLog).values({
+      entryId: entry.id,
+      roundId: round.id,
+      entryRoundId: erId,
+      playersIn: rosterDiff.in,
+      playersOut: rosterDiff.out,
+      formation: input.formation,
+      captainPlayerId: input.captainPlayerId,
+      coachId: input.coachId,
+      pinsDelta: delta,
+      changesInSave: newChanges,
+    }),
+  );
   ops.push(...pinOps);
   const r = await runBatch(ops);
   if (r.pins) {
