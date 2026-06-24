@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import { BUDGET, SQUAD } from "../lib/game/config";
 import { countryEs } from "../lib/i18n/countries";
 import { buildStatsDigest } from "../lib/reports/stats-digest";
+import { buildFinanceDigest, computeFinance } from "../lib/reports/finance-digest";
 import { query, section, kv, pct, nf, table } from "./lib/report";
 
 /**
@@ -346,6 +347,31 @@ async function seccionMonetizacion() {
 }
 
 // ──────────────────────────────────────────────────────────────
+// Finanzas (breakeven) — mismo cómputo que el digest financiero de Slack
+// ──────────────────────────────────────────────────────────────
+
+async function seccionFinanzas() {
+  const f = await computeFinance();
+  const money = (n: number) => `$${nf(Math.round(n))}`;
+
+  section("Ingresos (sin internos ni reembolsos)");
+  kv("Brutos", `${money(f.brutoTotal)}  (pines ${money(f.brutoPines)} · copa ${money(f.brutoCopa)})`);
+  kv(`Neto tras MP (−${f.feeEffPct.toFixed(2)}%)`, money(f.netTotal));
+
+  section("Egresos");
+  kv("Marketing", money(f.marketingArs));
+  kv(`Infra (US$${f.infraUsd} @ MEP ${nf(f.mep)})`, money(f.infraArs));
+  kv("Premio garantizado copa(s)", money(f.premioArs));
+  kv("TOTAL", money(f.totalEgresos));
+  if (f.pendingNote) kv("Pendiente de sumar", f.pendingNote);
+
+  section("Resultado");
+  kv("Resultado global", `${f.resultado >= 0 ? "+" : ""}${money(f.resultado)} ${f.resultado < 0 ? "(déficit)" : "(superávit)"}`);
+  kv("Entradas copa vendidas", `${f.copaEntries}${f.capacity ? ` / ${f.capacity}` : ""}`);
+  kv("Breakeven copa (cubrir premio)", `${f.copaBreakeven} entradas${f.faltanEntradas > 0 ? ` (faltan ${f.faltanEntradas})` : " (cubierto)"}`);
+}
+
+// ──────────────────────────────────────────────────────────────
 // Ligas
 // ──────────────────────────────────────────────────────────────
 
@@ -446,19 +472,25 @@ async function postSlackDigest() {
     return;
   }
 
-  const { text, blocks } = await buildStatsDigest();
+  // Dos mensajes separados, igual que el cron: digest de stats + resumen financiero.
+  const [stats, finance] = await Promise.all([buildStatsDigest(), buildFinanceDigest()]);
 
-  try {
-    const res = await fetch("https://slack.com/api/chat.postMessage", {
-      method: "POST",
-      headers: { "Content-Type": "application/json; charset=utf-8", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ channel, text, blocks }),
-    });
-    const json = (await res.json()) as { ok: boolean; error?: string };
-    console.log(json.ok ? "\n✅ Digest posteado a Slack (#stats)." : `\n❌ Slack error: ${json.error}`);
-  } catch (e) {
-    console.log(`\n❌ Falló el post a Slack: ${(e as Error).message}`);
+  async function postOne(label: string, payload: { text: string; blocks: unknown[] }) {
+    try {
+      const res = await fetch("https://slack.com/api/chat.postMessage", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ channel, text: payload.text, blocks: payload.blocks }),
+      });
+      const json = (await res.json()) as { ok: boolean; error?: string };
+      console.log(json.ok ? `\n✅ ${label} posteado a Slack (#stats).` : `\n❌ Slack error (${label}): ${json.error}`);
+    } catch (e) {
+      console.log(`\n❌ Falló el post de ${label} a Slack: ${(e as Error).message}`);
+    }
   }
+
+  await postOne("Digest de stats", stats);
+  await postOne("Resumen financiero", finance);
 }
 
 // ──────────────────────────────────────────────────────────────
@@ -470,6 +502,7 @@ const SECTIONS: Record<string, () => Promise<void>> = {
   engagement: seccionEngagement,
   funnel: seccionFunnel,
   monetizacion: seccionMonetizacion,
+  finanzas: seccionFinanzas,
   ligas: seccionLigas,
   salud: seccionSalud,
 };

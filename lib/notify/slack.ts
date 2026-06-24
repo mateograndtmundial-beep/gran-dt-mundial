@@ -356,6 +356,13 @@ export function notifyStatsDigest(input: { text: string; blocks: Block[] }): voi
   });
 }
 
+/** Resumen financiero (breakeven) — mensaje APARTE del digest, mismo canal #stats. */
+export function notifyFinanceDigest(input: { text: string; blocks: Block[] }): void {
+  fire(async () => {
+    await post("stats", { text: input.text, color: COLOR.gold, blocks: input.blocks });
+  });
+}
+
 // ──────────────────────────────────────────────────────────────
 // Errores / salud
 // ──────────────────────────────────────────────────────────────

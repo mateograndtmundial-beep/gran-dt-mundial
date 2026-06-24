@@ -1,10 +1,14 @@
 import { buildStatsDigest } from "@/lib/reports/stats-digest";
-import { notifyStatsDigest, notifyError } from "@/lib/notify/slack";
+import { buildFinanceDigest } from "@/lib/reports/finance-digest";
+import { notifyStatsDigest, notifyFinanceDigest, notifyError } from "@/lib/notify/slack";
 
 /*
- * Cron diario de stats (Vercel Cron, 8am ARG = 11:00 UTC). Arma el digest de
- * `lib/reports/stats-digest.ts` (equipos, engagement, funnel, monetización,
- * ligas, salud) y lo postea al canal #stats. Solo lectura — no modifica nada.
+ * Cron diario de stats (Vercel Cron, 8am ARG = 11:00 UTC). Postea a #stats DOS
+ * mensajes separados, ambos solo-lectura:
+ *   1. Digest de stats — `lib/reports/stats-digest.ts` (equipos, engagement,
+ *      funnel, monetización, ligas, salud).
+ *   2. Resumen financiero — `lib/reports/finance-digest.ts` (ingresos vs egresos
+ *      / breakeven). Mensaje aparte para que el análisis de plata viaje solo.
  *
  * Seguridad: igual que /api/cron/sync — Vercel agrega
  * `Authorization: Bearer <CRON_SECRET>`. Sin secreto configurado → 401.
@@ -23,8 +27,9 @@ function authorized(req: Request): boolean {
 async function run(req: Request): Promise<Response> {
   if (!authorized(req)) return new Response("Unauthorized", { status: 401 });
   try {
-    const { text, blocks } = await buildStatsDigest();
-    notifyStatsDigest({ text, blocks });
+    const [stats, finance] = await Promise.all([buildStatsDigest(), buildFinanceDigest()]);
+    notifyStatsDigest(stats);
+    notifyFinanceDigest(finance);
     return Response.json({ ok: true });
   } catch (e) {
     notifyError({ source: "cron/stats", message: (e as Error).message });
