@@ -1131,8 +1131,13 @@ export async function getLeagueRanking(code: string, page = 1, singleRoundOrder?
   // de la liga (no puntúa) — eso lo filtra quien llama, vía las fechas publicadas
   // dentro de la ventana de la liga.
   const useSingleRound = singleRoundOrder != null;
-  const lo = useSingleRound ? singleRoundOrder : startOrder;
-  const hi = useSingleRound ? singleRoundOrder : Number.MAX_SAFE_INTEGER;
+  // Condición de "fecha dentro de la ventana": una sola fecha (vista por fecha) o todo
+  // desde startOrder en adelante (acumulado). OJO: no usar una cota superior numérica
+  // (p.ej. Number.MAX_SAFE_INTEGER) — `rounds.order` es int4 y Postgres castea el literal
+  // a int32, que se desborda (error 22003 / pg_strtoint32_safe).
+  const inWindow = useSingleRound
+    ? sql`${rounds.order} = ${singleRoundOrder}`
+    : sql`${rounds.order} >= ${startOrder}`;
 
   const [{ count }] = await db
     .select({ count: sql<number>`count(*)` })
@@ -1145,12 +1150,12 @@ export async function getLeagueRanking(code: string, page = 1, singleRoundOrder?
 
   // Suma por miembro de los puntos de sus fechas desde startOrder en adelante.
   // Miembro sin entry o sin fechas en rango → 0.
-  const pointsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} else 0 end), 0)`;
+  const pointsExpr = sql<number>`coalesce(sum(case when ${inWindow} then ${entryRounds.points} else 0 end), 0)`;
   // Desempate (decisión del dueño, ver docs/legal/BASES-Y-CONDICIONES.md): a igualdad
   // de puntos totales gana quien tuvo el MEJOR puntaje en una sola fecha dentro de la
   // ventana de la liga; si siguen iguales, la inscripción más temprana (joinedAt).
   // `else null` excluye fechas fuera de rango; sentinela bajo para que el null ordene último.
-  const bestRoundExpr = sql<number>`coalesce(max(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} end), -1000000)`;
+  const bestRoundExpr = sql<number>`coalesce(max(case when ${inWindow} then ${entryRounds.points} end), -1000000)`;
   const rows = await db
     .select({
       userId: leagueMembers.userId,
@@ -1195,9 +1200,13 @@ export async function getLeagueUserStanding(
   startOrder: number,
   singleRoundOrder?: number | null,
 ): Promise<{ rank: number; points: number; username: string | null; entryName: string | null } | null> {
-  const lo = singleRoundOrder != null ? singleRoundOrder : startOrder;
-  const hi = singleRoundOrder != null ? singleRoundOrder : Number.MAX_SAFE_INTEGER;
-  const ptsExpr = sql<number>`coalesce(sum(case when ${rounds.order} >= ${lo} and ${rounds.order} <= ${hi} then ${entryRounds.points} else 0 end), 0)`;
+  // Misma ventana que el ranking; sin cota superior numérica (rounds.order es int4 →
+  // un literal tipo Number.MAX_SAFE_INTEGER desborda el int32 y rompe la query).
+  const inWindow =
+    singleRoundOrder != null
+      ? sql`${rounds.order} = ${singleRoundOrder}`
+      : sql`${rounds.order} >= ${startOrder}`;
+  const ptsExpr = sql<number>`coalesce(sum(case when ${inWindow} then ${entryRounds.points} else 0 end), 0)`;
 
   // Puntos (y datos) del usuario en la vista actual.
   const meRow = (
