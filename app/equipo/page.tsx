@@ -108,7 +108,7 @@ export default async function EquipoPage({
         <div className="mb-3 flex items-center gap-2 rounded-[10px] border-2 border-gold-border bg-gold-bg px-4 py-2.5 card-shadow">
           <Trophy size={18} className="shrink-0 text-gold" aria-hidden />
           <p className="text-sm font-semibold text-gold-ink">
-            Estás a un paso de la Liga Premium. Armá el equipo y creá tu cuenta para poder asegurar tu entrada.
+            Estás a un paso de la Liga Premium. Armá el equipo y creá tu cuenta para asegurar tu entrada.
           </p>
         </div>
       )}
