@@ -59,7 +59,10 @@ async function enforceOnboarding(
   if (user && !user.username) {
     const url = req.nextUrl.clone();
     url.pathname = "/bienvenida";
-    if (pathname !== "/") url.searchParams.set("next", pathname);
+    // Preservamos pathname + query del destino original (p.ej. /equipo?from=copa,
+    // que viene del aviso de la Liga Premium) para no perder el contexto tras el
+    // gate de nickname. `next` se valida en /bienvenida (solo rutas internas).
+    if (pathname !== "/") url.searchParams.set("next", pathname + req.nextUrl.search);
     return NextResponse.redirect(url);
   }
   return null;
