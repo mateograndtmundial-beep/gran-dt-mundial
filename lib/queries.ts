@@ -1014,6 +1014,14 @@ export async function getGoldenTicketCopas(userId?: number) {
         userId != null
           ? sql<boolean>`exists (select 1 from ${leagueMembers} where ${leagueMembers.leagueId} = ${leagues.id} and ${leagueMembers.userId} = ${userId})`
           : sql<boolean>`false`,
+      // ¿El usuario ya tiene equipo armado? Lo resolvemos como una columna más de este
+      // mismo query (un solo round-trip a Neon, que es HTTP) para que la landing /copa
+      // sepa si empujar a "Armá tu equipo" sin pagar una consulta extra. El valor es el
+      // mismo en todas las filas (no depende de la copa); la UI lo lee de cualquiera.
+      hasTeam:
+        userId != null
+          ? sql<boolean>`exists (select 1 from ${entries} where ${entries.userId} = ${userId})`
+          : sql<boolean>`false`,
     })
     .from(leagues)
     .leftJoin(products, eq(products.entryLeagueId, leagues.id))

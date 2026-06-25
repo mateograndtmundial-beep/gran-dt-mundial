@@ -6,9 +6,11 @@ import { formatArs } from "./format";
 /**
  * Estado de /copa para visitantes SIN sesión. Es la primera pantalla que ve quien llega
  * del link de Instagram, así que en vez de un EmptyState gris vende el premio y empuja a
- * crear la cuenta. El CTA lleva al alta con `redirect_url=/copa`: tras registrarse y armar
- * su equipo, Clerk lo devuelve acá para inscribirse en la copa. Mobile-first (la mayoría
- * entra del celular): hero centrado + pasos 1-2-3 que apilan en una columna.
+ * crear la cuenta. El CTA de alta lleva al armador (`redirect_url=/equipo?from=copa`): la
+ * jugada de conversión es que primero armen su equipo (el gancho gratis y divertido) y se
+ * inscriban después, ya invertidos — al guardar, /mi-equipo los empuja a la copa. Quien ya
+ * tiene cuenta (link "Ingresar") vuelve directo a /copa para inscribirse. Mobile-first (la
+ * mayoría entra del celular): hero centrado + pasos 1-2-3 que apilan en una columna.
  */
 export function CopaSignedOutHero({
   prizeArs,
@@ -45,7 +47,7 @@ export function CopaSignedOutHero({
 
         <div className="mt-5 flex flex-col items-center gap-2">
           <PrimaryButton
-            href="/sign-up?redirect_url=%2Fcopa"
+            href="/sign-up?redirect_url=%2Fequipo%3Ffrom%3Dcopa"
             className="w-full max-w-xs justify-center bg-gold-ink hover:bg-gold-ink"
           >
             CREAR CUENTA Y JUGAR

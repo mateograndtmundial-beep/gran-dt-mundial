@@ -1,3 +1,4 @@
+import { Trophy } from "lucide-react";
 import { EmptyState } from "@/components/ui";
 import { Eyebrow } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
@@ -12,12 +13,16 @@ export const dynamic = "force-dynamic";
 export default async function EquipoPage({
   searchParams,
 }: {
-  searchParams: Promise<{ add?: string }>;
+  searchParams: Promise<{ add?: string; from?: string }>;
 }) {
   // Deep-link desde /jugadores ("Agregar a mi equipo"): el armador coloca al
   // jugador en un slot libre de su posición. Number("") y NaN → null.
-  const { add } = await searchParams;
+  const { add, from } = await searchParams;
   const addPlayerId = Number(add) > 0 ? Number(add) : null;
+  // Llegó desde la campaña de la Liga Premium (/copa): mostramos un recordatorio de que
+  // armar el equipo es el paso previo a sumarse por el premio. Al guardar, /mi-equipo
+  // cierra el loop con el CTA de inscripción.
+  const fromCopa = from === "copa";
   let players: PlayerRow[] = [];
   let coaches: CoachRow[] = [];
   let stats: Record<number, PlayerStats> = {};
@@ -98,6 +103,16 @@ export default async function EquipoPage({
 
   return (
     <div>
+      {/* Recordatorio de la Liga Premium cuando se llega desde la campaña (/copa). */}
+      {fromCopa && (
+        <div className="mb-3 flex items-center gap-2 rounded-[10px] border-2 border-gold-border bg-gold-bg px-4 py-2.5 card-shadow">
+          <Trophy size={18} className="shrink-0 text-gold" aria-hidden />
+          <p className="text-sm font-semibold text-gold-ink">
+            Estás a un paso de la Liga Premium. Armá tu equipo y, al guardar, te sumás por el premio.
+          </p>
+        </div>
+      )}
+
       {/* Header compacto — no se come el alto de la cancha */}
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h1 className="font-display text-2xl leading-none tracking-tight text-ink">

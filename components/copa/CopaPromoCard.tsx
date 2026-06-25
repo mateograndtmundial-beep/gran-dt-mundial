@@ -3,7 +3,7 @@ import { ChevronRight, Trophy } from "lucide-react";
 import { Eyebrow } from "@/components/editorial";
 import type { CopaStatus } from "@/lib/queries";
 import { formatArs } from "./format";
-import { EnrollButton } from "./EnrollButton";
+import { CopaEnrollSection } from "./CopaEnrollSection";
 import { CupoScarcity } from "./CupoScarcity";
 
 /**
@@ -17,9 +17,20 @@ import { CupoScarcity } from "./CupoScarcity";
  *
  * `href`: si se pasa (en `/ligas`), toda la card es un link a esa ruta (`/copa`, donde
  * está el detalle completo y la inscripción) en lugar de mostrar el flujo de pago inline.
- * En `/copa` se omite `href` y la card muestra el `EnrollButton` directamente.
+ * En `/copa` se omite `href` y la card muestra la sección de inscripción directamente.
+ *
+ * `needsTeam`: solo en modo inline (`/copa`). Si el usuario aún no armó su equipo, la
+ * sección empuja primero a armarlo (mejor conversión) antes de ofrecer el pago.
  */
-export function CopaPromoCard({ copa, href }: { copa: CopaStatus; href?: string }) {
+export function CopaPromoCard({
+  copa,
+  href,
+  needsTeam = false,
+}: {
+  copa: CopaStatus;
+  href?: string;
+  needsTeam?: boolean;
+}) {
   const capacity = copa.capacity ?? 100;
 
   const inner = (
@@ -53,7 +64,7 @@ export function CopaPromoCard({ copa, href }: { copa: CopaStatus; href?: string 
         <p className="mt-4 text-sm font-semibold text-gold-ink">Ver la copa e inscribirme →</p>
       ) : (
         <div className="mt-4">
-          <EnrollButton entrySku={copa.entrySku} />
+          <CopaEnrollSection entrySku={copa.entrySku} needsTeam={needsTeam} />
         </div>
       )}
     </>

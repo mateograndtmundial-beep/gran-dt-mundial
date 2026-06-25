@@ -39,6 +39,9 @@ export default async function CopaPage({
   const soldOut = !promoCopa && enrolledCopas.length === 0 && copas.length > 0;
   // Para el hero sin sesión, datos de premio/entrada de la copa abierta (o la primera).
   const featured = promoCopa ?? copas[0] ?? null;
+  // ¿Ya armó su equipo? Viene como columna de getGoldenTicketCopas (mismo valor en todas
+  // las filas, sin round-trip extra). Si todavía no, empujamos a armarlo antes de pagar.
+  const needsTeam = !(copas[0]?.hasTeam ?? false);
 
   return (
     <div className="space-y-5">
@@ -85,7 +88,7 @@ export default async function CopaPage({
           )}
 
           {/* Inscripción a una copa abierta, o cupos agotados */}
-          {promoCopa && <CopaPromoCard copa={promoCopa} />}
+          {promoCopa && <CopaPromoCard copa={promoCopa} needsTeam={needsTeam} />}
           {soldOut && <CopaSoldOutCard />}
 
           {/* Cómo funciona, resumido. El detalle (distribución, desempate) en /bases. */}

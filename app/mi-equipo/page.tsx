@@ -7,7 +7,8 @@ import { ChangesStatusChip } from "@/components/changes-status-card";
 import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, type ChangesStatus } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, type ChangesStatus } from "@/lib/queries";
+import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
@@ -84,6 +85,20 @@ export default async function MiEquipoPage({
     changesStatus = null;
   }
 
+  // Empujón a la Liga Premium: el usuario ya tiene equipo, así que si hay una copa abierta
+  // (con cupo y en término) y no está inscripto, le ofrecemos sumarse. Reusamos la card de
+  // promo en modo link → lleva a /copa, donde se cierra la inscripción. Esto cubre tanto el
+  // momento post-guardado (viene de armar su equipo) como las visitas posteriores.
+  let copaPromo: Awaited<ReturnType<typeof getGoldenTicketCopas>>[number] | undefined;
+  try {
+    const copas = await getGoldenTicketCopas(user.id);
+    copaPromo = copas
+      .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
+      .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
+  } catch {
+    copaPromo = undefined;
+  }
+
   // "Puntos por fecha": mostramos las fechas que YA arrancaron, es decir las
   // ANTERIORES a la editable (la que se está armando, que aún no empezó). Las
   // publicadas van con sus puntos; las en juego / sin publicar van con la etiqueta
@@ -143,6 +158,9 @@ export default async function MiEquipoPage({
     <div className="space-y-5">
       {/* Confirmación tras guardar desde el armador (?saved=1) */}
       {justSaved && <SaveConfirmBanner changes={Number(sp.ch ?? 0)} pins={Number(sp.pins ?? 0)} />}
+
+      {/* Empujón a la Liga Premium si hay una copa abierta y todavía no está inscripto. */}
+      {copaPromo && <CopaPromoCard copa={copaPromo} href="/copa" />}
 
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">
