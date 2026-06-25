@@ -1,11 +1,13 @@
 # Liga Premium — alineación rápida
 
-> Doc para que **el compañero** entienda la propuesta: decisiones tomadas, lo que queda por
-> definir y los **riesgos que asumimos**. Última actualización 19/06; **16vos arranca ~28/06**.
-> El **código y la UI ya están hechos** en la rama (ver "Estado técnico"); lo que queda es
-> legal/fiscal/operativo + el deploy.
+> 🟢 **EN VIVO desde el 25/06/2026.** Llegó el **OK legal** y la Liga Premium quedó **activa y
+> cobrando en producción** (mergeada a `main`, desplegada). El bloqueante legal está resuelto.
+> **El checklist detallado más abajo queda como registro del estado previo al lanzamiento** —
+> leer la situación actual desde acá, no desde los `[ ]` históricos.
 >
-> Se trabaja en la rama `feat/copa-golden-ticket`; se mergea a `main` cuando lo decidamos.
+> Doc para que **el compañero** entienda la propuesta: decisiones tomadas, lo que queda por
+> definir y los **riesgos que asumimos**. **16vos arranca ~28/06**.
+> El **código y la UI ya están hechos** (ver "Estado técnico").
 >
 > **Nombres:** la feature se llama **Liga Premium** de cara al usuario (es el nombre público,
 > el que se ve en la app — copas **"Liga Premium I"** y **"Liga Premium II"**). **"GOLDEN
@@ -142,8 +144,8 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
   **entrada $5.000**, **premio FIJO $400.000** al **top 10**.
 - **No es pozo**: lo pone la casa. Vamos a **llenar los 100**; si no, la casa cubre.
 - **El negocio son los pines**; la entrada es secundaria.
-- **Cobro por MP** con **alta automática** por webhook. **Único bloqueante: visto legal antes
-  de cobrar.**
+- **Cobro por MP** con **alta automática** por webhook. ~~Único bloqueante: visto legal antes
+  de cobrar.~~ ✅ **Visto legal recibido (25/06/2026) — en vivo.**
 - En 16vos, **5 cambios gratis solo para los inscriptos en la Copa** (premium conservan ventaja).
 
 ---
@@ -186,7 +188,7 @@ Cupo de 100, una sola vez. Los conocemos y los asumimos a conciencia:
 ### 🔴 Pendiente — agrupado por área
 
 #### Legal (bloqueante real)
-- [ ] **Visto de un abogado** antes de cobrar (entrada + premio en plata puede ser juego regulado). *(aún no — bloqueante)*
+- [x] **Visto de un abogado** antes de cobrar (entrada + premio en plata puede ser juego regulado). *(recibido el 25/06/2026 — desbloqueado, en vivo)*
 - [~] **Bases y Condiciones**: **draft hecho** (`docs/legal/BASES-Y-CONDICIONES.md` + página `/bases`, con aceptación obligatoria en el checkout y link en `/soporte`). **Falta:** que el abogado revise/cierre los `[REVISAR CON ABOGADO]` y dar por publicada la versión final.
 - [x] **Privacidad**: el consentimiento para **publicar nombre/usuario de ganadores** ya está en las Bases (se acepta al inscribirse). *(operativo si cambia el texto legal)*
 

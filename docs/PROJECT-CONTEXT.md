@@ -171,7 +171,7 @@ Editorial claro estilo Gran DT + Panini. Fuentes: **Bebas Neue** (display), **Ma
 ## Estado: hecho ✅ / pendiente 🔜
 **Hecho:** app completa y live en prod · dominio + SSL · Clerk producción (+ Google) · backend de pines + UI (`/pines`) · Mercado Pago en producción (verificado: crea preferencia) · pricing real · scoring + auto-sub + admin · ligas · sistema de diseño editorial.
 
-**En curso (rama `feat/copa-golden-ticket`):** **Liga Premium** — código + UI + Bases + migración y seed (copas 103/104) ya en prod, con el cobro **gateado** hasta el visto legal. Falta: visto del abogado, proceso fiscal, activar el producto de entrada (`active=true`), crear la preferencia en MP y probar un pago real. Ver [`docs/MONETIZACION.md`](./MONETIZACION.md).
+**🟢 Liga Premium — EN VIVO (desde 25/06/2026):** llegó el **OK legal** y la copa quedó **activa y cobrando en producción**. Flujo de inscripción: el visitante de `/copa` sin sesión va al armador (`/sign-up?redirect_url=/equipo?from=copa`), arma su equipo y, al guardar, `/mi-equipo` lo empuja a sumarse a la copa (estrategia equipo-primero para conversión). El armado no es muro: desde `/copa` puede "inscribirme igual". Ver [`docs/MONETIZACION.md`](./MONETIZACION.md).
 
 **Pendiente / a futuro:**
 - 🔜 **Probar un pago real de pines** end-to-end en prod (pagar → webhook acredita). Ojo: en localhost el webhook NO llega (MP no alcanza tu compu) y mezclar token sandbox con tarjeta real da *"una de las partes es de prueba"* → probar en prod o con usuario de prueba MP.
