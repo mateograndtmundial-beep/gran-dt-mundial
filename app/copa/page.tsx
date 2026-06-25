@@ -7,6 +7,7 @@ import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaSoldOutCard } from "@/components/copa/CopaSoldOutCard";
 import { CopaSignedOutHero } from "@/components/copa/CopaSignedOutHero";
+import { formatCopaStart } from "@/components/copa/format";
 
 export const dynamic = "force-dynamic";
 
@@ -42,12 +43,16 @@ export default async function CopaPage({
   // ¿Ya armó su equipo? Viene como columna de getGoldenTicketCopas (mismo valor en todas
   // las filas, sin round-trip extra). Si todavía no, empujamos a armarlo antes de pagar.
   const needsTeam = !(copas[0]?.hasTeam ?? false);
+  // Fecha de arranque (kickoff de 16vos) para dejar claro en toda la página cuándo empieza.
+  const startDate = formatCopaStart(featured?.closesAt ?? null);
 
   return (
     <div className="space-y-5">
       <PageTitle
         title="Liga Premium"
-        subtitle="Premio $400.000 garantizado, repartido entre los 10 primeros. Cupo limitado."
+        subtitle={`Premio $400.000 garantizado, repartido entre los 10 primeros. ${
+          startDate ? `Arranca el ${startDate} con los 16vos.` : "Arranca con los 16vos de final."
+        } Cupo limitado.`}
       />
 
       {status === "success" && (
@@ -70,6 +75,7 @@ export default async function CopaPage({
           prizeArs={featured?.prizeArs ?? null}
           entryFeeArs={featured?.entryFeeArs ?? null}
           capacity={featured?.capacity ?? null}
+          startsAt={featured?.closesAt ?? null}
         />
       ) : copas.length === 0 ? (
         <EmptyState title="La Liga Premium todavía no está abierta." hint="Seguinos en Instagram para enterarte." />
@@ -93,16 +99,34 @@ export default async function CopaPage({
 
           {/* Cómo funciona, resumido. El detalle (distribución, desempate) en /bases. */}
           <Card className="p-5">
-            <Eyebrow className="mb-2">CÓMO FUNCIONA</Eyebrow>
-            <ul className="space-y-1.5 text-sm text-ink-2">
-              <li>· Competís con tu equipo de siempre — rankea desde los 16vos de final.</li>
-              <li>· Entrada $5.000 · premio $400.000 garantizado al top 10 (lo pone la casa).</li>
-              <li>· Cupo de 100. Cuando se llena, se cierra la inscripción; si querés que abramos otra, escribinos por Instagram.</li>
-              <li>· Si pagás y no entrás por falta de cupo, te reembolsamos.</li>
+            <Eyebrow className="mb-3 text-gold-ink">CÓMO FUNCIONA</Eyebrow>
+            <ul className="space-y-2.5 text-sm leading-snug text-ink-2">
+              {[
+                <>
+                  Competís con tu equipo de siempre — {startDate ? `arranca el ${startDate}, ` : ""}rankea
+                  desde los 16vos de final.
+                </>,
+                <>Entrada $5.000 · premio $400.000 garantizado al top 10 (lo pone la casa).</>,
+                <>
+                  Cupo de 100. Cuando se llena, se cierra la inscripción; si querés que abramos otra,
+                  escribinos por Instagram.
+                </>,
+                <>Si pagás y no entrás por falta de cupo, te reembolsamos.</>,
+              ].map((item, i) => (
+                <li key={i} className="flex gap-2.5">
+                  <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-gold" aria-hidden />
+                  <span>{item}</span>
+                </li>
+              ))}
             </ul>
-            <Link href="/bases" className="mt-3 inline-block text-sm font-semibold text-gold-ink underline">
-              Ver Bases y Condiciones →
-            </Link>
+            <div className="mt-4 border-t border-border pt-3">
+              <Link
+                href="/bases"
+                className="text-sm font-semibold text-gold-ink underline-offset-2 hover:underline"
+              >
+                Ver Bases y Condiciones →
+              </Link>
+            </div>
           </Card>
         </>
       )}

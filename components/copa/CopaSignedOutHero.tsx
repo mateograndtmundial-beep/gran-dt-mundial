@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Trophy, UserPlus, Users } from "lucide-react";
+import { CalendarDays, Trophy, UserPlus, Users } from "lucide-react";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
-import { formatArs } from "./format";
+import { formatArs, copaStartLine } from "./format";
 
 /**
  * Estado de /copa para visitantes SIN sesión. Es la primera pantalla que ve quien llega
@@ -16,10 +16,12 @@ export function CopaSignedOutHero({
   prizeArs,
   entryFeeArs,
   capacity,
+  startsAt,
 }: {
   prizeArs: number | null;
   entryFeeArs: number | null;
   capacity: number | null;
+  startsAt: string | Date | null;
 }) {
   const steps = [
     { icon: UserPlus, title: "Creá tu cuenta", desc: "Gratis, en 30 segundos." },
@@ -43,6 +45,10 @@ export function CopaSignedOutHero({
         </p>
         <p className="text-sm text-ink-3">
           Entrada {formatArs(entryFeeArs ?? 5000)} · cupo {capacity ?? 100} · pagás una sola vez.
+        </p>
+        <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-ink">
+          <CalendarDays size={15} className="shrink-0" aria-hidden />
+          {copaStartLine(startsAt)}
         </p>
 
         <div className="mt-5 flex flex-col items-center gap-2">

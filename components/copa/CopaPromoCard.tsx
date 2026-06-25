@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ChevronRight, Trophy } from "lucide-react";
+import { CalendarDays, ChevronRight, Trophy } from "lucide-react";
 import { Eyebrow } from "@/components/editorial";
 import type { CopaStatus } from "@/lib/queries";
-import { formatArs } from "./format";
+import { formatArs, copaStartLine } from "./format";
 import { CopaEnrollSection } from "./CopaEnrollSection";
 import { CupoScarcity } from "./CupoScarcity";
 
@@ -51,6 +51,10 @@ export function CopaPromoCard({
           </p>
           <p className="text-sm text-ink-3">
             Entrada {formatArs(copa.entryFeeArs ?? 5000)} · cupo {capacity}
+          </p>
+          <p className="mt-1.5 inline-flex items-center gap-1.5 text-sm font-semibold text-gold-ink">
+            <CalendarDays size={15} className="shrink-0" aria-hidden />
+            {copaStartLine(copa.closesAt)}
           </p>
         </div>
       </div>

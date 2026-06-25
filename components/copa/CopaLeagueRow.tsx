@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight, Trophy } from "lucide-react";
 import type { CopaStatus } from "@/lib/queries";
-import { formatArs } from "./format";
+import { formatArs, formatCopaStart } from "./format";
 
 /**
  * Fila premium dorada de una Liga Premium en la que el usuario YA está inscripto.
@@ -10,6 +10,7 @@ import { formatArs } from "./format";
  */
 export function CopaLeagueRow({ copa }: { copa: CopaStatus }) {
   const capacity = copa.capacity ?? 100;
+  const startDate = formatCopaStart(copa.closesAt);
   return (
     <Link
       href={`/ligas/${copa.code}`}
@@ -20,6 +21,7 @@ export function CopaLeagueRow({ copa }: { copa: CopaStatus }) {
         <p className="truncate font-semibold text-ink text-sm">{copa.name}</p>
         <p className="truncate text-xs text-ink-3">
           Premio {formatArs(copa.prizeArs ?? 400000)} · {copa.enrolled}/{capacity} inscriptos
+          {startDate ? ` · arranca ${startDate}` : ""}
         </p>
       </div>
       <ChevronRight size={16} className="text-gold shrink-0" aria-hidden />

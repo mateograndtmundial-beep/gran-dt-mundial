@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { X, Trophy } from "lucide-react";
-import { formatArs } from "./format";
+import { formatArs, formatCopaStart } from "./format";
 
 const STORAGE_KEY = "sampa.copaBannerDismissed";
 
@@ -13,7 +13,8 @@ const STORAGE_KEY = "sampa.copaBannerDismissed";
  * Dismissable (localStorage). Solo se renderiza desde el server si hay copa abierta y el
  * usuario no está dentro (ver app/page.tsx).
  */
-export function CopaHomeBanner({ prizeArs }: { prizeArs: number }) {
+export function CopaHomeBanner({ prizeArs, startsAt }: { prizeArs: number; startsAt: string | Date | null }) {
+  const startDate = formatCopaStart(startsAt);
   const [mounted, setMounted] = useState(false);
   const [show, setShow] = useState(false);
 
@@ -48,7 +49,7 @@ export function CopaHomeBanner({ prizeArs }: { prizeArs: number }) {
           Liga Premium · premio {formatArs(prizeArs)} garantizado
         </p>
         <p className="truncate text-xs text-ink-3 group-hover:text-gold-ink transition-colors">
-          Cupos limitados — sumate antes de que se llene →
+          {startDate ? `Arranca el ${startDate} con los 16vos` : "Cupos limitados"} — sumate antes de que se llene →
         </p>
       </Link>
       <button

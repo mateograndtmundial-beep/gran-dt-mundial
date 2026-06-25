@@ -79,7 +79,7 @@ export default async function Home() {
 
   // Promo SUTIL de la Liga Premium: solo si hay una copa abierta con cupo y el usuario
   // no está inscripto en ninguna. Best-effort: si falla, no mostramos el banner.
-  let copaBannerPrize: number | null = null;
+  let copaBanner: { prize: number; closesAt: string | Date | null } | null = null;
   try {
     const user = await getCurrentUser();
     if (user) {
@@ -88,7 +88,7 @@ export default async function Home() {
         (c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed,
       );
       const enrolledAny = copas.some((c) => c.isEnrolled);
-      if (open && !enrolledAny) copaBannerPrize = open.prizeArs ?? 400000;
+      if (open && !enrolledAny) copaBanner = { prize: open.prizeArs ?? 400000, closesAt: open.closesAt };
     }
   } catch {
     // sin DB / sin auth: sin banner
@@ -113,7 +113,7 @@ export default async function Home() {
     <>
       {/* Banner de la Copa fuera del rhythm de space-y-12 para que quede pegado arriba
           (su propio mb-4) y no deje el hueco de 3rem antes del hero en mobile. */}
-      {copaBannerPrize != null && <CopaHomeBanner prizeArs={copaBannerPrize} />}
+      {copaBanner != null && <CopaHomeBanner prizeArs={copaBanner.prize} startsAt={copaBanner.closesAt} />}
       <div className="space-y-12">
       <WelcomeBanner />
 
