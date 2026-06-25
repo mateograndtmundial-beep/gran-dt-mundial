@@ -41,7 +41,7 @@ export function CopaSignedOutHero({
           {formatArs(prizeArs ?? 400000)}
         </p>
         <p className="mt-2 text-sm font-semibold text-ink-2">
-          Armá tu equipo del Mundial y llevate tu parte del pozo.
+          Armá tu equipo del Mundial y llevate el premio.
         </p>
         <p className="text-sm text-ink-3">
           Entrada {formatArs(entryFeeArs ?? 5000)} · cupo {capacity ?? 100} · pagás una sola vez.
