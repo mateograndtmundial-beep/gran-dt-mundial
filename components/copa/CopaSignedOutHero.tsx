@@ -58,7 +58,7 @@ export function CopaSignedOutHero({
           >
             ARMÁ TU EQUIPO GRATIS →
           </PrimaryButton>
-          <p className="text-xs text-ink-3">Sin pagar nada todavía. La cuenta y el pago vienen después.</p>
+          <p className="text-xs text-ink-3">No es obligatorio anotarte en la Liga Premium para jugar.</p>
           <Link href="/sign-in?redirect_url=%2Fcopa" className="text-sm font-semibold text-ink-2 underline">
             Ya tengo cuenta · Ingresar
           </Link>
