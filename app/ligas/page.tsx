@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
-import { Eyebrow } from "@/components/editorial";
+import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyLeagues, getGoldenTicketCopas, type CopaStatus } from "@/lib/queries";
 import { LeagueActions } from "@/components/league-actions";
@@ -19,7 +19,13 @@ export default async function LigasPage() {
   let error = false;
   try {
     user = await getCurrentUser();
-    if (user) [leagues, copas] = await Promise.all([getMyLeagues(user.id), getGoldenTicketCopas(user.id)]);
+    if (user) {
+      [leagues, copas] = await Promise.all([getMyLeagues(user.id), getGoldenTicketCopas(user.id)]);
+    } else {
+      // Sin sesión: igual traemos las copas para el CTA de la Liga Premium (premio, entrada,
+      // fecha de arranque). getGoldenTicketCopas sin userId marca isEnrolled/hasTeam en false.
+      copas = await getGoldenTicketCopas();
+    }
   } catch {
     error = true;
   }
@@ -43,10 +49,29 @@ export default async function LigasPage() {
       {error ? (
         <EmptyState title="No pudimos cargar tus ligas." hint="Probá recargar la página en un rato." />
       ) : !user ? (
-        <EmptyState
-          title="Ingresá para crear o unirte a ligas."
-          hint="Competí contra tus amigos por el primer puesto."
-        />
+        <div className="space-y-5">
+          {/* Liga Premium: el gancho más fuerte para el visitante sin cuenta. */}
+          {promoCopa && <CopaPromoCard copa={promoCopa} href="/copa" />}
+          {soldOut && <CopaSoldOutCard />}
+
+          {/* CTA general: crear cuenta + armar equipo para participar (ranking, ligas, copa). */}
+          <Card className="p-6 text-center">
+            <Eyebrow className="mb-2 block">EMPEZÁ A JUGAR</Eyebrow>
+            <p className="mx-auto mb-4 max-w-md text-sm text-ink-2">
+              Creá tu cuenta gratis y armá tu equipo del Mundial para competir en el ranking global,
+              en ligas con tus amigos y en la Liga Premium.
+            </p>
+            <PrimaryButton href="/sign-up?redirect_url=%2Fequipo">
+              CREAR CUENTA Y ARMAR EQUIPO →
+            </PrimaryButton>
+            <p className="mt-3 text-xs text-ink-3">
+              ¿Ya tenés cuenta?{" "}
+              <Link href="/sign-in?redirect_url=%2Fligas" className="font-semibold text-blue underline">
+                Ingresar
+              </Link>
+            </p>
+          </Card>
+        </div>
       ) : (
         <>
           {/* Liga Premium — card de promo si hay una abierta, o "cupos agotados" si no */}
