@@ -1,11 +1,12 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { db } from "@/lib/db";
-import { matches, players, playerMatchStats } from "@/lib/db/schema";
+import { matches, players, playerMatchStats, rounds } from "@/lib/db/schema";
 import { apiFootball } from "@/lib/api-football/client";
 import { parseMatchTiming, concededWhileOnPitch } from "@/lib/api-football/timing";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { chunkedBatch, type BatchOp } from "@/lib/db/batch";
+import { matchesWithCompleteStats } from "@/lib/scoring/stats-quality";
 import { SCORING } from "@/lib/game/config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -276,6 +277,94 @@ export async function syncRound(roundId: number) {
   }
 
   return { matches: results.filter(Boolean).length };
+}
+
+// Minutos estimados desde el kickoff hasta que el partido TERMINÓ + el delay con el
+// que queremos postear (≈30' después del final). Grupos: 90' + entretiempo +
+// descuento ≈ 120'. Eliminatorias: puede ir a alargue + penales ≈ 150'. Sumamos
+// ~30' de colchón para postear "un rato después" del pitazo final.
+const POST_MATCH_DELAY_MIN = 30;
+const SETTLE_MIN = { group: 120 + POST_MATCH_DELAY_MIN, knockout: 150 + POST_MATCH_DELAY_MIN } as const;
+
+/**
+ * Sincronización INCREMENTAL y barata en llamadas a API-Football, pensada para un
+ * cron frecuente. Solo toca los partidos que LO NECESITAN:
+ *   - de fechas no publicadas,
+ *   - que en NUESTRA DB todavía no están `finished` (los terminados ya no se vuelven
+ *     a pedir → 0 llamadas de más),
+ *   - cuyo kickoff + duración estimada + ~30' ya pasó (recién ahí pedimos las stats
+ *     finales). Ese umbral nos da, de yapa, el delay de ~30' para postear la story.
+ * Cada partido cuesta 3 llamadas (fixture+players+events) y se paga UNA sola vez.
+ */
+// Ventana de "estabilización": aunque un partido ya esté finished CON stats
+// completas, lo re-sincronizamos un par de veces más dentro de esta ventana para
+// capturar correcciones tardías de API-Football (ratings revisados, tarjetas /
+// expulsiones cargadas después del pitazo, figura del partido). Con el cron horario
+// son ~2-3 pasadas extra por partido. Pasada la ventana, se da por estable.
+const STABILIZE_WINDOW_MS = 5 * 3_600_000;
+
+// Tope duro: si pasadas 24h del kickoff API-Football no terminó de cargar bien las
+// stats (o el partido quedó postergado/sin marcar `finished`), dejamos de reintentar
+// (lo resuelve el admin a mano) para no drenar la API con un partido "colgado".
+const SYNC_GIVEUP_WINDOW_MS = 24 * 3_600_000;
+
+export async function syncDueMatches(now: Date = new Date()) {
+  // Todos los partidos de fechas no publicadas (cualquier estado): así podemos
+  // RE-sincronizar los que figuran `finished` pero todavía no tienen stats completas.
+  const rows = await db
+    .select({
+      match: matches,
+      roundType: rounds.type,
+    })
+    .from(matches)
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(ne(rounds.status, "published"))
+    .orderBy(asc(matches.kickoff));
+
+  const nowMs = now.getTime();
+
+  // Pasó el umbral "terminó hace ~30'".
+  const pastSettle = rows.filter((r) => {
+    if (!r.match.kickoff) return false;
+    const settleMin = r.roundType === "knockout" ? SETTLE_MIN.knockout : SETTLE_MIN.group;
+    return new Date(r.match.kickoff).getTime() + settleMin * 60_000 <= nowMs;
+  });
+
+  // ¿Cuáles de los que figuran finished ya tienen stats completas? Esos no se tocan.
+  const finishedIds = pastSettle.filter((r) => r.match.status === "finished").map((r) => r.match.id);
+  const complete = await matchesWithCompleteStats(finishedIds);
+
+  const due = pastSettle.filter((r) => {
+    const kickoffMs = r.match.kickoff ? new Date(r.match.kickoff).getTime() : 0;
+    const age = nowMs - kickoffMs;
+    if (r.match.status === "finished" && complete.has(r.match.id)) {
+      // Listo: re-sincronizar solo dentro de la ventana de estabilización (capturar
+      // correcciones tardías); después se considera estable y no se vuelve a pedir.
+      return age <= STABILIZE_WINDOW_MS;
+    }
+    // No terminado o con stats incompletas: pedir hasta el tope duro de 24h.
+    return age <= SYNC_GIVEUP_WINDOW_MS;
+  });
+
+  if (due.length === 0) return { matches: 0, due: 0, byRound: [] as { roundId: number; matches: number }[] };
+
+  const byApi = await buildPlayerIndex();
+  const results = await mapLimit(due, SYNC_CONCURRENCY, (r) => syncOneMatch(r.match, byApi));
+
+  // Cuántos partidos se sincronizaron por fecha (para avisar a Slack "hay stats
+  // nuevas para revisar/publicar").
+  const counts = new Map<number, number>();
+  results.forEach((ok, i) => {
+    if (ok) counts.set(due[i]!.match.roundId, (counts.get(due[i]!.match.roundId) ?? 0) + 1);
+  });
+  const byRound = [...counts.entries()].map(([roundId, matches]) => ({ roundId, matches }));
+
+  try {
+    revalidateTag("country-fixtures", "max");
+  } catch {
+    /* fuera de un request de Next (CLI): no hay caché que invalidar */
+  }
+  return { matches: results.filter(Boolean).length, due: due.length, byRound };
 }
 
 /**

@@ -1,8 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, gte, isNull } from "drizzle-orm";
 import { db } from "@/lib/db";
-import { matches } from "@/lib/db/schema";
+import { matches, rounds } from "@/lib/db/schema";
+import { SOCIAL_MIN_ROUND_ORDER } from "@/lib/game/config";
 import {
   getMatchRecap,
   buildPlaceholders,
@@ -10,6 +11,7 @@ import {
   type StoryData,
   type FlagMap,
 } from "./recap-data";
+import { matchesWithCompleteStats } from "@/lib/scoring/stats-quality";
 import { renderStoryPng } from "./render";
 import { uploadStoryToSlack } from "./slack";
 
@@ -63,10 +65,25 @@ export async function postPendingRecaps(): Promise<{ posted: number; skipped: nu
   const pend = await db
     .select({ id: matches.id })
     .from(matches)
-    .where(and(eq(matches.status, "finished"), isNull(matches.recapPostedAt)));
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(
+      and(
+        eq(matches.status, "finished"),
+        isNull(matches.recapPostedAt),
+        gte(rounds.order, SOCIAL_MIN_ROUND_ORDER),
+      ),
+    );
+  // Solo posteamos partidos con stats COMPLETAS: API-Football marca FT antes de
+  // tener todas las stats de jugadores; si posteamos antes sale la story con la
+  // figura mal/vacía (e idempotente → queda así). Los incompletos se reintentan luego.
+  const ready = await matchesWithCompleteStats(pend.map((m) => m.id));
   let posted = 0;
   let skipped = 0;
   for (const m of pend) {
+    if (!ready.has(m.id)) {
+      skipped++;
+      continue;
+    }
     try {
       if (await postMatchRecap(m.id)) posted++;
       else skipped++;

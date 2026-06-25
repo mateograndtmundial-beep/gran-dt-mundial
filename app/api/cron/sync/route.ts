@@ -1,18 +1,19 @@
-import { getRoundsToSync } from "@/lib/queries";
-import { syncRound } from "@/lib/api-football/sync";
-import { notifyRoundSynced, notifyError } from "@/lib/notify/slack";
+import { syncDueMatches } from "@/lib/api-football/sync";
+import { notifyError, notifyRoundSynced } from "@/lib/notify/slack";
 import { postPendingRecaps } from "@/lib/stories/recap";
 import { postPendingScoreboards } from "@/lib/stories/scoreboard";
+import { closeBrowser } from "@/lib/stories/render";
 
 /*
- * Cron de sincronización (Vercel Cron). Sincroniza las stats de las fechas en
- * juego desde API-Football. NO publica: la publicación sigue siendo manual desde
- * /admin (decisión de producto). Avisa a Slack cuando una fecha terminó de
- * sincronizar y está lista para revisar/publicar.
+ * Cron de sincronización (Vercel Cron). Corre cada hora en franja mundialista
+ * (ver schedule en vercel.json). Es INCREMENTAL: solo sincroniza los partidos que
+ * ya terminaron hace ~30' y todavía no tienen stats en nuestra DB (syncDueMatches)
+ * → barato en llamadas a API-Football y con un delay natural de ~30' tras el final.
+ * Tras sincronizar, postea a #SOCIAL las stories y carruseles pendientes (idempotente).
+ * NO publica fechas: la publicación sigue siendo manual desde /admin.
  *
  * Seguridad: Vercel agrega `Authorization: Bearer <CRON_SECRET>` a los cron jobs
  * cuando la env CRON_SECRET está seteada. Sin secreto configurado → 401.
- * El schedule vive en vercel.json.
  */
 
 export const dynamic = "force-dynamic";
@@ -27,12 +28,10 @@ function authorized(req: Request): boolean {
 async function run(req: Request): Promise<Response> {
   if (!authorized(req)) return new Response("Unauthorized", { status: 401 });
   try {
-    const roundIds = await getRoundsToSync();
-    const synced: { roundId: number; matches: number }[] = [];
-    for (const id of roundIds) {
-      const r = await syncRound(id);
-      synced.push({ roundId: id, matches: r.matches });
-      notifyRoundSynced({ roundId: id, matches: r.matches, source: "cron" });
+    const sync = await syncDueMatches();
+    // Avisa a #scoring por cada fecha que recibió stats nuevas (para revisar/publicar).
+    for (const r of sync.byRound) {
+      notifyRoundSynced({ roundId: r.roundId, matches: r.matches, source: "cron" });
     }
     // Tras sincronizar, genera y postea a #SOCIAL las stories de los partidos
     // terminados con stats que aún no se postearon. Best-effort: un fallo de render
@@ -50,10 +49,13 @@ async function run(req: Request): Promise<Response> {
     } catch (e) {
       notifyError({ source: "cron/scoreboards", message: (e as Error).message });
     }
-    return Response.json({ ok: true, rounds: roundIds.length, synced, recaps, scoreboards });
+    return Response.json({ ok: true, sync, recaps, scoreboards });
   } catch (e) {
     notifyError({ source: "cron/sync", message: (e as Error).message });
     return Response.json({ ok: false, error: (e as Error).message }, { status: 500 });
+  } finally {
+    // Cerramos el navegador compartido del render para no dejar el proceso colgado.
+    await closeBrowser();
   }
 }
 

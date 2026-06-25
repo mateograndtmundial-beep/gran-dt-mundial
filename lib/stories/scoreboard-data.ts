@@ -3,6 +3,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import { matches, players, countries, playerMatchStats, rounds, coaches } from "@/lib/db/schema";
 import { resolveMatchOutcome } from "@/lib/scoring/resultado-partido";
+import { matchesWithCompleteStats } from "@/lib/scoring/stats-quality";
 import { getMatchRecap, POS, POS_ORDER, fillTemplate, type Pos, type FlagMap } from "./recap-data";
 
 // Datos del CARRUSEL de puntajes por grupo/fecha (1080×1350). Hermano de
@@ -101,9 +102,15 @@ export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]>
     .where(eq(matches.roundId, roundId))
     .orderBy(asc(matches.kickoff), asc(matches.id));
 
+  // Solo consideramos "listo" un partido finished con stats COMPLETAS (no parciales:
+  // API-Football marca FT antes de cargar todas las stats de jugadores). Evita
+  // postear —y lockear, por ser idempotente— un carrusel con tablas vacías.
+  const finishedIds = rows.filter((r) => r.status === "finished").map((r) => r.matchId);
+  const ready = await matchesWithCompleteStats(finishedIds);
+
   if (round.type === "knockout") {
     return rows
-      .filter((r) => r.status === "finished")
+      .filter((r) => r.status === "finished" && ready.has(r.matchId))
       .map((r) => ({
         kind: "knockout" as const,
         bucket: `match:${r.matchId}`,
@@ -113,18 +120,19 @@ export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]>
       }));
   }
 
-  // Grupos: agrupar por letra; emitir solo los grupos 100% terminados.
-  const byGroup = new Map<string, { all: number[]; finished: number }>();
+  // Grupos: agrupar por letra; emitir solo los grupos cuyos partidos están TODOS
+  // terminados y con stats completas.
+  const byGroup = new Map<string, { all: number[]; ready: number }>();
   for (const r of rows) {
     const letter = (r.homeGroup ?? "").replace(/^Group\s+/i, "").trim() || "?";
-    const g = byGroup.get(letter) ?? { all: [], finished: 0 };
+    const g = byGroup.get(letter) ?? { all: [], ready: 0 };
     g.all.push(r.matchId);
-    if (r.status === "finished") g.finished++;
+    if (r.status === "finished" && ready.has(r.matchId)) g.ready++;
     byGroup.set(letter, g);
   }
   const units: CarouselUnit[] = [];
   for (const [letter, g] of [...byGroup.entries()].sort(([a], [b]) => a.localeCompare(b))) {
-    if (g.all.length > 0 && g.finished === g.all.length) {
+    if (g.all.length > 0 && g.ready === g.all.length) {
       units.push({
         kind: "group",
         bucket: `group:${letter}`,

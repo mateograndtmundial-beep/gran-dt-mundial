@@ -122,3 +122,9 @@ export const ROUNDS = [
 ];
 
 export const TOURNAMENT_START = process.env.NEXT_PUBLIC_TOURNAMENT_START ?? '2026-06-11T19:00:00Z';
+
+// Las stories/carruseles automáticos a #SOCIAL arrancan recién en esta fecha
+// (order). Las Fechas 1 y 2 ya pasaron y no queremos re-postear su backlog: el
+// posteo automático ignora cualquier fecha con order < este valor. (El sync de
+// stats no se ve afectado; esto es solo política de posteo en redes.)
+export const SOCIAL_MIN_ROUND_ORDER = 3;

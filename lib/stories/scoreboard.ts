@@ -1,9 +1,10 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
-import { eq } from "drizzle-orm";
+import { and, eq, gte } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { matches, rounds, scoreboardPosts } from "@/lib/db/schema";
+import { SOCIAL_MIN_ROUND_ORDER } from "@/lib/game/config";
 import {
   getCarouselUnits,
   getUnitData,
@@ -192,11 +193,13 @@ export async function postCarousel(unit: CarouselUnit): Promise<boolean> {
  * Best-effort por unidad (try/catch). Es lo que corre el cron y el botón de admin.
  */
 export async function postPendingScoreboards(): Promise<{ posted: number; skipped: number }> {
-  // Fechas con al menos un partido terminado.
+  // Fechas (desde SOCIAL_MIN_ROUND_ORDER) con al menos un partido terminado. Las
+  // fechas anteriores ya pasaron y no se re-postean (ver config).
   const roundsWithFinished = await db
     .selectDistinct({ roundId: matches.roundId })
     .from(matches)
-    .where(eq(matches.status, "finished"));
+    .innerJoin(rounds, eq(matches.roundId, rounds.id))
+    .where(and(eq(matches.status, "finished"), gte(rounds.order, SOCIAL_MIN_ROUND_ORDER)));
 
   let posted = 0;
   let skipped = 0;
