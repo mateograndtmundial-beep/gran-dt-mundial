@@ -8,7 +8,7 @@ import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, type ChangesStatus } from "@/lib/queries";
-import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
+import { CopaMiEquipoBanner } from "@/components/copa/CopaMiEquipoBanner";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
@@ -159,8 +159,11 @@ export default async function MiEquipoPage({
       {/* Confirmación tras guardar desde el armador (?saved=1) */}
       {justSaved && <SaveConfirmBanner changes={Number(sp.ch ?? 0)} pins={Number(sp.pins ?? 0)} />}
 
-      {/* Empujón a la Liga Premium si hay una copa abierta y todavía no está inscripto. */}
-      {copaPromo && <CopaPromoCard copa={copaPromo} href="/copa" />}
+      {/* Empujón SUTIL a la Liga Premium si hay una copa abierta y todavía no está inscripto.
+          Franja chica y cerrable para no estorbar al equipo. */}
+      {copaPromo && (
+        <CopaMiEquipoBanner prizeArs={copaPromo.prizeArs ?? 400000} startsAt={copaPromo.closesAt} />
+      )}
 
       {/* Header compacto: el equipo es el protagonista, el puntaje va al costado */}
       <section className="flex flex-wrap items-end justify-between gap-4">
