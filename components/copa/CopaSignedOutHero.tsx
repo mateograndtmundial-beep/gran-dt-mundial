@@ -5,11 +5,11 @@ import { formatArs, copaStartLine } from "./format";
 
 /**
  * Estado de /copa para visitantes SIN sesión. Es la primera pantalla que ve quien llega
- * del link de Instagram, así que en vez de un EmptyState gris vende el premio y empuja a
- * crear la cuenta. El CTA de alta lleva al armador (`redirect_url=/equipo?from=copa`): la
- * jugada de conversión es que primero armen su equipo (el gancho gratis y divertido) y se
- * inscriban después, ya invertidos — al guardar, /mi-equipo los empuja a la copa. Quien ya
- * tiene cuenta (link "Ingresar") vuelve directo a /copa para inscribirse. Mobile-first (la
+ * del link de Instagram, así que en vez de un EmptyState gris vende el premio y lo manda a
+ * jugar. El CTA lleva DIRECTO al armador (`/equipo?from=copa`), SIN pedir cuenta primero:
+ * armar el equipo es lo divertido y engancha al que recién llega. Recién al guardar el
+ * equipo se pide la cuenta (sign-up) y, ya con cuenta + equipo, vuelve a /copa para
+ * anotarse. Quien ya tiene cuenta (link "Ingresar") va directo a /copa. Mobile-first (la
  * mayoría entra del celular): hero centrado + pasos 1-2-3 que apilan en una columna.
  */
 export function CopaSignedOutHero({
@@ -24,9 +24,9 @@ export function CopaSignedOutHero({
   startsAt: string | Date | null;
 }) {
   const steps = [
-    { icon: UserPlus, title: "Creá tu cuenta", desc: "Gratis, en 30 segundos." },
-    { icon: Users, title: "Armá tu equipo", desc: "15 cracks del Mundial + DT, con tu presupuesto." },
-    { icon: Trophy, title: "Sumate a la Copa", desc: "Competís desde los 16vos por el pozo." },
+    { icon: Users, title: "Armá tu equipo", desc: "Gratis: 15 cracks del Mundial + DT, con tu presupuesto." },
+    { icon: UserPlus, title: "Creá tu cuenta", desc: "En 30 segundos, para guardar tu equipo." },
+    { icon: Trophy, title: "Sumate a la Copa", desc: "Competís desde los 16vos por el premio." },
   ];
 
   return (
@@ -53,11 +53,12 @@ export function CopaSignedOutHero({
 
         <div className="mt-5 flex flex-col items-center gap-2">
           <PrimaryButton
-            href="/sign-up?redirect_url=%2Fequipo%3Ffrom%3Dcopa"
+            href="/equipo?from=copa"
             className="w-full max-w-xs justify-center bg-gold-ink hover:bg-gold-ink"
           >
-            CREAR CUENTA Y JUGAR
+            ARMÁ TU EQUIPO GRATIS →
           </PrimaryButton>
+          <p className="text-xs text-ink-3">Sin pagar nada todavía. La cuenta y el pago vienen después.</p>
           <Link href="/sign-in?redirect_url=%2Fcopa" className="text-sm font-semibold text-ink-2 underline">
             Ya tengo cuenta · Ingresar
           </Link>

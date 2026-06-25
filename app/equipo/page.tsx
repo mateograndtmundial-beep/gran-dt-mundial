@@ -152,6 +152,7 @@ export default async function EquipoPage({
             isAuthed={isAuthed}
             changeContext={changeContext}
             addPlayerId={addPlayerId}
+            fromCopa={fromCopa}
           />
         </div>
       )}

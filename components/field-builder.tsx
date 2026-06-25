@@ -127,6 +127,7 @@ export function FieldBuilder({
   isAuthed = false,
   changeContext = null,
   addPlayerId = null,
+  fromCopa = false,
 }: {
   players: PlayerRow[];
   coaches: CoachRow[];
@@ -141,6 +142,10 @@ export function FieldBuilder({
   isAuthed?: boolean;
   changeContext?: ChangeContext | null;
   addPlayerId?: number | null;
+  // El usuario llegó desde la campaña de la Liga Premium (/copa) y armó su equipo acá.
+  // Cambia el flujo: al pedir cuenta vuelve al armador con el contexto, y al guardar lo
+  // mandamos de vuelta a /copa para anotarse (en vez de a /mi-equipo).
+  fromCopa?: boolean;
 }) {
   const hasStats = Object.keys(stats).length > 0;
   const hasOwnership = Object.keys(ownership).length > 0;
@@ -559,12 +564,16 @@ export function FieldBuilder({
     });
     setSaving(false);
     if (!res.ok && res.error === "auth") {
-      // Guardamos el borrador y volvemos a /equipo tras iniciar sesión, para no
-      // perder el equipo recién armado.
+      // Guardamos el borrador y volvemos al armador tras autenticarse, para no perder el
+      // equipo recién armado (al volver, el auto-guardado lo persiste y sigue el flujo).
+      // Flujo Copa: el equipo se armó primero (gancho gratis) → ahora SÍ pedimos cuenta
+      // (sign-up) y preservamos ?from=copa para volver acá y, al guardar, ir a /copa.
       const slotsMap: Record<string, number> = {};
       for (const [slot, p] of Object.entries(picks)) slotsMap[slot] = p.id;
       writeDraft({ formation, slots: slotsMap, captainPlayerId: captainId, coachId, teamName, submitted: true });
-      router.push(`/sign-in?redirect_url=${encodeURIComponent("/equipo")}`);
+      const authRoute = fromCopa ? "/sign-up" : "/sign-in";
+      const dest = fromCopa ? "/equipo?from=copa" : "/equipo";
+      router.push(`${authRoute}?redirect_url=${encodeURIComponent(dest)}`);
       return;
     }
     if (!res.ok && res.error === "pins") {
@@ -609,6 +618,12 @@ export function FieldBuilder({
     }
     if (!res.ok) { setMessage("No se pudo guardar. Intentá de nuevo."); return; }
     clearDraft(); // guardado OK → el borrador local ya no hace falta
+    // Flujo Copa: ya tiene cuenta + equipo → lo llevamos a /copa para anotarse en la copa
+    // (el último paso del funnel del aviso). El resto va a /mi-equipo con el cartel de éxito.
+    if (fromCopa) {
+      router.push("/copa");
+      return;
+    }
     // Confirmación en /mi-equipo: pasamos los números por query y ahí mostramos
     // un cartel de éxito (el armador navega de inmediato, no alcanza un toast acá).
     const params = new URLSearchParams({ saved: "1", ch: String(changesMade), pins: String(pinsDue) });
