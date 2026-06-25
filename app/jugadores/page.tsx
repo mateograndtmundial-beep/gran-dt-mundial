@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { PlayersExplorer } from "@/components/players-explorer";
-import { getPlayersWithCountry, getCountryFixtures, getPlayerTournamentStats, getEditableRound, getPlayerOwnership, type PlayerRow, type FixtureInfo, type PlayerStats } from "@/lib/queries";
+import { getPlayersWithCountry, getCountryFixtures, getPlayerTournamentStats, getPlayerOwnership, type PlayerRow, type FixtureInfo, type PlayerStats } from "@/lib/queries";
 
 // ISR: contenido no dependiente del usuario. Se revalida cada 60s y on-demand
 // (updatePlayerPrice hace revalidatePath("/jugadores")).
@@ -24,18 +24,17 @@ export default async function JugadoresPage() {
   let ownership: Record<number, number> = {};
   let error = false;
   try {
-    const [p, f, s, editable] = await Promise.all([
+    const [p, f, s] = await Promise.all([
       getPlayersWithCountry(),
       getCountryFixtures(),
       getPlayerTournamentStats(),
-      getEditableRound(),
     ]);
     players = p;
     fixtures = f;
     stats = s;
-    // Ownership de la fecha que se está editando (el % se calcula sobre los
-    // equipos con alineación en esa fecha). Vacío si no hay fecha editable.
-    ownership = editable ? await getPlayerOwnership(editable.round.id) : {};
+    // Ownership global (% de equipos del juego que tiene a cada jugador). Vacío
+    // si hay pocos equipos (anti-ruido).
+    ownership = await getPlayerOwnership();
   } catch {
     error = true;
   }

@@ -164,34 +164,44 @@ export const getPlayerTournamentStats = unstable_cache(
 
 // ---------- Ownership (% de equipos que eligió a cada jugador) ----------
 
-// Mínimo de equipos en la fecha para mostrar ownership. Por debajo, un "100%"
-// con 1 de 1 equipo es ruido/engañoso (típico pre-lanzamiento) → no se muestra.
+// Mínimo de equipos para mostrar ownership. Por debajo, un "100%" con 1 de 1
+// equipo es ruido/engañoso (típico pre-lanzamiento) → no se muestra.
 export const MIN_OWNERSHIP_SAMPLE = 30;
 
 /**
- * % de equipos que rostean a cada jugador en una fecha (la editable).
- * Denominador = equipos con alineación en esa fecha. Devuelve playerId -> % (0–100,
- * entero). Mapa vacío si el universo es menor a MIN_OWNERSHIP_SAMPLE (anti-ruido).
- * Cacheado con tag "player-ownership" (cambia al editar equipos, no solo al publicar)
- * + TTL corto.
+ * % de equipos que rostean a cada jugador, sobre la TOTALIDAD de equipos del
+ * juego (no una fecha puntual). Como hay 1 equipo por usuario y las alineaciones
+ * se arrastran, para cada equipo se usa su alineación MÁS RECIENTE: si no editó
+ * la fecha nueva, vale la de la fecha anterior (último `entryRound` por
+ * `rounds.order`). Denominador = todos los equipos con al menos una alineación.
+ * Devuelve playerId -> % (1 decimal). Mapa vacío si el universo es menor a
+ * MIN_OWNERSHIP_SAMPLE (anti-ruido). Cacheado con tag "player-ownership" (cambia
+ * al editar equipos, no solo al publicar) + TTL corto.
  */
 export const getPlayerOwnership = unstable_cache(
-  async (roundId: number): Promise<Record<number, number>> => {
+  async (): Promise<Record<number, number>> => {
+    // Denominador: equipos con cualquier alineación cargada (1 por usuario).
     const totalRows = await db
       .select({ total: sql<number>`count(distinct ${entryRounds.entryId})::int` })
-      .from(entryRounds)
-      .where(eq(entryRounds.roundId, roundId));
+      .from(entryRounds);
     const total = Number(totalRows[0]?.total) || 0;
     if (total < MIN_OWNERSHIP_SAMPLE) return {};
+
+    // Última alineación de cada equipo (mayor `rounds.order`) = su equipo efectivo.
+    const latest = db
+      .selectDistinctOn([entryRounds.entryId], { erId: entryRounds.id })
+      .from(entryRounds)
+      .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+      .orderBy(entryRounds.entryId, desc(rounds.order))
+      .as("latest");
 
     const rows = await db
       .select({
         playerId: entryRoundPlayers.playerId,
-        owners: sql<number>`count(distinct ${entryRounds.entryId})::int`,
+        owners: sql<number>`count(*)::int`,
       })
-      .from(entryRoundPlayers)
-      .innerJoin(entryRounds, eq(entryRoundPlayers.entryRoundId, entryRounds.id))
-      .where(eq(entryRounds.roundId, roundId))
+      .from(latest)
+      .innerJoin(entryRoundPlayers, eq(entryRoundPlayers.entryRoundId, latest.erId))
       .groupBy(entryRoundPlayers.playerId);
 
     const out: Record<number, number> = {};
@@ -199,7 +209,7 @@ export const getPlayerOwnership = unstable_cache(
       const owners = Number(r.owners) || 0;
       // % crudo (1 decimal): el front decide "<1%" vs "N%". Los jugadores que no
       // aparecen acá (0 dueños) no entran al mapa → el front los muestra "<1%"
-      // mientras haya datos (la fecha superó MIN_OWNERSHIP_SAMPLE).
+      // mientras haya datos (el universo superó MIN_OWNERSHIP_SAMPLE).
       out[r.playerId] = Math.round((owners / total) * 1000) / 10;
     }
     return out;

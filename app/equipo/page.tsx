@@ -42,9 +42,9 @@ export default async function EquipoPage({
       getEditableRound(),
       getPlayerTournamentStats(),
     ]);
-    // Ownership de la fecha editable (% de equipos que tiene a cada jugador), para
-    // el orden "Más elegidos" del picker. Vacío si no hay fecha editable.
-    ownership = editable ? await getPlayerOwnership(editable.round.id) : {};
+    // Ownership global (% de equipos del juego que tiene a cada jugador), para
+    // el orden "Más elegidos" del picker. Vacío si hay pocos equipos (anti-ruido).
+    ownership = await getPlayerOwnership();
     const user = await getCurrentUser();
     isAuthed = !!user;
     if (user) {
