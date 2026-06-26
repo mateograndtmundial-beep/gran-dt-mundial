@@ -6,7 +6,7 @@ import { apiFootball } from "@/lib/api-football/client";
 import { parseMatchTiming, concededWhileOnPitch } from "@/lib/api-football/timing";
 import { calcularPuntos } from "@/lib/scoring/calcular-puntos";
 import { chunkedBatch, type BatchOp } from "@/lib/db/batch";
-import { matchesWithCompleteStats } from "@/lib/scoring/stats-quality";
+import { matchesWithCompleteStats, statsLookComplete } from "@/lib/scoring/stats-quality";
 import { SCORING } from "@/lib/game/config";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -128,6 +128,22 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
       }
     }
 
+    // ¿Las stats lucen COMPLETAS? API-Football marca el fixture FT/AET/PEN ANTES de
+    // terminar de cargar las estadísticas de jugadores: por unos minutos devuelve el
+    // partido "terminado" con minutos/suplentes a medio cargar. Si en esa ventana lo
+    // diéramos por `finished`, el scoring vería titulares en 0' (los trataría como "no
+    // jugó") y ni ellos ni sus suplentes sumarían, y las stories/carrusel se postearían
+    // (idempotentes) sobre datos parciales. Por eso evaluamos la completitud acá, en
+    // memoria, y SOLO marcamos `finished` cuando los datos ya están completos; mientras
+    // tanto queda `live` y el cron lo vuelve a sincronizar hasta que cierren bien.
+    const fullMatchPlayers = raws.filter((r) => r.minutes >= 90).length;
+    const teamsRepresented = new Set(raws.filter((r) => r.minutes >= 90).map((r) => r.our.countryId)).size;
+    // Suplentes (flag de la API), SIN filtrar por minutos: un suplente que entró y
+    // jugó <20' igual cuenta como "el banco ya cargó" (era la data que faltaba).
+    const substitutes = raws.filter((r) => r.substitute).length;
+    const statsComplete = statsLookComplete(fullMatchPlayers, teamsRepresented, substitutes);
+    const finishedComplete = finished && statsComplete;
+
     // Figura: mayor rating con >= minMinutes, comparando el decimal crudo (el
     // entero redondeado empataría seguido). (Empates: se queda el primero; el
     // admin puede ajustar.)
@@ -245,7 +261,9 @@ async function syncOneMatch(m: MatchRow, byApi: PlayerByApi): Promise<boolean> {
           awayScore,
           homePenalties,
           awayPenalties,
-          status: finished ? "finished" : "scheduled",
+          // Solo `finished` con stats completas (ver arriba). FT-pero-incompleto queda
+          // `live` para que el cron lo siga sincronizando y no se publique/postee a medias.
+          status: finishedComplete ? "finished" : finished ? "live" : "scheduled",
           motmPlayerId: effectiveMotm,
         })
         .where(eq(matches.id, m.id)),
