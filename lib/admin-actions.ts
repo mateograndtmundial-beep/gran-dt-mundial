@@ -16,6 +16,7 @@ import { notifyRoundPublished, notifyRoundSynced, notifyError } from "@/lib/noti
 import { postPendingRecaps, postMatchRecap } from "@/lib/stories/recap";
 import { postRoundRecap } from "@/lib/stories/round-recap";
 import { postPendingScoreboards } from "@/lib/stories/scoreboard";
+import { closeBrowser } from "@/lib/stories/render";
 
 /** Devuelve el usuario admin actual, o null si no autenticado / no admin. */
 async function currentAdmin() {
@@ -69,6 +70,11 @@ export async function generateRecapsAction() {
     logAdmin("generateRecaps", admin.id, { ok: false, error: (e as Error).message });
     notifyError({ source: "generateRecaps", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
+  } finally {
+    // No dejar el navegador compartido colgado entre requests: si se congela el
+    // Lambda y muere su chromium, el próximo render reusaría uno stale y fallaría
+    // con "Target page... has been closed". Cerrarlo acá lo evita de raíz.
+    await closeBrowser();
   }
 }
 
@@ -95,6 +101,8 @@ export async function generateScoreboardsAction() {
     logAdmin("generateScoreboards", admin.id, { ok: false, error: (e as Error).message });
     notifyError({ source: "generateScoreboards", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
+  } finally {
+    await closeBrowser();
   }
 }
 
@@ -116,6 +124,8 @@ export async function generateMatchRecapAction(matchId: number) {
     logAdmin("generateMatchRecap", admin.id, { matchId, ok: false, error: (e as Error).message });
     notifyError({ source: "generateMatchRecap", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
+  } finally {
+    await closeBrowser();
   }
 }
 
@@ -185,6 +195,9 @@ export async function publishRoundAction(roundId: number) {
     logAdmin("publishRound", admin.id, { roundId, ok: false, error: (e as Error).message });
     notifyError({ source: "publishRound", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
+  } finally {
+    // El publish postea el carrusel de resumen (render) → cerrar el navegador.
+    await closeBrowser();
   }
 }
 
@@ -206,6 +219,8 @@ export async function postRoundRecapAction(roundId: number) {
     logAdmin("postRoundRecap", admin.id, { roundId, ok: false, error: (e as Error).message });
     notifyError({ source: "postRoundRecap", message: (e as Error).message });
     return { ok: false as const, error: (e as Error).message };
+  } finally {
+    await closeBrowser();
   }
 }
 
