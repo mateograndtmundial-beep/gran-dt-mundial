@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ChevronRight, Trophy } from "lucide-react";
 import type { CopaStatus } from "@/lib/queries";
 import { formatArs, formatCopaStart } from "./format";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 
 /**
  * Fila premium dorada de una Liga Premium en la que el usuario YA está inscripto.
@@ -19,10 +20,16 @@ export function CopaLeagueRow({ copa }: { copa: CopaStatus }) {
       <Trophy size={18} className="text-gold shrink-0" aria-hidden />
       <div className="flex-1 min-w-0">
         <p className="truncate font-semibold text-ink text-sm">{copa.name}</p>
-        <p className="truncate text-xs text-ink-3">
-          Premio {formatArs(copa.prizeArs ?? 400000)} · {copa.enrolled}/{capacity} inscriptos
-          {startDate ? ` · arranca ${startDate}` : ""}
-        </p>
+        {COPA_PAUSED ? (
+          <p className="truncate text-xs font-semibold text-gold-ink">
+            Torneo suspendido — tocá para ver el aviso
+          </p>
+        ) : (
+          <p className="truncate text-xs text-ink-3">
+            Premio {formatArs(copa.prizeArs ?? 400000)} · {copa.enrolled}/{capacity} inscriptos
+            {startDate ? ` · arranca ${startDate}` : ""}
+          </p>
+        )}
       </div>
       <ChevronRight size={16} className="text-gold shrink-0" aria-hidden />
     </Link>

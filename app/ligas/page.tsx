@@ -8,6 +8,7 @@ import { LeagueActions } from "@/components/league-actions";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { CopaSoldOutCard } from "@/components/copa/CopaSoldOutCard";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -33,12 +34,16 @@ export default async function LigasPage() {
   // Copas en las que ya está inscripto (fila premium arriba de las privadas) y la copa
   // abierta a la que se puede sumar (una sola card de promo, la de menor cupo restante).
   const enrolledCopas = copas.filter((c) => c.isEnrolled);
-  const promoCopa = copas
-    .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
-    .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
+  // Liga Premium en pausa → no mostramos promo ni "agotado" a los no inscriptos (los
+  // inscriptos siguen viendo su fila premium, con el aviso de cancelación adentro).
+  const promoCopa = COPA_PAUSED
+    ? undefined
+    : copas
+        .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
+        .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
   // Cupos agotados: hay copas premium visibles pero ninguna abierta para sumarse y el
   // usuario no está dentro de ninguna → mostramos la invitación a escribir por Instagram.
-  const soldOut = !promoCopa && enrolledCopas.length === 0 && copas.length > 0;
+  const soldOut = !COPA_PAUSED && !promoCopa && enrolledCopas.length === 0 && copas.length > 0;
   // Las copas no se listan como ligas privadas (se muestran como fila premium aparte).
   const privateLeagues = leagues.filter((l) => l.kind !== "golden_ticket");
 

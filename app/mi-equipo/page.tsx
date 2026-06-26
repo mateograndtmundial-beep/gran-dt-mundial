@@ -9,6 +9,7 @@ import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
 import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, type ChangesStatus } from "@/lib/queries";
 import { CopaMiEquipoBanner } from "@/components/copa/CopaMiEquipoBanner";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { POSITIONS, type Position } from "@/lib/game/config";
 import { roundWithArticle } from "@/lib/game/round-format";
 import { formatPoints, formatPrice } from "@/lib/utils";
@@ -92,9 +93,12 @@ export default async function MiEquipoPage({
   let copaPromo: Awaited<ReturnType<typeof getGoldenTicketCopas>>[number] | undefined;
   try {
     const copas = await getGoldenTicketCopas(user.id);
-    copaPromo = copas
-      .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
-      .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
+    // Liga Premium en pausa → sin empujón de promo.
+    copaPromo = COPA_PAUSED
+      ? undefined
+      : copas
+          .filter((c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed)
+          .sort((a, b) => (a.spotsLeft ?? 0) - (b.spotsLeft ?? 0))[0];
   } catch {
     copaPromo = undefined;
   }

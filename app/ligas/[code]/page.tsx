@@ -5,6 +5,8 @@ import { PageTitle, EmptyState } from "@/components/ui";
 import { Eyebrow, ValidationCallout } from "@/components/editorial";
 import { LeagueRanking } from "@/components/domain/LeagueRanking";
 import { CopaPrizeHeader } from "@/components/copa/CopaPrizeHeader";
+import { CopaPausedNotice } from "@/components/copa/CopaPausedNotice";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { LeagueManagement } from "@/components/league-management";
 import { LeagueShare } from "@/components/league-share";
 import { LeagueJoinCTA } from "@/components/league-join-cta";
@@ -156,6 +158,10 @@ export default async function LeaguePage({
       {data.league.kind === "golden_ticket" && status === "pending" && (
         <ValidationCallout type="warning">Estamos confirmando tu pago. Esto puede demorar unos minutos.</ValidationCallout>
       )}
+
+      {/* Liga Premium en pausa (revisión legal): aviso de cancelación + reembolso para los
+          inscriptos, arriba de todo. */}
+      {data.league.kind === "golden_ticket" && COPA_PAUSED && <CopaPausedNotice variant="enrolled" />}
 
       {data.league.kind === "golden_ticket" && (
         <CopaPrizeHeader

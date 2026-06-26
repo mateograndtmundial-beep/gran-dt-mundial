@@ -12,6 +12,7 @@ import { createEntryOrder } from "@/lib/payment-actions";
  * mapean a un mensaje claro. Si no hay `entrySku` (copa sin producto), queda deshabilitado.
  */
 const ERROR_MSG: Record<string, string> = {
+  paused: "Las inscripciones están en pausa.",
   closed: "La inscripción está cerrada.",
   full: "La copa ya está completa.",
   already: "Ya estás dentro de esta copa.",

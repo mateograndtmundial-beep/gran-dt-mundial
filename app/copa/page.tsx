@@ -7,7 +7,9 @@ import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaSoldOutCard } from "@/components/copa/CopaSoldOutCard";
 import { CopaSignedOutHero } from "@/components/copa/CopaSignedOutHero";
+import { CopaPausedNotice } from "@/components/copa/CopaPausedNotice";
 import { formatCopaStart } from "@/components/copa/format";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 
 export const dynamic = "force-dynamic";
 
@@ -50,9 +52,13 @@ export default async function CopaPage({
     <div className="space-y-5">
       <PageTitle
         title="Liga Premium"
-        subtitle={`Premio $400.000 garantizado, repartido entre los 10 primeros. ${
-          startDate ? `Arranca el ${startDate} con los 16vos.` : "Arranca con los 16vos de final."
-        } Cupo limitado.`}
+        subtitle={
+          COPA_PAUSED
+            ? "Información sobre la Liga Premium."
+            : `Premio $400.000 garantizado, repartido entre los 10 primeros. ${
+                startDate ? `Arranca el ${startDate} con los 16vos.` : "Arranca con los 16vos de final."
+              } Cupo limitado.`
+        }
       />
 
       {status === "success" && (
@@ -70,6 +76,24 @@ export default async function CopaPage({
 
       {error ? (
         <EmptyState title="No pudimos cargar la Liga Premium." hint="Probá recargar en un rato." />
+      ) : COPA_PAUSED ? (
+        // Pausada: a los inscriptos el aviso de cancelación + su fila; al resto, el aviso
+        // de pausa (sin ningún CTA de inscripción).
+        enrolledCopas.length > 0 ? (
+          <>
+            <CopaPausedNotice variant="enrolled" />
+            <div>
+              <Eyebrow className="mb-2">YA ESTÁS DENTRO</Eyebrow>
+              <Card className="overflow-hidden">
+                {enrolledCopas.map((c) => (
+                  <CopaLeagueRow key={c.id} copa={c} />
+                ))}
+              </Card>
+            </div>
+          </>
+        ) : (
+          <CopaPausedNotice variant="prospect" />
+        )
       ) : !user ? (
         <CopaSignedOutHero
           prizeArs={featured?.prizeArs ?? null}

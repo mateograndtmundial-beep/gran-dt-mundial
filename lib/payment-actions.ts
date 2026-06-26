@@ -9,6 +9,7 @@ import { getPinBalance } from "@/lib/pins";
 import { getAppBaseUrl } from "@/lib/site";
 import { getGoldenTicketCopas } from "@/lib/queries";
 import { isCopaPastDeadline } from "@/lib/copa/lifecycle";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { notifyCheckoutStarted, notifyError } from "@/lib/notify/slack";
 import { headers } from "next/headers";
 
@@ -103,6 +104,10 @@ export async function createPinOrder(productSku: string, country?: string) {
 export async function createEntryOrder(productSku: string) {
   const user = await getCurrentUser();
   if (!user) return { ok: false as const, error: "auth" as const };
+
+  // Liga Premium en pausa (revisión legal): no tomamos nuevas inscripciones. Guard
+  // server-side — no alcanza con esconder el botón (clientes cacheados, links directos).
+  if (COPA_PAUSED) return { ok: false as const, error: "paused" as const };
 
   const product = (
     await db

@@ -8,6 +8,7 @@ import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
 import { getEditableRound, getGoldenTicketCopas } from "@/lib/queries";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
 import { InstagramIcon, XIcon } from "@/components/icons";
@@ -88,7 +89,8 @@ export default async function Home() {
         (c) => !c.isEnrolled && c.status === "open" && (c.spotsLeft ?? 0) > 0 && !c.deadlinePassed,
       );
       const enrolledAny = copas.some((c) => c.isEnrolled);
-      if (open && !enrolledAny) copaBanner = { prize: open.prizeArs ?? 400000, closesAt: open.closesAt };
+      // Liga Premium en pausa → sin banner de promo (no invitamos a sumarse).
+      if (open && !enrolledAny && !COPA_PAUSED) copaBanner = { prize: open.prizeArs ?? 400000, closesAt: open.closesAt };
     }
   } catch {
     // sin DB / sin auth: sin banner

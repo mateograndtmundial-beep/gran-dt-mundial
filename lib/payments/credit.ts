@@ -4,6 +4,7 @@ import { orders, products, users, leagues, leagueMembers } from "@/lib/db/schema
 import { addPins, isUniqueViolation } from "@/lib/pins";
 import { notifyPaymentPaid, notifyError, notifyCopaEnrollment } from "@/lib/notify/slack";
 import { isCopaPastDeadline, markCopaFull } from "@/lib/copa/lifecycle";
+import { COPA_PAUSED } from "@/lib/copa/announcement";
 
 /**
  * Acredita los pines de una orden pagada. Idempotente: solo transiciona si la
@@ -78,6 +79,14 @@ async function enrollInLeague(userId: number, leagueId: number, orderId: number)
       .limit(1)
   )[0];
   if (existing) return; // webhook repetido: ya estaba inscripto
+
+  // Liga Premium en pausa (revisión legal): un pago en vuelo (checkout iniciado antes
+  // de la pausa) NO se inscribe → se marca para reembolso manual, igual que un "pagó
+  // sin lugar". Así "no se suma más nadie" queda blindado también en el webhook.
+  if (COPA_PAUSED) {
+    await markOrderForRefund(orderId, leagueId, userId, "Liga Premium en pausa (no se toman inscripciones)");
+    return;
+  }
 
   const league = (
     await db
