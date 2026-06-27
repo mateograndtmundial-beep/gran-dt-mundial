@@ -36,6 +36,10 @@ export const FINANCE_CONFIG = {
   // No se descuentan solas → se listan acá para sacarlas de los ingresos.
   manualRefundOrderIds: [36], // Dino — 10 pines / $10.000 ARS
 
+  // La Liga Premium se dio de baja: NO se computan sus ingresos (entradas a la
+  // copa) ni el premio garantizado como costo. Poner en true si se reactiva.
+  ligaPremiumActiva: false,
+
   // Comisión Mercado Pago: acreditación a 30 días = 3,49% + IVA 21%.
   mpFeeRate: 0.0349,
   mpIva: 0.21,
@@ -60,8 +64,15 @@ export const FINANCE_CONFIG = {
   costsArs: {
     igStories: 35000, // Instagram stories
     fbStories: 50000, // Facebook stories
-    publicidadIg: 20000, // publicidad IG
+    publicidadIg: 20000, // publicidad IG (lanzamiento)
+    publicidadIg2506: 20000, // publicidad IG — jueves 25/06
   },
+
+  // Otros costos en ARS sueltos (no marketing).
+  // Reembolso a 2 usuarios de la Liga Premium dada de baja: además de devolverles
+  // los $5.000 que puso cada uno (ya excluidos al no computar ingresos de copa),
+  // les dimos $10.000 TOTAL extra de compensación.
+  extraRefundsArs: 10000,
 
   // Costos conocidos pero todavía sin monto firme → no entran al total, se avisan.
   pendingNote: "Neon (variable, factura del mes sin llegar)",
@@ -109,16 +120,23 @@ async function shape() {
 
   const excluded = new Set(cfg.excludeUsers.map((u) => u.toLowerCase()));
   const refunded = new Set<number>(cfg.manualRefundOrderIds);
-  const valid = rows.filter((r) => !excluded.has(r.uname) && !refunded.has(Number(r.id)));
+  const liga = cfg.ligaPremiumActiva;
 
-  const brutoTotal = valid.reduce((a, r) => a + Number(r.amount), 0);
+  const valid = rows.filter((r) => {
+    if (excluded.has(r.uname) || refunded.has(Number(r.id))) return false;
+    // Liga Premium dada de baja → no se computan los ingresos de las entradas.
+    if (!liga && r.is_copa) return false;
+    return true;
+  });
+
+  const brutoPines = valid.filter((r) => !r.is_copa).reduce((a, r) => a + Number(r.amount), 0);
   const brutoCopa = valid.filter((r) => r.is_copa).reduce((a, r) => a + Number(r.amount), 0);
-  const brutoPines = brutoTotal - brutoCopa;
+  const brutoTotal = brutoPines + brutoCopa;
   const copaEntries = valid.filter((r) => r.is_copa).length;
 
   const netTotal = brutoTotal * netFactor;
 
-  // ── Premio garantizado + cupo de las copas vivas (no draft) ──
+  // ── Premio garantizado + cupo de las copas vivas (solo si la liga está activa) ──
   const copas = await query<{ premio: number; capacity: number; entry_fee: number }>(sql`
     select coalesce(sum(prize_ars), 0) as premio,
            coalesce(sum(capacity), 0) as capacity,
@@ -126,26 +144,28 @@ async function shape() {
     from leagues
     where kind = 'golden_ticket' and status in ('open', 'full', 'closed')
   `);
-  const premioArs = Number(copas[0]?.premio ?? 0);
-  const capacity = Number(copas[0]?.capacity ?? 0);
+  const premioArs = liga ? Number(copas[0]?.premio ?? 0) : 0;
+  const capacity = liga ? Number(copas[0]?.capacity ?? 0) : 0;
   const entryFee = Number(copas[0]?.entry_fee ?? 0);
 
   // ── Egresos ──
   const marketingArs = sum(cfg.costsArs);
   const infraUsd = sum(cfg.costsUsd);
   const infraArs = infraUsd * cfg.mepArsPerUsd;
-  const totalEgresos = marketingArs + infraArs + premioArs;
+  const extraRefundsArs = cfg.extraRefundsArs;
+  const totalEgresos = marketingArs + infraArs + premioArs + extraRefundsArs;
 
   const resultado = netTotal - totalEgresos;
 
-  // ── Breakeven de la copa (entradas para cubrir el premio) ──
+  // ── Breakeven de la copa (entradas para cubrir el premio) — solo con liga activa ──
   const netPerEntry = entryFee * netFactor;
-  const copaBreakeven = netPerEntry > 0 ? Math.ceil(premioArs / netPerEntry) : 0;
+  const copaBreakeven = liga && netPerEntry > 0 ? Math.ceil(premioArs / netPerEntry) : 0;
   const faltanEntradas = Math.max(0, copaBreakeven - copaEntries);
 
   return {
     feeEffPct: feeEff * 100,
     mep: cfg.mepArsPerUsd,
+    ligaPremiumActiva: liga,
     brutoTotal,
     brutoCopa,
     brutoPines,
@@ -157,6 +177,7 @@ async function shape() {
     marketingArs,
     infraUsd,
     infraArs,
+    extraRefundsArs,
     totalEgresos,
     resultado,
     copaBreakeven,
@@ -180,15 +201,16 @@ export async function buildFinanceDigest(): Promise<{ text: string; blocks: Bloc
     md(`:money_with_wings: *Resumen financiero — Los 11 de Sampa*`),
     divider(),
     md(
-      `*:inbox_tray: Ingresos* _(sin internos ni reembolsos)_\n` +
-        `• Brutos: *${ars(s.brutoTotal)}*  _(pines ${ars(s.brutoPines)} · copa ${ars(s.brutoCopa)})_\n` +
+      `*:inbox_tray: Ingresos* _(solo pines; sin internos ni reembolsos)_\n` +
+        `• Brutos: *${ars(s.brutoTotal)}*\n` +
         `• Neto tras Mercado Pago (−${s.feeEffPct.toFixed(2)}%): *${ars(s.netTotal)}*`,
     ),
     md(
       `*:outbox_tray: Egresos*\n` +
         `• Marketing: ${ars(s.marketingArs)}\n` +
         `• Infra (${usd(s.infraUsd)} @ MEP venta ${nf(s.mep)}): ${ars(s.infraArs)}\n` +
-        `• Premio garantizado copa(s): ${ars(s.premioArs)}\n` +
+        (s.ligaPremiumActiva ? `• Premio garantizado copa(s): ${ars(s.premioArs)}\n` : "") +
+        (s.extraRefundsArs ? `• Reembolsos a usuarios: ${ars(s.extraRefundsArs)}\n` : "") +
         `• *Total: ${ars(s.totalEgresos)}*` +
         (s.pendingNote ? `\n• :hourglass_flowing_sand: _Pendiente de sumar: ${s.pendingNote}_` : ""),
     ),
@@ -196,12 +218,14 @@ export async function buildFinanceDigest(): Promise<{ text: string; blocks: Bloc
       `*${enRojo ? ":red_circle:" : ":large_green_circle:"} Resultado global: ${enRojo ? "" : "+"}${ars(s.resultado)}* ` +
         `${enRojo ? "_(déficit — todavía no breakeven)_" : "_(superávit)_"}`,
     ),
-    md(
-      `*:trophy: Copa*\n` +
-        `• Entradas vendidas: *${s.copaEntries}${s.capacity ? ` / ${s.capacity}` : ""}*\n` +
-        `• Breakeven de la copa (cubrir el premio): *${s.copaBreakeven}* entradas` +
-        (s.faltanEntradas > 0 ? `  →  faltan *${s.faltanEntradas}*` : `  →  :white_check_mark: cubierto`),
-    ),
+    s.ligaPremiumActiva
+      ? md(
+          `*:trophy: Copa*\n` +
+            `• Entradas vendidas: *${s.copaEntries}${s.capacity ? ` / ${s.capacity}` : ""}*\n` +
+            `• Breakeven de la copa (cubrir el premio): *${s.copaBreakeven}* entradas` +
+            (s.faltanEntradas > 0 ? `  →  faltan *${s.faltanEntradas}*` : `  →  :white_check_mark: cubierto`),
+        )
+      : context(`:trophy: Liga Premium dada de baja: no se computan sus ingresos ni el premio.`),
     context(
       `Supuestos: MP 3,49% + IVA (30 días) · MEP venta ${nf(s.mep)} (costos al 15/06) · ` +
         `costos infra/marketing y reembolsos cargados en \`FINANCE_CONFIG\`. Números read-only sobre la DB.`,

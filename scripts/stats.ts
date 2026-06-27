@@ -354,21 +354,26 @@ async function seccionFinanzas() {
   const f = await computeFinance();
   const money = (n: number) => `$${nf(Math.round(n))}`;
 
-  section("Ingresos (sin internos ni reembolsos)");
-  kv("Brutos", `${money(f.brutoTotal)}  (pines ${money(f.brutoPines)} · copa ${money(f.brutoCopa)})`);
+  section("Ingresos (solo pines; sin internos ni reembolsos)");
+  kv("Brutos", money(f.brutoTotal));
   kv(`Neto tras MP (−${f.feeEffPct.toFixed(2)}%)`, money(f.netTotal));
 
   section("Egresos");
   kv("Marketing", money(f.marketingArs));
   kv(`Infra (US$${f.infraUsd} @ MEP ${nf(f.mep)})`, money(f.infraArs));
-  kv("Premio garantizado copa(s)", money(f.premioArs));
+  if (f.ligaPremiumActiva) kv("Premio garantizado copa(s)", money(f.premioArs));
+  if (f.extraRefundsArs) kv("Reembolsos a usuarios", money(f.extraRefundsArs));
   kv("TOTAL", money(f.totalEgresos));
   if (f.pendingNote) kv("Pendiente de sumar", f.pendingNote);
 
   section("Resultado");
   kv("Resultado global", `${f.resultado >= 0 ? "+" : ""}${money(f.resultado)} ${f.resultado < 0 ? "(déficit)" : "(superávit)"}`);
-  kv("Entradas copa vendidas", `${f.copaEntries}${f.capacity ? ` / ${f.capacity}` : ""}`);
-  kv("Breakeven copa (cubrir premio)", `${f.copaBreakeven} entradas${f.faltanEntradas > 0 ? ` (faltan ${f.faltanEntradas})` : " (cubierto)"}`);
+  if (f.ligaPremiumActiva) {
+    kv("Entradas copa vendidas", `${f.copaEntries}${f.capacity ? ` / ${f.capacity}` : ""}`);
+    kv("Breakeven copa (cubrir premio)", `${f.copaBreakeven} entradas${f.faltanEntradas > 0 ? ` (faltan ${f.faltanEntradas})` : " (cubierto)"}`);
+  } else {
+    kv("Liga Premium", "dada de baja (sin ingresos ni premio)");
+  }
 }
 
 // ──────────────────────────────────────────────────────────────
