@@ -1,4 +1,4 @@
-import { and, eq, inArray, lt, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, lt, ne, notInArray, sql } from "drizzle-orm";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import {
@@ -256,6 +256,44 @@ export async function publishRound(roundId: number) {
       }
     }
     await runChunked(eliminations);
+  }
+
+  // Eliminados de FASE DE GRUPOS: las selecciones que no clasificaron a la primera
+  // ronda de eliminatorias (16vos) nunca juegan un mata-mata, así que el bloque de
+  // arriba nunca las toca. Al cerrar la fase de grupos las marcamos derivándolas del
+  // FIXTURE de 16vos: los países que aparecen ahí son, por definición, los que
+  // clasificaron; el resto quedó afuera. Se dispara al publicar la última fecha de
+  // grupos (y, como red de seguridad, en las eliminatorias) y es idempotente:
+  // solo toca países que siguen "vivos" (eliminatedRound null) y que NO están en el
+  // cuadro. Guarda: si el fixture de 16vos todavía no se seedeó (cruces sin equipos),
+  // no elimina a nadie — se re-evalúa en la próxima publicación.
+  const firstKo = (
+    await db
+      .select({ id: rounds.id, order: rounds.order })
+      .from(rounds)
+      .where(eq(rounds.type, "knockout"))
+      .orderBy(rounds.order)
+      .limit(1)
+  )[0];
+  if (firstKo && round.order >= firstKo.order - 1) {
+    const koMatches = await db
+      .select({ home: matches.homeCountryId, away: matches.awayCountryId })
+      .from(matches)
+      .where(eq(matches.roundId, firstKo.id));
+    const qualified = new Set<number>();
+    for (const m of koMatches) {
+      if (m.home != null) qualified.add(m.home);
+      if (m.away != null) qualified.add(m.away);
+    }
+    // Solo marcamos si el cuadro está COMPLETO (todos los cruces con sus dos equipos
+    // cargados). Si falta alguno, el fixture aún no está listo → no eliminamos a nadie.
+    const bracketComplete = koMatches.length > 0 && qualified.size === koMatches.length * 2;
+    if (bracketComplete) {
+      await db
+        .update(countries)
+        .set({ eliminatedRound: firstKo.order - 1 })
+        .where(and(notInArray(countries.id, [...qualified]), isNull(countries.eliminatedRound)));
+    }
   }
 
   await db.update(rounds).set({ status: "published" }).where(eq(rounds.id, roundId));
