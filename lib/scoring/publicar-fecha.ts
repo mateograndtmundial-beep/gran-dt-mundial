@@ -15,7 +15,7 @@ import {
 import { computeEntryTotal, sumRoundPoints, type ScoringContext } from "@/lib/scoring/puntos-equipo";
 import { resolveMatchOutcome } from "@/lib/scoring/resultado-partido";
 import { chunkedBatch as runChunked, type BatchOp } from "@/lib/db/batch";
-import { SCORING } from "@/lib/game/config";
+import { SCORING, FIRST_KNOCKOUT_MATCHES, FIRST_KNOCKOUT_QUALIFIERS } from "@/lib/game/config";
 
 /**
  * Publica una fecha: agrega los puntos por jugador, calcula el puntaje de cada
@@ -285,9 +285,13 @@ export async function publishRound(roundId: number) {
       if (m.home != null) qualified.add(m.home);
       if (m.away != null) qualified.add(m.away);
     }
-    // Solo marcamos si el cuadro está COMPLETO (todos los cruces con sus dos equipos
-    // cargados). Si falta alguno, el fixture aún no está listo → no eliminamos a nadie.
-    const bracketComplete = koMatches.length > 0 && qualified.size === koMatches.length * 2;
+    // Solo marcamos con el cuadro COMPLETO: los 16 cruces cargados (FIRST_KNOCKOUT_MATCHES)
+    // y los 32 clasificados sin nulls (FIRST_KNOCKOUT_QUALIFIERS). Si la API todavía no
+    // cargó todos los cruces (p.ej. faltan 2), NO eliminamos a nadie — si no, los equipos
+    // de los cruces faltantes quedarían marcados como eliminados por error. Se re-evalúa
+    // en la próxima publicación.
+    const bracketComplete =
+      koMatches.length === FIRST_KNOCKOUT_MATCHES && qualified.size === FIRST_KNOCKOUT_QUALIFIERS;
     if (bracketComplete) {
       await db
         .update(countries)

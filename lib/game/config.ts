@@ -121,6 +121,13 @@ export const ROUNDS = [
   { order: 8, name: 'Final', type: 'knockout' as const },
 ];
 
+// Formato Mundial 2026: 48 selecciones → 32 clasifican a la primera ronda de
+// eliminatorias ("16vos de Final", round of 32 = 16 cruces). Se usa como guarda
+// para marcar los eliminados de fase de grupos SOLO con el cuadro completo: si la
+// API todavía no cargó los 16 cruces, no se elimina a nadie (evita marcar de más).
+export const FIRST_KNOCKOUT_MATCHES = 16;
+export const FIRST_KNOCKOUT_QUALIFIERS = FIRST_KNOCKOUT_MATCHES * 2; // 32
+
 export const TOURNAMENT_START = process.env.NEXT_PUBLIC_TOURNAMENT_START ?? '2026-06-11T19:00:00Z';
 
 // Las stories/carruseles automáticos a #SOCIAL arrancan recién en esta fecha
