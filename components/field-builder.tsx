@@ -170,6 +170,7 @@ export function FieldBuilder({
   const [search, setSearch]         = useState("");
   const [modalCountry, setModalCountry] = useState<string>("ALL");
   const [modalSort, setModalSort]   = useState<"price-desc" | "price-asc" | "name-asc" | "ppp-desc" | "owned-desc">("price-desc");
+  const [modalHideElim, setModalHideElim] = useState(false);
   const [modalShown, setModalShown] = useState(MODAL_PAGE);
   const [saving, setSaving]         = useState(false);
   const [message, setMessage]       = useState<string | null>(null);
@@ -367,6 +368,7 @@ export function FieldBuilder({
           (p) =>
             p.position === modal.slot.position &&
             !pickedIds.has(p.id) &&
+            (!modalHideElim || p.eliminatedRound == null) &&
             (modalCountry === "ALL" || p.countryName === modalCountry) &&
             (nq === "" || normalizeName(p.name).includes(nq) || normalizeName(p.countryName).includes(nq)),
         )
@@ -439,6 +441,11 @@ export function FieldBuilder({
     if (!player) return { picks: base, error: null };
     // Ya está en el equipo → no duplicar (no es error: el usuario lo ve en cancha).
     if (Object.values(base).some((p) => p.id === pid)) return { picks: base, error: null };
+
+    // Selección eliminada del Mundial: no se puede sumar como alta nueva.
+    if (player.eliminatedRound != null) {
+      return { picks: base, error: `${player.name} no se puede sumar: su selección quedó eliminada del Mundial.` };
+    }
 
     // Presupuesto disponible (jugadores ya puestos + técnico elegido si lo hay).
     const coachPrice = coaches.find((c) => c.id === (initial?.coachId ?? null))?.price ?? 0;
@@ -1011,30 +1018,45 @@ export function FieldBuilder({
                 className="mb-2 w-full rounded-[8px] border border-border bg-canvas px-3 py-2.5 text-sm text-ink outline-none placeholder:text-ink-faint focus:border-blue focus:ring-1 focus:ring-blue transition-colors"
               />
               {modal.type === "player" && (
-                <div className="mb-3 flex gap-2">
-                  <select
-                    value={modalCountry}
-                    onChange={(e) => { setModalCountry(e.target.value); setModalShown(MODAL_PAGE); }}
-                    aria-label="Filtrar por país"
-                    className="min-w-0 flex-1 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
+                <div className="mb-3 space-y-2">
+                  <div className="flex gap-2">
+                    <select
+                      value={modalCountry}
+                      onChange={(e) => { setModalCountry(e.target.value); setModalShown(MODAL_PAGE); }}
+                      aria-label="Filtrar por país"
+                      className="min-w-0 flex-1 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
+                    >
+                      <option value="ALL">Todos los países</option>
+                      {playerCountries.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    <select
+                      value={modalSort}
+                      onChange={(e) => { setModalSort(e.target.value as typeof modalSort); setModalShown(MODAL_PAGE); }}
+                      aria-label="Ordenar"
+                      className="shrink-0 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
+                    >
+                      <option value="price-desc">Precio: mayor a menor</option>
+                      <option value="price-asc">Precio: menor a mayor</option>
+                      {hasStats && <option value="ppp-desc">Mejor puntuados</option>}
+                      {hasOwnership && <option value="owned-desc">Más elegidos</option>}
+                      <option value="name-asc">Nombre: A → Z</option>
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setModalHideElim((v) => !v); setModalShown(MODAL_PAGE); }}
+                    aria-pressed={modalHideElim}
+                    className={cn(
+                      "rounded-[6px] border px-3 py-1.5 text-xs font-semibold transition-colors",
+                      modalHideElim
+                        ? "border-blue bg-blue-light text-blue"
+                        : "border-border bg-canvas text-ink-2 hover:border-border-strong",
+                    )}
                   >
-                    <option value="ALL">Todos los países</option>
-                    {playerCountries.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <select
-                    value={modalSort}
-                    onChange={(e) => { setModalSort(e.target.value as typeof modalSort); setModalShown(MODAL_PAGE); }}
-                    aria-label="Ordenar"
-                    className="shrink-0 appearance-none rounded-[6px] border border-border bg-canvas px-3 py-1.5 text-xs font-semibold text-ink-2 outline-none hover:border-border-strong focus:border-blue cursor-pointer"
-                  >
-                    <option value="price-desc">Precio: mayor a menor</option>
-                    <option value="price-asc">Precio: menor a mayor</option>
-                    {hasStats && <option value="ppp-desc">Mejor puntuados</option>}
-                    {hasOwnership && <option value="owned-desc">Más elegidos</option>}
-                    <option value="name-asc">Nombre: A → Z</option>
-                  </select>
+                    Ocultar eliminados
+                  </button>
                 </div>
               )}
             </div>
@@ -1052,6 +1074,10 @@ export function FieldBuilder({
                 {modal.type === "player"
                   ? modalPlayers.map((p) => {
                       const affordable = p.price <= freeForSlot + 0.05;
+                      // Selección eliminada del Mundial: ya no juega → no se puede
+                      // sumar como jugador NUEVO (los que ya tenías de fechas previas
+                      // siguen en cancha; acá solo se eligen altas).
+                      const eliminated = p.eliminatedRound != null;
                       // Si el slot ya tiene un jugador del mismo país, reemplazarlo
                       // libera un cupo: no cuenta para el tope.
                       const countryNow =
@@ -1059,8 +1085,10 @@ export function FieldBuilder({
                         (slotCurrent?.countryId === p.countryId ? 1 : 0);
                       const countryOk =
                         maxPerCountry == null || countryNow < maxPerCountry;
-                      const selectable = affordable && countryOk;
-                      const reason = !affordable
+                      const selectable = affordable && countryOk && !eliminated;
+                      const reason = eliminated
+                        ? "selección eliminada"
+                        : !affordable
                         ? "presupuesto insuficiente"
                         : !countryOk
                           ? `máx ${maxPerCountry} de este país`
@@ -1073,13 +1101,16 @@ export function FieldBuilder({
                         title={
                           selectable
                             ? undefined
-                            : !affordable
+                            : eliminated
+                              ? "Su selección quedó eliminada del Mundial"
+                              : !affordable
                               ? "Presupuesto insuficiente"
                               : `Máximo ${maxPerCountry} jugadores por selección`
                         }
                         className={cn(
                           "flex w-full items-center gap-3 rounded-[6px] px-3 py-2.5 text-left transition-colors group",
                           selectable ? "hover:bg-surface-2" : "opacity-45 cursor-not-allowed",
+                          eliminated && "grayscale",
                         )}
                       >
                         {flagUrl(p.code) ? (
@@ -1089,8 +1120,19 @@ export function FieldBuilder({
                           <div className="h-5 w-7 rounded-sm bg-surface-2 shrink-0" />
                         )}
                         <span className="min-w-0 flex-1">
-                          <span className={cn("block truncate text-sm font-semibold text-ink", selectable && "group-hover:text-blue")}>
-                            {p.name}
+                          <span className="flex items-center gap-1.5">
+                            <span className={cn("block truncate text-sm font-semibold text-ink", selectable && "group-hover:text-blue", eliminated && "line-through")}>
+                              {p.name}
+                            </span>
+                            {eliminated && (
+                              <span
+                                aria-label="Jugador eliminado del torneo"
+                                className="shrink-0 -rotate-[6deg] rounded-sm bg-danger px-1 py-0.5 text-[9px] font-display text-white"
+                                style={{ boxShadow: "1px 1px 0 #991B1B" }}
+                              >
+                                ELIM
+                              </span>
+                            )}
                           </span>
                           <span className="block truncate text-xs text-ink-3">
                             {p.countryName}
