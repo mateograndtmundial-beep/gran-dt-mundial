@@ -2,6 +2,7 @@ import { and, asc, eq } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/lib/db";
 import { matches, players, countries, playerMatchStats, rounds, coaches } from "@/lib/db/schema";
+import { apiFootball, mapRoundOrder } from "@/lib/api-football/client";
 import { resolveMatchOutcome } from "@/lib/scoring/resultado-partido";
 import { matchesWithCompleteStats } from "@/lib/scoring/stats-quality";
 import { getMatchRecap, POS, POS_ORDER, fillTemplate, type Pos, type FlagMap } from "./recap-data";
@@ -54,6 +55,7 @@ export type FigureData = { posSigla: string; posColor: string; nombre: string; p
 export type MatchBlock = {
   homeSigla: string; homeCode: string; awaySigla: string; awayCode: string;
   hg: number; ag: number;
+  homePk: number | null; awayPk: number | null; // tanda de penales (null = no hubo)
   fig: FigureData | null;
 };
 
@@ -79,16 +81,96 @@ export type IconAssets = { gol: string; asist: string; golPen: string; penAtajad
 
 // ---------- selección de unidades ----------
 
+// Ronda de 16vos (round.order = 4, "Round of 32" en API-Football): a diferencia del
+// resto de las eliminatorias, acá el carrusel agrupa los 2 partidos que definen el
+// mismo cruce de octavos (no 1 carrusel por partido). Ver getRound16CrossUnits.
+const ROUND_ORDER_16VOS = 4;
+
+/**
+ * Cruces reales de la siguiente ronda, resueltos en vivo contra API-Football
+ * (sin tocar la DB): API-Football recién publica el fixture de la ronda N+1 con
+ * los 2 países ya cargados una vez que ambos partidos de la ronda N que lo
+ * alimentan terminaron — o sea que esta lista solo trae cruces YA determinados.
+ * Devuelve pares de countryId (nuestros ids, vía countries.apiFootballId).
+ */
+async function getNextRoundCountryPairs(nextOrder: number): Promise<[number, number][]> {
+  const fixtures = (await apiFootball.fixtures()) as Array<{
+    league?: { round?: string };
+    teams?: { home?: { id?: number }; away?: { id?: number } };
+  }>;
+  const cs = await db.select({ id: countries.id, apiFootballId: countries.apiFootballId }).from(countries);
+  const countryIdByApi = new Map(cs.filter((c) => c.apiFootballId != null).map((c) => [c.apiFootballId as number, c.id]));
+
+  const pairs: [number, number][] = [];
+  for (const f of fixtures) {
+    if (mapRoundOrder(f.league?.round ?? "") !== nextOrder) continue;
+    const homeId = countryIdByApi.get(f.teams?.home?.id ?? -1);
+    const awayId = countryIdByApi.get(f.teams?.away?.id ?? -1);
+    if (homeId && awayId) pairs.push([homeId, awayId]);
+  }
+  return pairs;
+}
+
+/** Unidades de 16vos: 2 partidos por carrusel, matcheados por el cruce real de octavos. */
+async function getRound16CrossUnits(roundId: number, roundOrder: number): Promise<CarouselUnit[]> {
+  const home = alias(countries, "home_c");
+  const away = alias(countries, "away_c");
+  const rows = await db
+    .select({
+      matchId: matches.id,
+      status: matches.status,
+      homeCountryId: matches.homeCountryId,
+      awayCountryId: matches.awayCountryId,
+    })
+    .from(matches)
+    .innerJoin(home, eq(matches.homeCountryId, home.id))
+    .innerJoin(away, eq(matches.awayCountryId, away.id))
+    .where(eq(matches.roundId, roundId));
+
+  const finishedIds = rows.filter((r) => r.status === "finished").map((r) => r.matchId);
+  const ready = await matchesWithCompleteStats(finishedIds);
+
+  const matchByCountry = new Map<number, (typeof rows)[number]>();
+  for (const r of rows) {
+    if (r.homeCountryId) matchByCountry.set(r.homeCountryId, r);
+    if (r.awayCountryId) matchByCountry.set(r.awayCountryId, r);
+  }
+
+  const crosses = await getNextRoundCountryPairs(roundOrder + 1);
+  const units: CarouselUnit[] = [];
+  for (const [countryA, countryB] of crosses) {
+    const m1 = matchByCountry.get(countryA);
+    const m2 = matchByCountry.get(countryB);
+    if (!m1 || !m2) continue; // cruce de un país todavía sin partido de 16vos en esta fecha
+    if (m1.status !== "finished" || m2.status !== "finished") continue;
+    if (!ready.has(m1.matchId) || !ready.has(m2.matchId)) continue;
+    const [id1, id2] = [m1.matchId, m2.matchId].sort((a, b) => a - b);
+    units.push({
+      kind: "knockout",
+      bucket: `match:${id1}-${id2}`,
+      roundId,
+      roundOrder,
+      matchIds: [id1, id2],
+    });
+  }
+  return units;
+}
+
 /**
  * Unidades a postear para una fecha (por su id). Grupos: una por grupo, solo
  * cuando TODOS los partidos de ese grupo en la fecha están terminados (no se
- * postea un grupo a medias). Eliminatorias: una por partido terminado.
+ * postea un grupo a medias). Eliminatorias: una por partido terminado, salvo
+ * 16vos (2 partidos por carrusel, ver getRound16CrossUnits).
  */
 export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]> {
   const round = (
     await db.select({ id: rounds.id, order: rounds.order, type: rounds.type }).from(rounds).where(eq(rounds.id, roundId)).limit(1)
   )[0];
   if (!round) return [];
+
+  if (round.type === "knockout" && round.order === ROUND_ORDER_16VOS) {
+    return getRound16CrossUnits(roundId, round.order);
+  }
 
   const home = alias(countries, "home_c");
   const rows = await db
@@ -296,6 +378,7 @@ export async function getUnitData(unit: CarouselUnit): Promise<UnitData> {
       homeSigla: meta.homeCode, homeCode: meta.homeCode,
       awaySigla: meta.awayCode, awayCode: meta.awayCode,
       hg: meta.homeScore ?? 0, ag: meta.awayScore ?? 0,
+      homePk: meta.homePenalties, awayPk: meta.awayPenalties,
       fig: recap
         ? {
             posSigla: POS[recap.jugador.posicion].sigla,
@@ -325,8 +408,8 @@ export async function getUnitData(unit: CarouselUnit): Promise<UnitData> {
           instanceLabel: "Eliminatorias",
           instanceTitle: roundName.toUpperCase(),
           instanceTitleSize: titleSize(roundName),
-          instanceSubtitle: matchBlocks[0]
-            ? `${matchBlocks[0].homeSigla} vs ${matchBlocks[0].awaySigla}`
+          instanceSubtitle: matchBlocks.length
+            ? matchBlocks.map((b) => `${b.homeSigla} vs ${b.awaySigla}`).join(" · ")
             : "Puntajes",
           matchBlocks,
         };
@@ -409,12 +492,27 @@ const logoStrip = (logoB64: string) => logoB64.replace(/^data:[^;]+;base64,/, ""
 /** Bloque de partido de la portada (snippet MATCH_BLOCK de scoreboard-cover.html). */
 function matchBlockHtml(b: MatchBlock, flags: FlagMap): string {
   const fig = b.fig ?? { posSigla: "—", posColor: "#6B7280", nombre: "—", pts: 0 };
+  const hadPk = b.homePk != null && b.awayPk != null;
+  const homeWonPk = hadPk && b.homePk! > b.awayPk!;
+  const awayWonPk = hadPk && b.awayPk! > b.homePk!;
+  const GOLD = "#C8A24B";
+  const homeColor = homeWonPk ? GOLD : "#fff";
+  const awayColor = awayWonPk ? GOLD : "#fff";
+  // Chip de penales: ABSOLUTO respecto del bloque de resultado, para que no le
+  // sume ancho al grupo central y así no descentre el "X - Y" (el resultado
+  // siempre queda centrado, tenga o no penales). Sin sumar altura a la card.
+  const pkChip = hadPk
+    ? `<span style="position:absolute;left:100%;top:50%;transform:translateY(-50%);margin-left:14px;display:inline-flex;align-items:center;background:rgba(200,162,75,0.18);border:1.5px solid ${GOLD};border-radius:999px;padding:5px 14px;white-space:nowrap;"><span style="color:${GOLD};font-weight:800;font-size:17px;letter-spacing:0.04em;">PEN ${b.homePk}-${b.awayPk}</span></span>`
+    : "";
   return (
     `<div style="background:#fff;border:2px solid #111827;border-radius:14px;box-shadow:6px 6px 0 rgba(17,24,39,0.85);overflow:hidden;margin-bottom:24px;">` +
-    `<div style="background:#101726;display:flex;align-items:center;justify-content:space-between;padding:24px 36px;">` +
-    `<div style="display:flex;align-items:center;gap:16px;"><span class="flag"><img src="data:image/png;base64,${flagB64(flags, b.homeCode)}" width="72" height="48"></span><span style="color:#fff;font-weight:800;font-size:40px;">${b.homeSigla}</span></div>` +
-    `<div style="display:flex;align-items:center;gap:16px;"><span style="color:#fff;font-weight:800;font-size:64px;letter-spacing:-0.04em;">${b.hg}</span><span style="color:#5B86FF;font-weight:800;font-size:34px;">-</span><span style="color:#fff;font-weight:800;font-size:64px;letter-spacing:-0.04em;">${b.ag}</span></div>` +
-    `<div style="display:flex;align-items:center;gap:16px;"><span style="color:#fff;font-weight:800;font-size:40px;">${b.awaySigla}</span><span class="flag"><img src="data:image/png;base64,${flagB64(flags, b.awayCode)}" width="72" height="48"></span></div>` +
+    `<div style="background:#101726;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:24px 36px;">` +
+    `<div style="display:flex;align-items:center;gap:16px;justify-self:start;"><span class="flag"><img src="data:image/png;base64,${flagB64(flags, b.homeCode)}" width="72" height="48"></span><span style="color:${homeColor};font-weight:800;font-size:40px;">${b.homeSigla}</span></div>` +
+    `<div style="position:relative;display:flex;align-items:center;gap:16px;">` +
+    `<span style="color:#fff;font-weight:800;font-size:64px;letter-spacing:-0.04em;">${b.hg}</span><span style="color:#5B86FF;font-weight:800;font-size:34px;">-</span><span style="color:#fff;font-weight:800;font-size:64px;letter-spacing:-0.04em;">${b.ag}</span>` +
+    pkChip +
+    `</div>` +
+    `<div style="display:flex;align-items:center;gap:16px;justify-self:end;"><span style="color:${awayColor};font-weight:800;font-size:40px;">${b.awaySigla}</span><span class="flag"><img src="data:image/png;base64,${flagB64(flags, b.awayCode)}" width="72" height="48"></span></div>` +
     `</div>` +
     `<div style="display:flex;align-items:center;padding:32px 36px;gap:20px;">` +
     `<div style="width:64px;height:64px;border-radius:12px;background:${fig.posColor};display:flex;align-items:center;justify-content:center;flex:0 0 64px;box-shadow:3px 3px 0 #111827;"><span style="color:#fff;font-weight:800;font-size:20px;">${fig.posSigla}</span></div>` +
@@ -559,7 +657,7 @@ export function demoUnitData(): UnitData {
       instanceTitleSize: "118px",
       instanceSubtitle: "Puntajes de la jornada",
       matchBlocks: [
-        { homeSigla: "GER", homeCode: "GER", awaySigla: "SCO", awayCode: "SCO", hg: 3, ag: 1, fig: { posSigla: "MED", posColor: POS.MID.color, nombre: "Wirtz", pts: 21 } },
+        { homeSigla: "GER", homeCode: "GER", awaySigla: "SCO", awayCode: "SCO", hg: 3, ag: 1, homePk: null, awayPk: null, fig: { posSigla: "MED", posColor: POS.MID.color, nombre: "Wirtz", pts: 21 } },
       ],
     },
     teams,
