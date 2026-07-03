@@ -57,7 +57,15 @@ export const metadata: Metadata = {
       { url: "/favicon.svg", type: "image/svg+xml" },
       { url: "/favicon.ico", sizes: "any" },
     ],
-    apple: "/apple-touch-icon.png",
+    // 512×512 aplanado sobre blanco (iOS pinta negro debajo de la transparencia).
+    apple: { url: "/apple-touch-icon.png", sizes: "512x512" },
+  },
+  // PWA instalable: junto con app/manifest.ts habilita "Agregar a inicio" en iOS
+  // (standalone, sin el chrome de Safari) con el título correcto.
+  appleWebApp: {
+    capable: true,
+    title: "Los 11 de Sampa",
+    statusBarStyle: "default",
   },
 };
 
