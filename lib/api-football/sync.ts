@@ -319,7 +319,11 @@ const SETTLE_MIN = { group: 120 + POST_MATCH_DELAY_MIN, knockout: 150 + POST_MAT
 // capturar correcciones tardías de API-Football (ratings revisados, tarjetas /
 // expulsiones cargadas después del pitazo, figura del partido). Con el cron horario
 // son ~2-3 pasadas extra por partido. Pasada la ventana, se da por estable.
-const STABILIZE_WINDOW_MS = 5 * 3_600_000;
+// Acotada a 2h (antes 5h) para ahorrar llamadas en el plan gratuito de API-Football
+// (100 req/día): alcanza para capturar correcciones tardías de rating/tarjetas y
+// recorta las re-sincronizaciones redundantes de partidos ya completos, que eran la
+// mayor fuente de consumo.
+const STABILIZE_WINDOW_MS = 2 * 3_600_000;
 
 // Tope duro: si pasadas 24h del kickoff API-Football no terminó de cargar bien las
 // stats (o el partido quedó postergado/sin marcar `finished`), dejamos de reintentar
