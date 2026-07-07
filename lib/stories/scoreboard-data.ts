@@ -84,7 +84,22 @@ export type IconAssets = { gol: string; asist: string; golPen: string; penAtajad
 // Toda eliminatoria ANTES de la final (16vos=4, 8vos=5, cuartos=6, semis=7) tiene
 // una ronda siguiente que cruza a sus ganadores de a 2 → el carrusel agrupa esos 2
 // partidos (no 1 carrusel por partido). La final (8) no tiene ronda siguiente que
-// cruzar, así que sigue con 1 carrusel por partido. Ver getCrossRoundUnits.
+// cruzar, así que sigue con 1 carrusel por partido.
+//
+// El cruce de 16vos→8vos (order 4) es IRREGULAR: depende de cómo la FIFA asignó
+// los grupos A-L al cuadro, no hay fórmula — por eso se resuelve en vivo contra
+// API-Football por país (getCrossRoundUnits). Ese cruce ya está resuelto y
+// publicado (fecha 4 completa), así que en la práctica esto solo importa si se
+// necesitara regenerar algo de esa fecha.
+//
+// De 8vos en adelante (order 5, 6, 7) el cuadro es un árbol binario normal: el
+// cruce siempre empareja partidos CONSECUTIVOS por orden de kickoff dentro de la
+// fecha (1ro con 2do, 3ro con 4to, ...) — verificado contra el cuadro real del
+// Mundial 2026 (Wikipedia: 8vos M89-96 → cuartos M97-100, cruces consecutivos
+// confirmados: Francia-Marruecos, Noruega-Inglaterra, España-Bélgica). No
+// depende de API-Football ni de la DB de la ronda siguiente: es 100% estructural
+// y estable de acá al final del torneo. Ver getSequentialPairUnits.
+const IRREGULAR_CROSS_ORDER = 4;
 const MAX_PAIRED_KO_ORDER = 7;
 
 /**
@@ -168,10 +183,45 @@ async function getCrossRoundUnits(roundId: number, roundOrder: number): Promise<
 }
 
 /**
+ * Unidades de 8vos/cuartos/semis: 2 partidos por carrusel, emparejados por
+ * posición (1ro con 2do, 3ro con 4to, ...) según el cuadro real del Mundial
+ * 2026 — sin llamadas a API-Football ni depender de que la ronda siguiente ya
+ * esté cargada en la DB. Ver nota en IRREGULAR_CROSS_ORDER.
+ */
+async function getSequentialPairUnits(roundId: number, roundOrder: number): Promise<CarouselUnit[]> {
+  const rows = await db
+    .select({ matchId: matches.id, status: matches.status, kickoff: matches.kickoff })
+    .from(matches)
+    .where(eq(matches.roundId, roundId))
+    .orderBy(asc(matches.kickoff), asc(matches.id));
+
+  const finishedIds = rows.filter((r) => r.status === "finished").map((r) => r.matchId);
+  const ready = await matchesWithCompleteStats(finishedIds);
+
+  const units: CarouselUnit[] = [];
+  for (let i = 0; i + 1 < rows.length; i += 2) {
+    const m1 = rows[i]!;
+    const m2 = rows[i + 1]!;
+    if (m1.status !== "finished" || m2.status !== "finished") continue;
+    if (!ready.has(m1.matchId) || !ready.has(m2.matchId)) continue;
+    const [id1, id2] = [m1.matchId, m2.matchId].sort((a, b) => a - b);
+    units.push({
+      kind: "knockout",
+      bucket: `match:${id1}-${id2}`,
+      roundId,
+      roundOrder,
+      matchIds: [id1, id2],
+    });
+  }
+  return units;
+}
+
+/**
  * Unidades a postear para una fecha (por su id). Grupos: una por grupo, solo
  * cuando TODOS los partidos de ese grupo en la fecha están terminados (no se
  * postea un grupo a medias). Eliminatorias antes de la final: 2 partidos por
- * carrusel (ver getCrossRoundUnits). Final: 1 partido por carrusel.
+ * carrusel — 16vos por cruce real vía API (getCrossRoundUnits), 8vos/cuartos/
+ * semis por posición (getSequentialPairUnits). Final: 1 partido por carrusel.
  */
 export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]> {
   const round = (
@@ -179,8 +229,11 @@ export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]>
   )[0];
   if (!round) return [];
 
-  if (round.type === "knockout" && round.order <= MAX_PAIRED_KO_ORDER) {
+  if (round.type === "knockout" && round.order === IRREGULAR_CROSS_ORDER) {
     return getCrossRoundUnits(roundId, round.order);
+  }
+  if (round.type === "knockout" && round.order > IRREGULAR_CROSS_ORDER && round.order <= MAX_PAIRED_KO_ORDER) {
+    return getSequentialPairUnits(roundId, round.order);
   }
 
   const home = alias(countries, "home_c");
