@@ -1368,11 +1368,11 @@ export function FieldBuilder({
               <p className="mt-2 text-sm text-ink-2">
                 Estás haciendo <strong>{changesMade}</strong> {changesMade === 1 ? "cambio" : "cambios"} en esta fecha.{" "}
                 {freeUsedNow > 0 && pinsDue === 0 ? (
-                  <>Usás tu <strong>cambio gratis</strong>.</>
+                  <>Usás {freeUsedNow === 1 ? "tu" : `tus ${freeUsedNow}`} <strong>cambio{freeUsedNow === 1 ? "" : "s"} gratis</strong>.</>
                 ) : freeUsedNow > 0 && pinsDue > 0 ? (
                   <>{freeUsedNow} gratis y el resto cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}).</>
                 ) : pinsDue > 0 ? (
-                  <>Cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}). Ya usaste tu cambio gratis de la fecha.</>
+                  <>Cuesta <strong>{pinsDue}</strong> {pinsDue === 1 ? "pin" : "pines"} (tenés {cc.pinBalance}). Ya usaste tus cambios gratis de la fecha.</>
                 ) : (
                   <>Sin costo extra (ya estaban pagos).</>
                 )}

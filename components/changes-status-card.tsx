@@ -74,7 +74,7 @@ export function ChangesStatusChip({ status }: { status: ChangesStatus }) {
     return (
       <Link
         href="/pines"
-        title="Ya usaste tu cambio gratis. Comprá pines para hacer más."
+        title="Ya usaste tus cambios gratis de la fecha. Comprá pines para hacer más."
         className={cn(CHIP_CLASSES, "border-gold-border bg-gold-bg hover:bg-gold/20 transition-colors")}
       >
         {content}
@@ -87,8 +87,8 @@ export function ChangesStatusChip({ status }: { status: ChangesStatus }) {
       className={CHIP_CLASSES}
       title={
         status.state === "limited"
-          ? `1 cambio gratis por fecha. Extra: 1 pin c/u (tenés ${status.pinBalance}).`
-          : "Armado libre hasta que arranque la próxima fecha. Después, 1 cambio gratis por fecha."
+          ? `Cambios gratis que te quedan esta fecha. Extra: 1 pin c/u (tenés ${status.pinBalance}).`
+          : "Armado libre hasta que arranque la próxima fecha. Después, tus cambios gratis por fecha (los extra con pines)."
       }
     >
       {content}

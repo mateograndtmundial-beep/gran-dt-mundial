@@ -20,7 +20,7 @@ import {
 } from "@/lib/db/schema";
 import { buildRoundBreakdown, type RoundBreakdown } from "@/lib/scoring/desglose";
 import type { Position } from "@/lib/game/config";
-import { getFreeChangesForRound, SCORING } from "@/lib/game/config";
+import { getFreeChangesForRound, PLAYOFFS_FREE_CHANGES_FROM_ORDER, SCORING } from "@/lib/game/config";
 import { round1 } from "@/lib/pricing/map";
 import { shortRoundName } from "@/lib/game/round-format";
 import { freeChangesLeft } from "@/lib/game/changes";
@@ -917,6 +917,34 @@ export async function getChangesStatus(userId: number, isPremium: boolean): Prom
   );
   const pinBalance = await getPinBalance(userId);
   return { state: "limited", roundName, deadline, freeLeft, pinBalance };
+}
+
+/** ¿El usuario ya armó equipo (tiene `entry`)? Chequeo liviano para gates de UI. */
+export async function userHasEntry(userId: number): Promise<boolean> {
+  const row = (
+    await db.select({ id: entries.id }).from(entries).where(eq(entries.userId, userId)).limit(1)
+  )[0];
+  return !!row;
+}
+
+/**
+ * ¿Corresponde mostrar el aviso "ahora 2 cambios gratis por fecha"? El beneficio
+ * queda vigente todos los playoffs (order ≥ PLAYOFFS_FREE_CHANGES_FROM_ORDER), pero
+ * el aviso es una NOVEDAD del estreno: se muestra SOLO en la fecha del debut (8vos,
+ * order exactamente PLAYOFFS_FREE_CHANGES_FROM_ORDER) y desde 4tos en adelante ya
+ * no. Es true cuando la primera fecha sin publicar es justo esa. El componente
+ * cliente, además, lo muestra una sola vez por dispositivo (localStorage).
+ */
+export async function isDoubleChangeNoticeActive(): Promise<boolean> {
+  const pending = (
+    await db
+      .select({ order: rounds.order })
+      .from(rounds)
+      .where(ne(rounds.status, "published"))
+      .orderBy(asc(rounds.order))
+      .limit(1)
+  )[0];
+  return !!pending && pending.order === PLAYOFFS_FREE_CHANGES_FROM_ORDER;
 }
 
 /** Ventana del recordatorio de cierre: aparece desde 24 h antes del deadline. */

@@ -131,9 +131,11 @@ export default function BasesPage() {
               cambio mientras no hayas guardado una fecha posterior).
             </li>
             <li>
-              <strong>De ahí en más, 1 cambio gratis por fecha:</strong> a partir de tener una fecha
-              anterior guardada, cada fecha tenés <strong>1 cambio gratis</strong> respecto de esa
-              alineación. Los cambios <strong>adicionales</strong> cuestan <strong>pines</strong>.
+              <strong>De ahí en más, cambios gratis por fecha:</strong> a partir de tener una fecha
+              anterior guardada, cada fecha tenés cambios gratis respecto de esa alineación:{" "}
+              <strong>1 en fase de grupos</strong> y <strong>2 desde los 8vos de final</strong> (para
+              todos los usuarios, para acompañar a los equipos con jugadores eliminados). Los cambios{" "}
+              <strong>adicionales</strong> cuestan <strong>pines</strong>.
             </li>
             <li>
               <strong>Los cambios gratis NO se acumulan:</strong> son por fecha y se reinician al
@@ -168,8 +170,8 @@ export default function BasesPage() {
               Si <strong>recién armás tu equipo para sumar desde 16vos</strong> (por ejemplo, entrás
               en la Fecha 3 y ese es tu primer equipo), tenés <strong>cambios ilimitados y gratis
               hasta que arranquen los 16vos</strong>: partís de cero y recién ahí empieza a contar tu
-              alineación. De los <strong>8vos en adelante</strong>, volvés a tener{" "}
-              <strong>1 cambio gratis por fecha</strong> (no acumulable), como todos.
+              alineación. De los <strong>8vos en adelante</strong>, tenés{" "}
+              <strong>2 cambios gratis por fecha</strong> (no acumulables), como todos.
             </li>
           </ul>
         </Section>

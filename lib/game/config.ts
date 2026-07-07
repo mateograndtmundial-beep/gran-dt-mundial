@@ -9,22 +9,33 @@ export const MAX_PER_COUNTRY = 3;
 // armar equipos 100% funcionales. Con 3 no alcanzaba. Regla GENERAL (todos los
 // usuarios), no exclusiva de la Copa.
 export const MAX_PER_COUNTRY_KNOCKOUT = 5;
-export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha (default); los extra cuestan pines
+export const FREE_CHANGES_PER_ROUND = 1; // cambios gratis por fecha (default en grupos); los extra cuestan pines
+
+// Desde los 8vos de Final (octavos, order 5) TODOS los usuarios pasan de 1 a 2
+// cambios gratis por fecha. Es para acompañar a los equipos que se van quedando sin
+// jugadores por las eliminaciones de playoffs y fomentar que la gente siga jugando.
+// Regla GENERAL (no exclusiva de la Copa) y por-fecha (no se acumula).
+export const FREE_CHANGES_PLAYOFFS = 2;
+export const PLAYOFFS_FREE_CHANGES_FROM_ORDER = 5; // 8vos de Final (ver ROUNDS)
 
 // En los 16vos de Final (order 4) los inscriptos en la Copa GOLDEN TICKET arrancan
 // con cambios gratis extra, para emparejar cuentas nuevas y viejas al entrar a la
 // Copa (ver docs/MONETIZACION.md). Es un beneficio EXCLUSIVO de los participantes de
-// la Copa: el resto de los usuarios sigue en FREE_CHANGES_PER_ROUND siempre. El cupo
+// la Copa: el resto de los usuarios sigue en FREE_CHANGES_PER_ROUND. El cupo
 // es por-fecha y no se acumula (se reinicia al arrancar cada fecha).
 export const FREE_CHANGES_R16 = 5;
 
 /**
  * Cambios gratis de una fecha según su `order` (1-based, como en ROUNDS) y si el
- * usuario está inscripto en la Copa GOLDEN TICKET (`inCopa`). Solo los inscriptos
- * reciben el cupo extra de los 16vos; cualquier otro caso usa el default.
+ * usuario está inscripto en la Copa GOLDEN TICKET (`inCopa`).
+ * - 16vos (order 4) + inscripto en la Copa → cupo extra exclusivo de la Copa.
+ * - Desde 8vos (order ≥ 5) → 2 cambios gratis para TODOS (fase de playoffs).
+ * - Resto (fase de grupos, 16vos sin Copa) → el default de 1.
  */
 export function getFreeChangesForRound(roundOrder: number, inCopa = false): number {
-  return roundOrder === 4 && inCopa ? FREE_CHANGES_R16 : FREE_CHANGES_PER_ROUND;
+  if (roundOrder === 4 && inCopa) return FREE_CHANGES_R16;
+  if (roundOrder >= PLAYOFFS_FREE_CHANGES_FROM_ORDER) return FREE_CHANGES_PLAYOFFS;
+  return FREE_CHANGES_PER_ROUND;
 }
 
 // Pricing de jugadores: precio continuo derivado del valor de mercado (Transfermarkt).

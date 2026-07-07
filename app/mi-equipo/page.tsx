@@ -7,7 +7,8 @@ import { ChangesStatusChip } from "@/components/changes-status-card";
 import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, type ChangesStatus } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, isDoubleChangeNoticeActive, type ChangesStatus } from "@/lib/queries";
+import { DoubleChangeNotice } from "@/components/double-change-notice";
 import { CopaMiEquipoBanner } from "@/components/copa/CopaMiEquipoBanner";
 import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { POSITIONS, type Position } from "@/lib/game/config";
@@ -158,10 +159,24 @@ export default async function MiEquipoPage({
     .filter((p) => !p.isStarter && p.slot)
     .sort((a, b) => POSITIONS.indexOf(a.position as Position) - POSITIONS.indexOf(b.position as Position));
 
+  // Aviso de novedad "2 cambios gratis por fecha": solo en la fecha del estreno
+  // (8vos); desde 4tos el beneficio sigue pero el aviso ya no. El usuario acá ya
+  // tiene equipo (garantizado arriba), así que no re-chequeamos sesión/entry; el
+  // cliente se encarga de mostrarlo una sola vez.
+  let showDoubleChangeNotice = false;
+  try {
+    showDoubleChangeNotice = await isDoubleChangeNoticeActive();
+  } catch {
+    showDoubleChangeNotice = false;
+  }
+
   return (
     <div className="space-y-5">
       {/* Confirmación tras guardar desde el armador (?saved=1) */}
       {justSaved && <SaveConfirmBanner changes={Number(sp.ch ?? 0)} pins={Number(sp.pins ?? 0)} />}
+
+      {/* Novedad: 2 cambios gratis por fecha en playoffs (dismissible, 1 sola vez). */}
+      {showDoubleChangeNotice && <DoubleChangeNotice />}
 
       {/* Empujón SUTIL a la Liga Premium si hay una copa abierta y todavía no está inscripto.
           Franja chica y cerrable para no estorbar al equipo. */}

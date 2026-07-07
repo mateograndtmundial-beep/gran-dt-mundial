@@ -335,20 +335,22 @@ export default function ComoFuncionaPage() {
         <Card className="space-y-4 p-6">
           <RuleItem
             icon={<ArrowLeftRight size={22} strokeWidth={1.5} />}
-            title="1 cambio libre por fecha"
+            title="Cambios libres por fecha"
           >
-            Antes de cada fecha tenés <strong>1 cambio gratis</strong>. Cada cambio extra cuesta{" "}
-            <strong>1 pin</strong>, la moneda del juego (sección{" "}
+            En fase de grupos tenés <strong>1 cambio gratis</strong> por fecha. Desde los{" "}
+            <strong>8vos de Final</strong> pasan a ser <strong>2 cambios gratis</strong> por fecha
+            (para todos), para acompañar a los equipos con jugadores eliminados. Cada cambio extra
+            cuesta <strong>1 pin</strong>, la moneda del juego (sección{" "}
             <Link href="/pines" className="font-semibold text-blue hover:underline">
               Pines
             </Link>
             ). Con el <strong>pack premium de cambios ilimitados</strong> no pagás pines por los
             extra.
           </RuleItem>
-          <RuleItem icon={<Coins size={22} strokeWidth={1.5} />} title="Pines acumulables, cambio gratis no">
+          <RuleItem icon={<Coins size={22} strokeWidth={1.5} />} title="Pines acumulables, cambios gratis no">
             Los pines <strong>no vencen</strong>: si no los gastás, quedan para las siguientes
-            fechas. El <strong>cambio gratis no se acumula</strong>: es 1 por fecha y si no lo usás,
-            se pierde.
+            fechas. Los <strong>cambios gratis no se acumulan</strong>: son por fecha y si no los
+            usás, se pierden.
           </RuleItem>
           <ValidationCallout type="success">
             Al armar tu equipo por primera vez (o si todavía no jugaste una fecha puntuable), los
@@ -454,8 +456,8 @@ export default function ComoFuncionaPage() {
               <AccordionContent>
                 <p className="text-ink-2">
                   Cada fecha cierra al arrancar su primer partido. Apenas arranca, ya podés hacer
-                  cambios para la siguiente (1 gratis, los extra con pines) hasta su primer partido.
-                  El horario exacto está en el armador.
+                  cambios para la siguiente (1 gratis en grupos, 2 desde los 8vos; los extra con
+                  pines) hasta su primer partido. El horario exacto está en el armador.
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -473,9 +475,10 @@ export default function ComoFuncionaPage() {
               <AccordionTrigger>¿Qué pasa si una de mis selecciones queda eliminada?</AccordionTrigger>
               <AccordionContent>
                 <p className="text-ink-2">
-                  Sus jugadores dejan de sumar desde que quedan afuera. Podés reemplazarlos como
-                  cualquier cambio (1 gratis por fecha, los extra con pines); no hay cambios gratis
-                  adicionales por eliminación. A favor: desde los 16avos el tope sube a{" "}
+                  Sus jugadores dejan de sumar desde que quedan afuera. Podés reemplazarlos con los
+                  cambios gratis de la fecha (los extra con pines). Justo para acompañar las
+                  eliminaciones, desde los <strong>8vos de Final</strong> los cambios gratis pasan de
+                  1 a <strong>2 por fecha</strong>. Además, desde los 16avos el tope sube a{" "}
                   <strong>5 jugadores por país</strong>, así que tenés más margen para rearmar con
                   las selecciones que siguen en carrera.
                 </p>

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Shirt, Calculator, Trophy } from "lucide-react";
 import { Countdown } from "@/components/countdown";
 import { WelcomeBanner } from "@/components/welcome-banner";
+import { DoubleChangeBanner } from "@/components/double-change-banner";
 import { CopaHomeBanner } from "@/components/copa/CopaHomeBanner";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
@@ -118,6 +119,7 @@ export default async function Home() {
       {copaBanner != null && <CopaHomeBanner prizeArs={copaBanner.prize} startsAt={copaBanner.closesAt} />}
       <div className="space-y-12">
       <WelcomeBanner />
+      <DoubleChangeBanner />
 
       {/* ─── HERO ─── */}
       <section className="grid items-center gap-10 pt-4 md:grid-cols-[55%_45%]">
