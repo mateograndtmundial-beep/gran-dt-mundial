@@ -81,10 +81,11 @@ export type IconAssets = { gol: string; asist: string; golPen: string; penAtajad
 
 // ---------- selección de unidades ----------
 
-// Ronda de 16vos (round.order = 4, "Round of 32" en API-Football): a diferencia del
-// resto de las eliminatorias, acá el carrusel agrupa los 2 partidos que definen el
-// mismo cruce de octavos (no 1 carrusel por partido). Ver getRound16CrossUnits.
-const ROUND_ORDER_16VOS = 4;
+// Toda eliminatoria ANTES de la final (16vos=4, 8vos=5, cuartos=6, semis=7) tiene
+// una ronda siguiente que cruza a sus ganadores de a 2 → el carrusel agrupa esos 2
+// partidos (no 1 carrusel por partido). La final (8) no tiene ronda siguiente que
+// cruzar, así que sigue con 1 carrusel por partido. Ver getCrossRoundUnits.
+const MAX_PAIRED_KO_ORDER = 7;
 
 /**
  * Cruces reales de la siguiente ronda, resueltos en vivo contra API-Football
@@ -92,12 +93,22 @@ const ROUND_ORDER_16VOS = 4;
  * los 2 países ya cargados una vez que ambos partidos de la ronda N que lo
  * alimentan terminaron — o sea que esta lista solo trae cruces YA determinados.
  * Devuelve pares de countryId (nuestros ids, vía countries.apiFootballId).
+ *
+ * Resiliente a caídas/límites de API-Football: si la llamada falla, devuelve []
+ * (todavía ningún cruce determinado) en vez de tirar el error — evita que un
+ * problema de la API tumbe TODO postPendingScoreboards (loopea todas las fechas).
  */
 async function getNextRoundCountryPairs(nextOrder: number): Promise<[number, number][]> {
-  const fixtures = (await apiFootball.fixtures()) as Array<{
+  let fixtures: Array<{
     league?: { round?: string };
     teams?: { home?: { id?: number }; away?: { id?: number } };
   }>;
+  try {
+    fixtures = (await apiFootball.fixtures()) as typeof fixtures;
+  } catch (e) {
+    console.error(`[scoreboards] getNextRoundCountryPairs(${nextOrder}): ${(e as Error).message}`);
+    return [];
+  }
   const cs = await db.select({ id: countries.id, apiFootballId: countries.apiFootballId }).from(countries);
   const countryIdByApi = new Map(cs.filter((c) => c.apiFootballId != null).map((c) => [c.apiFootballId as number, c.id]));
 
@@ -111,8 +122,8 @@ async function getNextRoundCountryPairs(nextOrder: number): Promise<[number, num
   return pairs;
 }
 
-/** Unidades de 16vos: 2 partidos por carrusel, matcheados por el cruce real de octavos. */
-async function getRound16CrossUnits(roundId: number, roundOrder: number): Promise<CarouselUnit[]> {
+/** Unidades de una eliminatoria: 2 partidos por carrusel, matcheados por el cruce real de la ronda siguiente. */
+async function getCrossRoundUnits(roundId: number, roundOrder: number): Promise<CarouselUnit[]> {
   const home = alias(countries, "home_c");
   const away = alias(countries, "away_c");
   const rows = await db
@@ -141,7 +152,7 @@ async function getRound16CrossUnits(roundId: number, roundOrder: number): Promis
   for (const [countryA, countryB] of crosses) {
     const m1 = matchByCountry.get(countryA);
     const m2 = matchByCountry.get(countryB);
-    if (!m1 || !m2) continue; // cruce de un país todavía sin partido de 16vos en esta fecha
+    if (!m1 || !m2) continue; // cruce de un país todavía sin partido en esta fecha
     if (m1.status !== "finished" || m2.status !== "finished") continue;
     if (!ready.has(m1.matchId) || !ready.has(m2.matchId)) continue;
     const [id1, id2] = [m1.matchId, m2.matchId].sort((a, b) => a - b);
@@ -159,8 +170,8 @@ async function getRound16CrossUnits(roundId: number, roundOrder: number): Promis
 /**
  * Unidades a postear para una fecha (por su id). Grupos: una por grupo, solo
  * cuando TODOS los partidos de ese grupo en la fecha están terminados (no se
- * postea un grupo a medias). Eliminatorias: una por partido terminado, salvo
- * 16vos (2 partidos por carrusel, ver getRound16CrossUnits).
+ * postea un grupo a medias). Eliminatorias antes de la final: 2 partidos por
+ * carrusel (ver getCrossRoundUnits). Final: 1 partido por carrusel.
  */
 export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]> {
   const round = (
@@ -168,8 +179,8 @@ export async function getCarouselUnits(roundId: number): Promise<CarouselUnit[]>
   )[0];
   if (!round) return [];
 
-  if (round.type === "knockout" && round.order === ROUND_ORDER_16VOS) {
-    return getRound16CrossUnits(roundId, round.order);
+  if (round.type === "knockout" && round.order <= MAX_PAIRED_KO_ORDER) {
+    return getCrossRoundUnits(roundId, round.order);
   }
 
   const home = alias(countries, "home_c");
