@@ -67,7 +67,6 @@ export function PlayerDetailDialog({
   const router = useRouter();
   const firstKickoff = fixtures && fixtures[0] ? formatKickoff(fixtures[0].kickoff) : null;
   const hasStats = !!stats && stats.pj > 0;
-  const eliminated = !!player && player.eliminatedRound != null;
 
   if (!player) return null;
 
@@ -203,17 +202,15 @@ export function PlayerDetailDialog({
 
             {/* Puente con el armador: suma al jugador al equipo sin volver a buscarlo.
                 /equipo lo coloca en un slot libre de su posición (no auto-guarda). */}
-            {!eliminated && (
-              <PrimaryButton
-                className="w-full justify-center"
-                onClick={() => {
-                  router.push(`/equipo?add=${player.id}`);
-                  onClose();
-                }}
-              >
-                Agregar a mi equipo →
-              </PrimaryButton>
-            )}
+            <PrimaryButton
+              className="w-full justify-center"
+              onClick={() => {
+                router.push(`/equipo?add=${player.id}`);
+                onClose();
+              }}
+            >
+              Agregar a mi equipo →
+            </PrimaryButton>
         </div>
       </div>
     </div>

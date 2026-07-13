@@ -93,11 +93,15 @@ async function seedSquadsAndCoaches(countryIdByApi: Map<number, number>) {
             price: 5,
           })
           // No pisamos price (lo fija el admin / price-players) ni status.
+          // OJO: tampoco pisamos `position`. API-Football reclasifica seguido
+          // (p.ej. extremos "Attacker" → "Midfielder") y mapPosition tiene default
+          // MID, así que re-seedear cambiaba en silencio la posición de jugadores
+          // que los usuarios YA tenían en su equipo (rompe scoring/auto-sub/armador).
+          // La posición se fija SOLO al insertar; los ajustes se hacen a mano.
           .onConflictDoUpdate({
             target: players.apiFootballId,
             set: {
               name,
-              position: mapPosition(p.position),
               photoUrl: details?.photo ?? p.photo ?? null,
               club: details?.club ?? null,
               birthYear: details?.birthYear ?? null,

@@ -1018,7 +1018,7 @@ export async function isEnrolledInGoldenTicket(userId: number): Promise<boolean>
       .select({ id: leagueMembers.id })
       .from(leagueMembers)
       .innerJoin(leagues, eq(leagueMembers.leagueId, leagues.id))
-      .where(and(eq(leagueMembers.userId, userId), eq(leagues.kind, "golden_ticket")))
+      .where(and(eq(leagueMembers.userId, userId), eq(leagues.kind, "golden_ticket"), inArray(leagues.status, ["open", "full"])))
       .limit(1)
   )[0];
   return !!row;

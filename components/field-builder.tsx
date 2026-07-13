@@ -442,10 +442,7 @@ export function FieldBuilder({
     // Ya está en el equipo → no duplicar (no es error: el usuario lo ve en cancha).
     if (Object.values(base).some((p) => p.id === pid)) return { picks: base, error: null };
 
-    // Selección eliminada del Mundial: no se puede sumar como alta nueva.
-    if (player.eliminatedRound != null) {
-      return { picks: base, error: `${player.name} no se puede sumar: su selección quedó eliminada del Mundial.` };
-    }
+    // Selección eliminada del Mundial: se puede sumar igual (queda gris en la UI).
 
     // Presupuesto disponible (jugadores ya puestos + técnico elegido si lo hay).
     const coachPrice = coaches.find((c) => c.id === (initial?.coachId ?? null))?.price ?? 0;
@@ -1085,10 +1082,9 @@ export function FieldBuilder({
                         (slotCurrent?.countryId === p.countryId ? 1 : 0);
                       const countryOk =
                         maxPerCountry == null || countryNow < maxPerCountry;
-                      const selectable = affordable && countryOk && !eliminated;
-                      const reason = eliminated
-                        ? "selección eliminada"
-                        : !affordable
+                      // Los eliminados SÍ se pueden sumar (quedan grises, no bloqueados).
+                      const selectable = affordable && countryOk;
+                      const reason = !affordable
                         ? "presupuesto insuficiente"
                         : !countryOk
                           ? `máx ${maxPerCountry} de este país`
@@ -1101,9 +1097,7 @@ export function FieldBuilder({
                         title={
                           selectable
                             ? undefined
-                            : eliminated
-                              ? "Su selección quedó eliminada del Mundial"
-                              : !affordable
+                            : !affordable
                               ? "Presupuesto insuficiente"
                               : `Máximo ${maxPerCountry} jugadores por selección`
                         }

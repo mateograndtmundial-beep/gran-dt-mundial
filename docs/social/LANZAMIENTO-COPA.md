@@ -718,7 +718,7 @@ Te sumás hasta el 28/06 (o hasta que se llenen los 100). Link en bio 👉 los11
 
 Te sumás hasta el 28/06 (o hasta que se llenen los 100). 🔗 bio · los11desampa.com/copa
 
-¿Ya tenés tu equipo armado? 👇 (Bases y Condiciones en bio.)
+¿Ya tenés tu equipo armado? 👇 
 
 #LigaPremium #Mundial2026 #Los11DeSampa #FantasyFutbol #16vos
 ```
