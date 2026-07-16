@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt, ne, notInArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt, ne, notInArray, sql } from "drizzle-orm";
 import { revalidateTag, revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import {
@@ -244,18 +244,36 @@ export async function publishRound(roundId: number) {
   }
 
   // Marcar eliminados (perdedores en eliminatorias).
+  //
+  // Excepción: los perdedores de SEMIS no quedan eliminados ahí — juegan el partido
+  // por el 3er puesto, que va en la última fecha (junto con la Final; ver ROUNDS en
+  // lib/game/config.ts). Si los marcáramos en semis, sus jugadores aparecerían
+  // tachados/filtrados en el armador y no podrían sumar en la fecha que sí juegan.
+  // Quedan eliminados recién al publicar la última fecha, con el 3er puesto jugado.
   if (round.type === "knockout") {
-    const eliminations: BatchOp[] = [];
-    for (const m of ms) {
-      // Marca eliminado al perdedor, incluida la definición por penales.
-      const outcome = resolveMatchOutcome(m);
-      if (outcome.decided) {
-        eliminations.push(
-          db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, outcome.loserId)),
-        );
+    const lastKoOrder = (
+      await db
+        .select({ order: rounds.order })
+        .from(rounds)
+        .where(eq(rounds.type, "knockout"))
+        .orderBy(desc(rounds.order))
+        .limit(1)
+    )[0]?.order;
+    const isSemis = lastKoOrder != null && round.order === lastKoOrder - 1;
+
+    if (!isSemis) {
+      const eliminations: BatchOp[] = [];
+      for (const m of ms) {
+        // Marca eliminado al perdedor, incluida la definición por penales.
+        const outcome = resolveMatchOutcome(m);
+        if (outcome.decided) {
+          eliminations.push(
+            db.update(countries).set({ eliminatedRound: round.order }).where(eq(countries.id, outcome.loserId)),
+          );
+        }
       }
+      await runChunked(eliminations);
     }
-    await runChunked(eliminations);
   }
 
   // Eliminados de FASE DE GRUPOS: las selecciones que no clasificaron a la primera
