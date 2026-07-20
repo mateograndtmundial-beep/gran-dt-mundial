@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { PageTitle, EmptyState } from "@/components/ui";
 import { ValidationCallout } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
-import { getActiveProducts } from "@/lib/queries";
+import { getActiveProducts, isTournamentFinished } from "@/lib/queries";
 import { getPinBalance } from "@/lib/pins";
 import { isProviderConfigured } from "@/lib/payments";
 import { PinStore } from "@/components/pin-store";
@@ -25,9 +25,12 @@ export default async function PinesPage({
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let products: Awaited<ReturnType<typeof getActiveProducts>> = [];
   let balance = 0;
+  // Torneo terminado → se cierra la VENTA (los productos siguen `active` en la DB:
+  // el cierre es de UI y se revierte solo si hiciera falta reabrirla).
+  let finished = false;
   try {
     user = await getCurrentUser();
-    products = await getActiveProducts();
+    [products, finished] = await Promise.all([getActiveProducts(), isTournamentFinished()]);
     if (user) balance = await getPinBalance(user.id);
   } catch {
     // sin DB / sin auth
@@ -35,7 +38,14 @@ export default async function PinesPage({
 
   return (
     <div className="space-y-5">
-      <PageTitle title="Pines" subtitle="Comprá pines para hacer cambios extra en tu equipo cada fecha." />
+      <PageTitle
+        title="Pines"
+        subtitle={
+          finished
+            ? "Tu saldo de pines. El Mundial terminó, así que ya no se usan para hacer cambios."
+            : "Comprá pines para hacer cambios extra en tu equipo cada fecha."
+        }
+      />
 
       {status === "success" && (
         <ValidationCallout type="success">
@@ -47,7 +57,19 @@ export default async function PinesPage({
       )}
 
       {!user ? (
-        <EmptyState title="Ingresá para comprar pines" hint="Necesitás iniciar sesión." />
+        <EmptyState
+          title={finished ? "Ingresá para ver tu saldo" : "Ingresá para comprar pines"}
+          hint="Necesitás iniciar sesión."
+        />
+      ) : finished ? (
+        <PinStore
+          saleClosed
+          balance={balance}
+          isPremium={user.isPremium ?? false}
+          detectedCountry={detectedCountry}
+          dlocalReady={dlocalReady}
+          products={[]}
+        />
       ) : products.length === 0 ? (
         <EmptyState title="No hay productos disponibles." hint="Volvé a entrar más tarde." />
       ) : (

@@ -14,8 +14,8 @@ const STORAGE_PREFIX = "sampa.changeReminderDismissed";
  * (`ChangeReminder` → `getChangeReminder`) ya decidió que aplica (usuario con
  * equipo, dentro de la ventana de 24 h y sin cambios hechos); este componente
  * solo gestiona la presentación, el countdown amable y que se vea UNA sola vez
- * por fecha (localStorage keyed por `roundId`, mismo patrón que WelcomeBanner /
- * LineupLockNotice). Como la key incluye el roundId, vuelve a aparecer una vez
+ * por fecha (localStorage keyed por `roundId`, mismo patrón que WelcomeBanner).
+ * Como la key incluye el roundId, vuelve a aparecer una vez
  * en cada fecha nueva sin acumular molestia.
  */
 export function ChangeReminderPopup({

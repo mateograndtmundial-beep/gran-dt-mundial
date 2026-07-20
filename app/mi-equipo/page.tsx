@@ -7,7 +7,7 @@ import { ChangesStatusChip } from "@/components/changes-status-card";
 import { SaveConfirmBanner } from "@/components/save-confirm-banner";
 import { DeadlineNotice } from "@/components/deadline-notice";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, isDoubleChangeNoticeActive, type ChangesStatus } from "@/lib/queries";
+import { getMyTeam, getLineupPlayers, getLineupCoach, getUserGlobalRank, isRankingsVisible, getChangesStatus, getEditableRound, getGoldenTicketCopas, isDoubleChangeNoticeActive, isTournamentFinished, type ChangesStatus } from "@/lib/queries";
 import { DoubleChangeNotice } from "@/components/double-change-notice";
 import { CopaMiEquipoBanner } from "@/components/copa/CopaMiEquipoBanner";
 import { COPA_PAUSED } from "@/lib/copa/announcement";
@@ -28,6 +28,15 @@ export default async function MiEquipoPage({
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let team: Awaited<ReturnType<typeof getMyTeam>> = null;
   let error = false;
+  // Se lee ACÁ ARRIBA a propósito: los bloques "sin sesión" y "sin equipo" hacen
+  // return temprano y también necesitan saber si el torneo terminó (si no, ofrecen
+  // "armar mi equipo", que ya no se puede).
+  let finished = false;
+  try {
+    finished = await isTournamentFinished();
+  } catch {
+    // sin DB: asumimos torneo en juego (fallback seguro)
+  }
   try {
     user = await getCurrentUser();
     if (user) team = await getMyTeam(user.id);
@@ -50,10 +59,18 @@ export default async function MiEquipoPage({
         <PageTitle title="Mi equipo" />
         <EmptyState
           title="Ingresá para ver tu equipo"
-          hint="Podés armarlo primero y guardarlo al iniciar sesión."
+          hint={
+            finished
+              ? "El Mundial terminó, pero podés entrar a ver cómo te fue."
+              : "Podés armarlo primero y guardarlo al iniciar sesión."
+          }
         />
         <div className="mt-4 text-center">
-          <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+          {finished ? (
+            <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+          ) : (
+            <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+          )}
         </div>
       </div>
     );
@@ -63,9 +80,20 @@ export default async function MiEquipoPage({
     return (
       <div>
         <PageTitle title="Mi equipo" />
-        <EmptyState title="Todavía no armaste tu equipo." />
+        <EmptyState
+          title={finished ? "El Mundial terminó y no llegaste a armar equipo." : "Todavía no armaste tu equipo."}
+          hint={
+            finished
+              ? "Te esperamos en la próxima. Mientras tanto podés ver cómo terminó el ranking."
+              : undefined
+          }
+        />
         <div className="mt-4 text-center">
-          <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+          {finished ? (
+            <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+          ) : (
+            <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+          )}
         </div>
       </div>
     );
@@ -208,9 +236,17 @@ export default async function MiEquipoPage({
               <strong className="text-ink-2">{lateStartName}</strong>.
             </p>
           )}
+          {finished && ranking && (
+            <p className="text-xs text-ink-3">
+              El Mundial terminó: quedaste <strong className="text-ink-2">#{ranking}</strong> entre
+              todos los DT de Los 11 de Sampa. Gracias por jugar.
+            </p>
+          )}
         </div>
         <div className="flex items-stretch gap-2">
-          <SecondaryButton href="/equipo">EDITAR EQUIPO</SecondaryButton>
+          <SecondaryButton href={finished ? "/ranking" : "/equipo"}>
+            {finished ? "RANKING FINAL" : "EDITAR EQUIPO"}
+          </SecondaryButton>
           {/* Chip compacto: cambios disponibles para la fecha vigente */}
           {changesStatus && <ChangesStatusChip status={changesStatus} />}
         </div>
@@ -318,7 +354,9 @@ export default async function MiEquipoPage({
             </Link>
           </div>
           <p className="mb-3 text-xs text-ink-3">
-            Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos.
+            {finished
+              ? "El Mundial terminó: estos son tus puntos definitivos, fecha por fecha."
+              : "Los puntos se publican al cierre de cada fecha, cuando terminan todos sus partidos."}
           </p>
           <PointsBreakdown rounds={breakdownRounds} />
         </Card>

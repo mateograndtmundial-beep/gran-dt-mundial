@@ -11,21 +11,43 @@ import {
   getUserGlobalRankByRound,
   getPublishedRounds,
   isRankingsVisible,
+  isTournamentFinished,
 } from "@/lib/queries";
+import { FinalPodium } from "@/components/domain/FinalPodium";
 import { getCurrentUser } from "@/lib/auth";
 import { roundWithArticle } from "@/lib/game/round-format";
 
 // Depende del usuario (fija su posición arriba), así que se renderiza por request.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Ranking — Los 11 de Sampa",
-  description: "Mirá la tabla global del Mundial 2026: quién va primero y cuántos puntos lleva cada DT.",
-  openGraph: {
-    title: "Ranking del Mundial 2026 — Los 11 de Sampa",
-    description: "La tabla global de Los 11 de Sampa: quién va primero y cuántos puntos lleva cada DT.",
-  },
-};
+// Con el torneo terminado la tabla deja de ser "quién va ganando" y pasa a ser el
+// resultado definitivo. La query está cacheada, así que no cuesta una lectura extra.
+export async function generateMetadata(): Promise<Metadata> {
+  let finished = false;
+  try {
+    finished = await isTournamentFinished();
+  } catch {
+    // sin DB: metadata "en juego" (el fallback seguro)
+  }
+  return finished
+    ? {
+        title: "Ranking final — Los 11 de Sampa",
+        description:
+          "El ranking final del Mundial 2026: los DT que mejor la vieron en Los 11 de Sampa.",
+        openGraph: {
+          title: "Ranking final del Mundial 2026 — Los 11 de Sampa",
+          description: "Así terminó la tabla de Los 11 de Sampa: el podio y todos los DT.",
+        },
+      }
+    : {
+        title: "Ranking — Los 11 de Sampa",
+        description: "Mirá la tabla global del Mundial 2026: quién va primero y cuántos puntos lleva cada DT.",
+        openGraph: {
+          title: "Ranking del Mundial 2026 — Los 11 de Sampa",
+          description: "La tabla global de Los 11 de Sampa: quién va primero y cuántos puntos lleva cada DT.",
+        },
+      };
+}
 
 export default async function RankingPage({
   searchParams,
@@ -38,12 +60,13 @@ export default async function RankingPage({
   let me: { entryName: string | null; username: string | null; totalPoints: number; rank: number } | null = null;
   let error = false;
   let visible = false;
+  let finished = false;
   let publishedRounds: Awaited<ReturnType<typeof getPublishedRounds>> = [];
   // Fecha seleccionada (su `order`): solo válida si está entre las publicadas.
   let activeOrder: number | null = null;
   let activeRoundName: string | null = null;
   try {
-    visible = await isRankingsVisible();
+    [visible, finished] = await Promise.all([isRankingsVisible(), isTournamentFinished()]);
     if (visible) {
       publishedRounds = await getPublishedRounds();
       const wanted = Number(fecha);
@@ -83,11 +106,13 @@ export default async function RankingPage({
   return (
     <div className="space-y-5">
       <PageTitle
-        title="Ranking global"
+        title={finished && !activeRoundName ? "Ranking final" : "Ranking global"}
         subtitle={
           activeRoundName
             ? `Ranking de ${roundWithArticle(activeRoundName)}.`
-            : "Los mejores DT del Mundial 2026."
+            : finished
+              ? "Así terminó el Mundial 2026. Estos son los DT que mejor la vieron."
+              : "Los mejores DT del Mundial 2026."
         }
       />
       {!visible ? (
@@ -99,11 +124,24 @@ export default async function RankingPage({
         <EmptyState title="No pudimos cargar el ranking." hint="Probá recargar la página en un rato." />
       ) : (
         <div className="space-y-5">
+          {/* Coronación: solo en la vista general (con filtro de fecha, el "podio"
+              sería el de esa fecha, no el del torneo). Reusa las filas ya traídas. */}
+          {finished && !activeOrder && rows.length > 0 && (
+            <FinalPodium
+              rows={rows.slice(0, 3).map((r) => ({
+                entryId: r.entryId,
+                name: r.name,
+                username: r.username,
+                totalPoints: r.totalPoints,
+              }))}
+              heading="CAMPEONES DE LOS 11 DE SAMPA"
+            />
+          )}
           {publishedRounds.length > 0 && (
             <RoundFilterPills rounds={publishedRounds} active={activeOrder} basePath="/ranking" />
           )}
           {rows.length === 0 ? (
-            <EmptyState title="Todavía no hay equipos en el ranking." />
+            <EmptyState title={finished ? "No hubo equipos en el ranking." : "Todavía no hay equipos en el ranking."} />
           ) : (
             <>
               {me && (

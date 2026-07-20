@@ -44,12 +44,16 @@ export const viewport: Viewport = {
 /* ─── Metadatos ─── */
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
+  // Metadata raíz: corre en TODAS las páginas (incluidas las estáticas), así que no
+  // puede depender de la DB. Redactada en neutro para que siga siendo válida con el
+  // Mundial en juego y terminado.
   title: "Los 11 de Sampa — El juego de los DT del Mundial 2026",
   description:
-    "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 con 15 jugadores, elegí capitán y DT, y competí con amigos por el primer puesto.",
+    "Los 11 de Sampa: el fantasy del Mundial 2026. Equipos de 15 jugadores, capitán y DT, ranking global y ligas con amigos.",
   openGraph: {
     title: "Los 11 de Sampa",
-    description: "Ponete el buzo de Sampa: armá tu equipo del Mundial 2026 y competí con amigos.",
+    description:
+      "El fantasy del Mundial 2026: equipos de 15 jugadores, capitán y DT, ranking global y ligas con amigos.",
     // La imagen sale de app/opengraph-image.tsx (1200×630, generada con ImageResponse).
   },
   icons: {

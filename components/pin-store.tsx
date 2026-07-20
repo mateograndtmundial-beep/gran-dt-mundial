@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Crown } from "lucide-react";
 import { createPinOrder } from "@/lib/payment-actions";
 import { Card } from "@/components/ui";
-import { Eyebrow, PrimaryButton } from "@/components/editorial";
+import { Eyebrow, PrimaryButton, ValidationCallout } from "@/components/editorial";
 
 type Product = {
   sku: string;
@@ -49,12 +50,15 @@ export function PinStore({
   detectedCountry,
   dlocalReady,
   products,
+  saleClosed = false,
 }: {
   balance: number;
   isPremium: boolean;
   detectedCountry: string;
   dlocalReady: boolean;
   products: Product[];
+  /** Torneo terminado: los pines ya no se pueden gastar → mostramos solo el saldo. */
+  saleClosed?: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -98,21 +102,44 @@ export function PinStore({
     return isAr ? formatArs(Math.round(n)) : formatUsd(Math.round(n * 100) / 100);
   }
 
+  const balanceCard = (
+    <Card className="flex items-center justify-between p-4">
+      <Eyebrow>Tu saldo</Eyebrow>
+      {isPremium ? (
+        <span className="flex items-center gap-1.5 jersey-numeral text-2xl text-gold-ink">
+          <Crown size={20} className="text-gold" aria-hidden />
+          ilimitado
+        </span>
+      ) : (
+        <span className="jersey-numeral text-2xl text-blue">
+          {balance} <span className="text-sm text-ink-3">pines</span>
+        </span>
+      )}
+    </Card>
+  );
+
+  // Torneo terminado: los pines solo servían para cambios extra por fecha, así que
+  // sin fechas por jugar no hay nada que comprar. Dejamos el saldo a la vista.
+  if (saleClosed) {
+    return (
+      <div className="space-y-4">
+        {balanceCard}
+        <ValidationCallout type="warning">
+          El Mundial 2026 terminó: no quedan fechas por jugar, así que los pines ya no se pueden
+          usar para hacer cambios y cerramos la venta. Si compraste pines en los últimos 10 días y
+          no llegaste a usarlos, podés pedir el reembolso desde{" "}
+          <Link href="/soporte" className="font-semibold text-blue hover:underline">
+            Soporte
+          </Link>
+          .
+        </ValidationCallout>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <Card className="flex items-center justify-between p-4">
-        <Eyebrow>Tu saldo</Eyebrow>
-        {isPremium ? (
-          <span className="flex items-center gap-1.5 jersey-numeral text-2xl text-gold-ink">
-            <Crown size={20} className="text-gold" aria-hidden />
-            ilimitado
-          </span>
-        ) : (
-          <span className="jersey-numeral text-2xl text-blue">
-            {balance} <span className="text-sm text-ink-3">pines</span>
-          </span>
-        )}
-      </Card>
+      {balanceCard}
 
       {showCountryPicker && (
         <Card className="flex flex-col gap-1.5 p-4 sm:flex-row sm:items-center sm:justify-between">

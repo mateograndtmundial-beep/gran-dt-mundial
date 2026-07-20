@@ -5,10 +5,11 @@ import { Countdown } from "@/components/countdown";
 import { WelcomeBanner } from "@/components/welcome-banner";
 import { DoubleChangeBanner } from "@/components/double-change-banner";
 import { CopaHomeBanner } from "@/components/copa/CopaHomeBanner";
+import { FinalPodium } from "@/components/domain/FinalPodium";
 import { Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { TOURNAMENT_START } from "@/lib/game/config";
-import { getEditableRound, getGoldenTicketCopas } from "@/lib/queries";
+import { getEditableRound, getGoldenTicketCopas, getTournamentResults, type PodiumRow } from "@/lib/queries";
 import { COPA_PAUSED } from "@/lib/copa/announcement";
 import { getCurrentUser } from "@/lib/auth";
 import { SITE } from "@/lib/site";
@@ -96,6 +97,20 @@ export default async function Home() {
   } catch {
     // sin DB / sin auth: sin banner
   }
+  // ¿Terminó el Mundial? Con la última fecha publicada el hero deja de mostrar el
+  // countdown (que si no quedaría clavado en 00:00:00:00, contando a una fecha ya
+  // pasada) y pasa a coronar a los campeones del juego. Try/catch aparte del de
+  // `editable`: si el podio falla no queremos perder el countdown.
+  let finished = false;
+  let podium: PodiumRow[] = [];
+  try {
+    const res = await getTournamentResults();
+    finished = res.finished;
+    podium = res.podium;
+  } catch {
+    // sin DB: hero normal (el fallback seguro es "en juego", nunca coronar de más)
+  }
+
   const started = editable != null && editable.round.order > 1;
   // La fecha editable puede no tener fixtures todavía (playoffs antes de que se
   // publique el cuadro) → sin kickoff que contar: el hero muestra un cartel en vez
@@ -118,39 +133,55 @@ export default async function Home() {
           (su propio mb-4) y no deje el hueco de 3rem antes del hero en mobile. */}
       {copaBanner != null && <CopaHomeBanner prizeArs={copaBanner.prize} startsAt={copaBanner.closesAt} />}
       <div className="space-y-12">
-      <WelcomeBanner />
+      <WelcomeBanner finished={finished} />
       <DoubleChangeBanner />
 
       {/* ─── HERO ─── */}
       <section className="grid items-center gap-10 pt-4 md:grid-cols-[55%_45%]">
         {/* Columna izquierda: texto + CTA */}
         <div className="space-y-6">
-          <Eyebrow>MUNDIAL 2026 · PONETE EL BUZO DE SAMPA</Eyebrow>
+          <Eyebrow>
+            {finished ? "MUNDIAL 2026 · TERMINÓ" : "MUNDIAL 2026 · PONETE EL BUZO DE SAMPA"}
+          </Eyebrow>
 
           <h1 className="font-display text-[clamp(3.5rem,8vw,7rem)] leading-none tracking-tight text-ink">
             LOS <span className="text-blue">11</span> DE SAMPA
           </h1>
 
           <p className="max-w-[420px] text-lg leading-relaxed text-ink-2">
-            Ponete el buzo de Sampa: armá tu plantel del Mundial, elegí
-            capitán y DT, y competí con tus amigos durante las 8 fechas.
+            {finished ? (
+              <>El Mundial terminó. Estos son los DT que mejor la vieron.</>
+            ) : (
+              <>
+                Ponete el buzo de Sampa: armá tu plantel del Mundial, elegí
+                capitán y DT, y competí con tus amigos durante las 8 fechas.
+              </>
+            )}
           </p>
 
           {/* Countdown: al arranque del Mundial, o al cierre de cambios de la fecha
               editable. Si la próxima fecha todavía no tiene fixtures (playoffs antes
               del cuadro), no hay kickoff que contar → cartel en lugar del countdown. */}
-          <div>
-            <Eyebrow className="mb-3">
-              {started ? `CIERRE DE CAMBIOS · ${roundShortName!.toUpperCase()}` : "EL MUNDIAL ARRANCA EN"}
-            </Eyebrow>
-            {started && !hasDeadline ? (
-              <p className="max-w-[420px] font-display text-2xl leading-tight tracking-tight text-ink-2">
-                SE DEFINE CUANDO TERMINEN LOS GRUPOS
-              </p>
-            ) : (
-              <Countdown target={started ? editable!.deadline!.toISOString() : TOURNAMENT_START} />
-            )}
-          </div>
+          {finished ? (
+            // Torneo terminado: el countdown no tiene a qué apuntar (contaría a una
+            // fecha pasada y quedaría en 00:00:00:00) → lo reemplaza el podio.
+            <div className="max-w-[460px]">
+              <FinalPodium rows={podium} heading="PODIO FINAL · LOS 11 DE SAMPA" />
+            </div>
+          ) : (
+            <div>
+              <Eyebrow className="mb-3">
+                {started ? `CIERRE DE CAMBIOS · ${roundShortName!.toUpperCase()}` : "EL MUNDIAL ARRANCA EN"}
+              </Eyebrow>
+              {started && !hasDeadline ? (
+                <p className="max-w-[420px] font-display text-2xl leading-tight tracking-tight text-ink-2">
+                  SE DEFINE CUANDO TERMINEN LOS GRUPOS
+                </p>
+              ) : (
+                <Countdown target={started ? editable!.deadline!.toISOString() : TOURNAMENT_START} />
+              )}
+            </div>
+          )}
 
           {editable && (
             <p className="max-w-[420px] text-sm leading-relaxed text-ink-2">
@@ -177,19 +208,39 @@ export default async function Home() {
           )}
 
           <div className="flex flex-wrap items-center gap-4">
-            <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
-            <Link
-              href="/jugadores"
-              className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
-            >
-              Ver jugadores
-            </Link>
-            <Link
-              href="/como-funciona"
-              className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
-            >
-              ¿Cómo funciona?
-            </Link>
+            {finished ? (
+              <>
+                <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+                <Link
+                  href="/mi-equipo"
+                  className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
+                >
+                  Ver mi equipo
+                </Link>
+                <Link
+                  href="/ligas"
+                  className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
+                >
+                  Mis ligas
+                </Link>
+              </>
+            ) : (
+              <>
+                <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+                <Link
+                  href="/jugadores"
+                  className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
+                >
+                  Ver jugadores
+                </Link>
+                <Link
+                  href="/como-funciona"
+                  className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"
+                >
+                  ¿Cómo funciona?
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -221,20 +272,30 @@ export default async function Home() {
       <section>
         <Eyebrow className="mb-4">DE QUÉ VA</Eyebrow>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          {/* Con el torneo terminado, los imperativos ("armá", "sumá") invitan a algo
+              que ya no se puede hacer → la misma sección en pretérito. */}
           <Feature
             icon={<Shirt size={24} strokeWidth={1.5} />}
-            title="Armá tu plantel"
+            title={finished ? "Se armaba un plantel" : "Armá tu plantel"}
             text="15 jugadores dentro del presupuesto: titulares, suplentes, formación, capitán y técnico."
           />
           <Feature
             icon={<Calculator size={24} strokeWidth={1.5} />}
-            title="Sumá fecha a fecha"
-            text="Tus jugadores puntúan por lo que hacen en la cancha real: goles, asistencias, vallas, la figura."
+            title={finished ? "Se sumaba fecha a fecha" : "Sumá fecha a fecha"}
+            text={
+              finished
+                ? "Los jugadores puntuaban por lo que hacían en la cancha real: goles, asistencias, vallas, la figura."
+                : "Tus jugadores puntúan por lo que hacen en la cancha real: goles, asistencias, vallas, la figura."
+            }
           />
           <Feature
             icon={<Trophy size={24} strokeWidth={1.5} />}
-            title="Ganá la liga"
-            text="Creá tu liga, sumá a los amigos y peleá el primer puesto durante las 8 fechas del Mundial."
+            title={finished ? "Se ganaba la liga" : "Ganá la liga"}
+            text={
+              finished
+                ? "Cada uno con su liga y sus amigos, peleando el primer puesto durante las 8 fechas del Mundial."
+                : "Creá tu liga, sumá a los amigos y peleá el primer puesto durante las 8 fechas del Mundial."
+            }
           />
         </div>
       </section>

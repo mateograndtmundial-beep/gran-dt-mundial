@@ -3,7 +3,7 @@ import { ChevronRight } from "lucide-react";
 import { PageTitle, EmptyState, Card } from "@/components/ui";
 import { Eyebrow, PrimaryButton } from "@/components/editorial";
 import { getCurrentUser } from "@/lib/auth";
-import { getMyLeagues, getGoldenTicketCopas, type CopaStatus } from "@/lib/queries";
+import { getMyLeagues, getGoldenTicketCopas, isTournamentFinished, type CopaStatus } from "@/lib/queries";
 import { LeagueActions } from "@/components/league-actions";
 import { CopaLeagueRow } from "@/components/copa/CopaLeagueRow";
 import { CopaPromoCard } from "@/components/copa/CopaPromoCard";
@@ -17,8 +17,10 @@ export default async function LigasPage() {
   let user: Awaited<ReturnType<typeof getCurrentUser>> = null;
   let leagues: Awaited<ReturnType<typeof getMyLeagues>> = [];
   let copas: CopaStatus[] = [];
+  let finished = false;
   let error = false;
   try {
+    finished = await isTournamentFinished();
     user = await getCurrentUser();
     if (user) {
       [leagues, copas] = await Promise.all([getMyLeagues(user.id), getGoldenTicketCopas(user.id)]);
@@ -61,20 +63,27 @@ export default async function LigasPage() {
 
           {/* CTA general: crear cuenta + armar equipo para participar (ranking, ligas, copa). */}
           <Card className="p-6 text-center">
-            <Eyebrow className="mb-2 block">EMPEZÁ A JUGAR</Eyebrow>
+            <Eyebrow className="mb-2 block">{finished ? "ESTA EDICIÓN TERMINÓ" : "EMPEZÁ A JUGAR"}</Eyebrow>
             <p className="mx-auto mb-4 max-w-md text-sm text-ink-2">
-              Creá tu cuenta gratis y armá tu equipo del Mundial para competir en el ranking global,
-              en ligas con tus amigos y en la Liga Premium.
+              {finished
+                ? "El Mundial 2026 terminó y con él esta edición de Los 11 de Sampa. Podés ver cómo quedó el ranking final de todos los DT."
+                : "Creá tu cuenta gratis y armá tu equipo del Mundial para competir en el ranking global, en ligas con tus amigos y en la Liga Premium."}
             </p>
-            <PrimaryButton href="/sign-up?redirect_url=%2Fequipo">
-              CREAR CUENTA Y ARMAR EQUIPO →
-            </PrimaryButton>
-            <p className="mt-3 text-xs text-ink-3">
-              ¿Ya tenés cuenta?{" "}
-              <Link href="/sign-in?redirect_url=%2Fligas" className="font-semibold text-blue underline">
-                Ingresar
-              </Link>
-            </p>
+            {finished ? (
+              <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+            ) : (
+              <>
+                <PrimaryButton href="/sign-up?redirect_url=%2Fequipo">
+                  CREAR CUENTA Y ARMAR EQUIPO →
+                </PrimaryButton>
+                <p className="mt-3 text-xs text-ink-3">
+                  ¿Ya tenés cuenta?{" "}
+                  <Link href="/sign-in?redirect_url=%2Fligas" className="font-semibold text-blue underline">
+                    Ingresar
+                  </Link>
+                </p>
+              </>
+            )}
           </Card>
         </div>
       ) : (

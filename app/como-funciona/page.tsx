@@ -16,6 +16,7 @@ import {
   AccordionTrigger,
   AccordionContent,
 } from "@/components/ui/accordion";
+import { isTournamentFinished } from "@/lib/queries";
 import {
   FORMATIONS,
   POSITION_COLORS,
@@ -24,10 +25,16 @@ import {
   type Position,
 } from "@/lib/game/config";
 
+// La página lee `isTournamentFinished()` para pasar a modo "referencia" cuando el
+// Mundial termina, así que no puede prerenderarse de una vez para siempre. El
+// `revalidate` es el techo de staleness; en la práctica el flip entra antes, porque
+// la query está cacheada con el tag `leaderboard` que publicarFecha invalida.
+export const revalidate = 300;
+
 export const metadata: Metadata = {
   title: "¿Cómo funciona? · Los 11 de Sampa",
   description:
-    "Cómo armar tu equipo, cómo se suman los puntos y cómo se juega Los 11 de Sampa durante el Mundial.",
+    "Cómo se arma el equipo, cómo se suman los puntos y cómo se juega Los 11 de Sampa durante el Mundial.",
 };
 
 /* ─── Datos de la tabla de puntajes (espejo de lib/game/config.ts SCORING) ─── */
@@ -195,13 +202,34 @@ function RuleItem({
 
 const FORMACIONES = Object.keys(FORMATIONS);
 
-export default function ComoFuncionaPage() {
+export default async function ComoFuncionaPage() {
+  let finished = false;
+  try {
+    finished = await isTournamentFinished();
+  } catch {
+    // sin DB: la página se lee como "en juego" (fallback seguro)
+  }
+
   return (
     <div className="space-y-10">
       <PageTitle
         title="¿Cómo funciona?"
         subtitle="Armás tu plantel del Mundial, elegís capitán y DT, y sumás puntos fecha a fecha por lo que pasa en la cancha real."
       />
+
+      {/* Con el torneo terminado, todo lo que sigue es referencia histórica: lo
+          aclaramos arriba de todo para que nadie intente armar equipo. */}
+      {finished && (
+        <ValidationCallout type="warning">
+          El Mundial 2026 terminó y con él esta edición del juego: ya no se arman equipos ni se
+          hacen cambios. Lo que sigue queda como referencia de cómo se jugó. El ranking final está
+          en{" "}
+          <Link href="/ranking" className="font-semibold text-blue hover:underline">
+            Ranking
+          </Link>
+          .
+        </ValidationCallout>
+      )}
 
       {/* ─── De qué va ─── */}
       <Card className="p-6">
@@ -352,19 +380,25 @@ export default function ComoFuncionaPage() {
             fechas. Los <strong>cambios gratis no se acumulan</strong>: son por fecha y si no los
             usás, se pierden.
           </RuleItem>
-          <ValidationCallout type="success">
-            Al armar tu equipo por primera vez (o si todavía no jugaste una fecha puntuable), los
-            cambios son <strong>ilimitados y gratis</strong> hasta que arranque tu primera fecha.
-          </ValidationCallout>
-          <ValidationCallout type="warning">
-            Cada fecha cierra cuando arranca su primer partido: el equipo que tengas en ese momento
-            es el que puntúa. La ventana de cambios para la fecha siguiente va desde que arranca una
-            fecha hasta el primer partido de la próxima — el horario exacto está en el armador.
-          </ValidationCallout>
-          <p className="text-sm leading-relaxed text-ink-3">
-            Si no hacés cambios no perdés nada: tu equipo sigue sumando fecha tras fecha. Los
-            puntajes se publican al terminar cada fecha.
-          </p>
+          {/* Instrucciones operativas: con el torneo terminado ya no aplican (no hay
+              fecha que cierre ni cambios que hacer), así que se ocultan. */}
+          {!finished && (
+            <>
+              <ValidationCallout type="success">
+                Al armar tu equipo por primera vez (o si todavía no jugaste una fecha puntuable), los
+                cambios son <strong>ilimitados y gratis</strong> hasta que arranque tu primera fecha.
+              </ValidationCallout>
+              <ValidationCallout type="warning">
+                Cada fecha cierra cuando arranca su primer partido: el equipo que tengas en ese momento
+                es el que puntúa. La ventana de cambios para la fecha siguiente va desde que arranca una
+                fecha hasta el primer partido de la próxima — el horario exacto está en el armador.
+              </ValidationCallout>
+              <p className="text-sm leading-relaxed text-ink-3">
+                Si no hacés cambios no perdés nada: tu equipo sigue sumando fecha tras fecha. Los
+                puntajes se publican al terminar cada fecha.
+              </p>
+            </>
+          )}
         </Card>
       </section>
 
@@ -428,6 +462,16 @@ export default function ComoFuncionaPage() {
                   Para hacer más de 1 cambio por fecha: cada cambio extra cuesta <strong>1 pin</strong>{" "}
                   (o nada, con el pack de cambios ilimitados). Los pines <strong>no vencen</strong>;
                   el cambio gratis no se acumula.
+                  {finished && (
+                    <>
+                      {" "}
+                      Con el Mundial ya terminado no se pueden usar más: en{" "}
+                      <Link href="/pines" className="font-semibold text-blue hover:underline">
+                        Pines
+                      </Link>{" "}
+                      queda tu saldo a la vista.
+                    </>
+                  )}
                 </p>
               </AccordionContent>
             </AccordionItem>
@@ -484,16 +528,19 @@ export default function ComoFuncionaPage() {
                 </p>
               </AccordionContent>
             </AccordionItem>
-            <AccordionItem value="llegue-tarde">
-              <AccordionTrigger>Me sumo con el Mundial ya empezado, ¿desde cuándo sumo puntos?</AccordionTrigger>
-              <AccordionContent>
-                <p className="text-ink-2">
-                  Empezás a sumar desde la <strong>fecha siguiente</strong> (la primera que todavía
-                  no arrancó): si entrás con la Fecha 1 en juego, competís desde la Fecha 2. Como el
-                  ranking es por acumulado, cuanto antes entres, mejor.
-                </p>
-              </AccordionContent>
-            </AccordionItem>
+            {/* Obsoleta con el torneo terminado: ya no hay "fecha siguiente" a la que sumarse. */}
+            {!finished && (
+              <AccordionItem value="llegue-tarde">
+                <AccordionTrigger>Me sumo con el Mundial ya empezado, ¿desde cuándo sumo puntos?</AccordionTrigger>
+                <AccordionContent>
+                  <p className="text-ink-2">
+                    Empezás a sumar desde la <strong>fecha siguiente</strong> (la primera que todavía
+                    no arrancó): si entrás con la Fecha 1 en juego, competís desde la Fecha 2. Como el
+                    ranking es por acumulado, cuanto antes entres, mejor.
+                  </p>
+                </AccordionContent>
+              </AccordionItem>
+            )}
             <AccordionItem value="extra-penales">
               <AccordionTrigger>¿Cómo se cuentan el tiempo extra y los penales?</AccordionTrigger>
               <AccordionContent>
@@ -532,7 +579,11 @@ export default function ComoFuncionaPage() {
 
       {/* ─── CTA ─── */}
       <div className="flex flex-wrap items-center gap-4 pt-2">
-        <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+        {finished ? (
+          <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+        ) : (
+          <PrimaryButton href="/equipo">ARMAR MI EQUIPO →</PrimaryButton>
+        )}
         <Link
           href="/jugadores"
           className="text-sm font-semibold text-ink-2 transition-colors hover:text-blue"

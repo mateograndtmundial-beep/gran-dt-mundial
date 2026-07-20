@@ -1,8 +1,8 @@
 import { Trophy } from "lucide-react";
 import { EmptyState } from "@/components/ui";
-import { Eyebrow } from "@/components/editorial";
+import { Eyebrow, PrimaryButton, SecondaryButton } from "@/components/editorial";
 import { FieldBuilder } from "@/components/field-builder";
-import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, isEnrolledInGoldenTicket, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
+import { getPlayersWithCountry, getCoaches, getEditableLineup, getEditableRound, getEditContext, getPlayerTournamentStats, getPlayerOwnership, isEnrolledInGoldenTicket, isTournamentFinished, type PlayerRow, type CoachRow, type PlayerStats } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/auth";
 import { getPinBalance } from "@/lib/pins";
 import { BUDGET, MAX_PER_COUNTRY, MAX_PER_COUNTRY_KNOCKOUT, getFreeChangesForRound } from "@/lib/game/config";
@@ -34,13 +34,15 @@ export default async function EquipoPage({
   let isPremium = false;
   let inCopa = false;
   let isAuthed = false;
+  let finished = false;
   let error = false;
   try {
-    [players, coaches, editable, stats] = await Promise.all([
+    [players, coaches, editable, stats, finished] = await Promise.all([
       getPlayersWithCountry(),
       getCoaches(),
       getEditableRound(),
       getPlayerTournamentStats(),
+      isTournamentFinished(),
     ]);
     // Ownership global (% de equipos del juego que tiene a cada jugador), para
     // el orden "Más elegidos" del picker. Vacío si hay pocos equipos (anti-ruido).
@@ -116,15 +118,28 @@ export default async function EquipoPage({
       {/* Header compacto — no se come el alto de la cancha */}
       <div className="mb-3 flex items-baseline justify-between gap-3">
         <h1 className="font-display text-2xl leading-none tracking-tight text-ink">
-          ARMÁ TU EQUIPO
+          {finished ? "MI EQUIPO" : "ARMÁ TU EQUIPO"}
         </h1>
-        <Eyebrow className="hidden sm:block">11 TITULARES · CAPITÁN · DT</Eyebrow>
+        {!finished && <Eyebrow className="hidden sm:block">11 TITULARES · CAPITÁN · DT</Eyebrow>}
       </div>
       {error || players.length === 0 ? (
         <EmptyState
           title="No pudimos cargar la base de jugadores."
           hint="Probá recargar la página en un rato."
         />
+      ) : finished ? (
+        // Torneo terminado: el equipo no se desbloquea nunca más, así que el cartel
+        // de "esperá a que se publiquen los puntos" sería mentira. Cierre + salidas.
+        <>
+          <EmptyState
+            title="El Mundial terminó: el equipo ya no se edita."
+            hint="Gracias por jugar. Mirá cómo quedaste en el ranking final y en tus ligas."
+          />
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <PrimaryButton href="/ranking">VER EL RANKING FINAL →</PrimaryButton>
+            <SecondaryButton href="/mi-equipo">VER MI EQUIPO</SecondaryButton>
+          </div>
+        </>
       ) : locked ? (
         <EmptyState
           title="Equipo bloqueado: la fecha está en curso."
