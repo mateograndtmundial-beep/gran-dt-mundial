@@ -396,6 +396,11 @@ export async function unpublishRound(roundId: number) {
   revalidatePath("/ranking");
   // La fecha sale de "published" → ya no cuenta en las stats acumuladas; invalidar.
   revalidateTag("player-stats", "max");
+  // Los puntos acumulados y el estado "torneo terminado" (isTournamentFinished) se
+  // derivan de las fechas publicadas → al despublicar hay que invalidarlos también,
+  // si no el sitio queda mostrando el ranking viejo y/o el modo de cierre.
+  revalidateTag("leaderboard", "max");
+  revalidateTag("global-rank", "max");
   return { ok: true as const, info: "Fecha despublicada. Revisá y volvé a publicar." };
 }
 
