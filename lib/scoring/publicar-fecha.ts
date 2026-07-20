@@ -245,11 +245,17 @@ export async function publishRound(roundId: number) {
 
   // Marcar eliminados (perdedores en eliminatorias).
   //
-  // Excepción: los perdedores de SEMIS no quedan eliminados ahí — juegan el partido
-  // por el 3er puesto, que va en la última fecha (junto con la Final; ver ROUNDS en
-  // lib/game/config.ts). Si los marcáramos en semis, sus jugadores aparecerían
-  // tachados/filtrados en el armador y no podrían sumar en la fecha que sí juegan.
-  // Quedan eliminados recién al publicar la última fecha, con el 3er puesto jugado.
+  // `eliminatedRound` es una señal para la fecha SIGUIENTE: marca al jugador como
+  // tachado/filtrado en el armador porque su selección ya no va a sumar. De ahí que
+  // las DOS últimas fechas no eliminen a nadie:
+  //
+  //  - SEMIS: los perdedores juegan el partido por el 3er puesto, que va en la última
+  //    fecha (junto con la Final; ver ROUNDS en lib/game/config.ts). Marcarlos ahí los
+  //    tachaba para una fecha en la que sí juegan y suman.
+  //  - ÚLTIMA FECHA: no hay fecha siguiente que avisar. Las 4 selecciones que llegaron
+  //    a semis jugaron hasta el final, así que ninguna se muestra como eliminada —
+  //    tacharlas después de haber jugado (y puntuado) la Final o el 3er puesto es
+  //    directamente engañoso.
   if (round.type === "knockout") {
     const lastKoOrder = (
       await db
@@ -259,9 +265,9 @@ export async function publishRound(roundId: number) {
         .orderBy(desc(rounds.order))
         .limit(1)
     )[0]?.order;
-    const isSemis = lastKoOrder != null && round.order === lastKoOrder - 1;
+    const isLastTwo = lastKoOrder != null && round.order >= lastKoOrder - 1;
 
-    if (!isSemis) {
+    if (!isLastTwo) {
       const eliminations: BatchOp[] = [];
       for (const m of ms) {
         // Marca eliminado al perdedor, incluida la definición por penales.
