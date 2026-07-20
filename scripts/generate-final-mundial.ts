@@ -3,7 +3,16 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { eq, desc, asc, sql, inArray } from "drizzle-orm";
 import { db } from "../lib/db";
-import { entries, users, entryRounds, playerRoundPoints, players, countries } from "../lib/db/schema";
+import {
+  entries,
+  users,
+  entryRounds,
+  entryRoundPlayers,
+  rounds,
+  playerRoundPoints,
+  players,
+  countries,
+} from "../lib/db/schema";
 import { FORMATIONS } from "../lib/game/config";
 import { renderPng } from "../lib/stories/render";
 
@@ -145,14 +154,28 @@ async function getData() {
     .orderBy(desc(sql`SUM(pms.goals)`))
     .limit(1);
 
+  // El más elegido = en cuántos EQUIPOS quedó seleccionado, no cuántas veces se
+  // lo eligió. Contar filas de entry_round_players sumaba una por fecha (el mismo
+  // jugador en el mismo equipo contaba 8 veces → daba 2212, que no es "equipos").
+  //
+  // Se usa la MISMA definición de ownership que el sitio (getPlayerOwnership en
+  // lib/queries.ts): la ÚLTIMA alineación de cada equipo es su equipo efectivo.
+  const ultimaAlineacion = db
+    .selectDistinctOn([entryRounds.entryId], { erId: entryRounds.id })
+    .from(entryRounds)
+    .innerJoin(rounds, eq(entryRounds.roundId, rounds.id))
+    .orderBy(entryRounds.entryId, desc(rounds.order))
+    .as("ultima");
+
   const [masElegido] = await db
     .select({
       name: players.name,
       countryCode: countries.code,
-      veces: sql<number>`COUNT(*)`,
+      equipos: sql<number>`COUNT(*)::int`,
     })
-    .from(sql`entry_round_players erp`)
-    .innerJoin(players, sql`${players.id} = erp.player_id`)
+    .from(ultimaAlineacion)
+    .innerJoin(entryRoundPlayers, eq(entryRoundPlayers.entryRoundId, ultimaAlineacion.erId))
+    .innerJoin(players, eq(players.id, entryRoundPlayers.playerId))
     .innerJoin(countries, eq(countries.id, players.countryId))
     .groupBy(players.id, players.name, countries.code)
     .orderBy(desc(sql`COUNT(*)`))
@@ -409,7 +432,7 @@ function slideXi(xi: XiPlayer[], total: number, formation: string, flags: Record
 function slideNumeros(d: {
   dts: number;
   goleador?: { name: string; countryCode: string | null; goles: number };
-  masElegido?: { name: string; countryCode: string | null; veces: number };
+  masElegido?: { name: string; countryCode: string | null; equipos: number };
   mejorJugador: XiPlayer;
   flags: Record<string, { b64: string }>;
 }): string {
@@ -448,7 +471,7 @@ function slideNumeros(d: {
       }
       ${
         d.masElegido
-          ? statCard("El más elegido", d.masElegido.name, `${d.masElegido.veces}`, d.masElegido.countryCode, "veces")
+          ? statCard("El más elegido", d.masElegido.name, `${d.masElegido.equipos}`, d.masElegido.countryCode, "equipos")
           : ""
       }
       ${statCard("Más puntos fantasy", d.mejorJugador.name, `${d.mejorJugador.pts}`, d.mejorJugador.countryCode, "pts")}
@@ -492,7 +515,11 @@ async function main() {
   xi.forEach((p) => console.log(`  ${p.position.padEnd(3)} ${p.name} — ${p.pts} pts`));
   console.log(`DT que jugaron: ${dts}`);
   if (goleador) console.log(`Goleador: ${goleador.name} — ${goleador.goles} goles`);
-  if (masElegido) console.log(`Más elegido: ${masElegido.name} — ${masElegido.veces} veces`);
+  if (masElegido)
+    console.log(
+      `Más elegido: ${masElegido.name} — ${masElegido.equipos} equipos de ${dts} ` +
+        `(${Math.round((Number(masElegido.equipos) / Math.max(1, dts)) * 1000) / 10}%)`,
+    );
   console.log(`Más puntos fantasy: ${mejorJugador.name} — ${mejorJugador.pts} pts`);
   console.log("\nListo → out/final/");
 }
