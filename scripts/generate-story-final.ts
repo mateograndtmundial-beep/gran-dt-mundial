@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { eq, desc, asc } from "drizzle-orm";
+import { eq, desc, asc, sql, inArray } from "drizzle-orm";
 import { db } from "../lib/db";
-import { entries, users } from "../lib/db/schema";
+import { entries, users, entryRounds } from "../lib/db/schema";
 import { renderPng } from "../lib/stories/render";
 
 /*
@@ -129,15 +129,37 @@ async function loadAssets() {
 
 async function getPodium() {
   return db
-    .select({ entryName: entries.name, username: users.username, pts: entries.totalPoints })
+    .select({ entryId: entries.id, entryName: entries.name, username: users.username, pts: entries.totalPoints })
     .from(entries)
     .innerJoin(users, eq(entries.userId, users.id))
     .orderBy(desc(entries.totalPoints), asc(entries.id))
     .limit(3);
 }
 
+/**
+ * Si el 1er puesto está empatado en puntos, el orden lo estaría dando entries.id
+ * (orden de alta), que es arbitrario y no se puede publicar como criterio. Las
+ * Bases definen el desempate real: MEJOR PUNTAJE EN UNA SOLA FECHA. Lo calculamos
+ * para poder mostrarlo — si no, la placa muestra dos totales iguales y un campeón
+ * sin explicación.
+ */
+async function getDesempate(podio: Awaited<ReturnType<typeof getPodium>>): Promise<string | null> {
+  if (podio.length < 2 || podio[0]!.pts !== podio[1]!.pts) return null;
+  const empatados = podio.filter((p) => p.pts === podio[0]!.pts).map((p) => p.entryId);
+  const picos = await db
+    .select({ best: sql<number>`MAX(${entryRounds.points})` })
+    .from(entryRounds)
+    .where(inArray(entryRounds.entryId, empatados))
+    .groupBy(entryRounds.entryId)
+    .orderBy(desc(sql`MAX(${entryRounds.points})`));
+  const [mejor, segundo] = [picos[0]?.best, picos[1]?.best];
+  if (mejor == null || segundo == null || Number(mejor) === Number(segundo)) return null;
+  return `Empate en ${podio[0]!.pts} pts: define el mejor puntaje en una sola fecha (${mejor} vs ${segundo}).`;
+}
+
 async function main() {
   const [{ logoB64, titleFontCss }, podio] = await Promise.all([loadAssets(), getPodium()]);
+  const desempate = await getDesempate(podio);
   const campeon = podio[0];
   if (!campeon) throw new Error("No hay equipos en el ranking: ¿ya se publicó la Fecha 8?");
 
@@ -160,7 +182,14 @@ async function main() {
            </div>`
         : ""
     }
-    <p class="body" style="font-size:30px;line-height:1.32;margin-top:34px;text-align:center;">Mirá el ranking final completo en <b>los11desampa.com</b></p>`;
+    ${
+      desempate
+        ? `<div style="margin-top:30px;background:var(--gold-bg);border:2px solid var(--gold-border);border-radius:14px;padding:24px 28px;">
+             <p class="body" style="font-size:26px;line-height:1.3;color:var(--gold-ink);font-weight:600;text-align:center;">${desempate}</p>
+           </div>`
+        : ""
+    }
+    <p class="body" style="font-size:30px;line-height:1.32;margin-top:30px;text-align:center;">Mirá el ranking final completo en <b>los11desampa.com</b></p>`;
 
   const outDir = path.join(ROOT, "out/final");
   await mkdir(outDir, { recursive: true });
@@ -170,6 +199,7 @@ async function main() {
   console.log(`✓ ${path.relative(ROOT, file)} (${(buf.length / 1024).toFixed(0)} KB)`);
 
   console.log("\n── Caption data ──────────────────────────────");
+  if (desempate) console.log(`DESEMPATE: ${desempate}`);
   podio.forEach((r, i) => console.log(`  ${i + 1}. @${r.username} (${r.entryName}) — ${r.pts} pts`));
   console.log("\nListo → out/final/");
 }

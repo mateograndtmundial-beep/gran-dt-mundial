@@ -1,9 +1,9 @@
 import "dotenv/config";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { eq, desc, asc, sql } from "drizzle-orm";
+import { eq, desc, asc, sql, inArray } from "drizzle-orm";
 import { db } from "../lib/db";
-import { entries, users, playerRoundPoints, players, countries } from "../lib/db/schema";
+import { entries, users, entryRounds, playerRoundPoints, players, countries } from "../lib/db/schema";
 import { FORMATIONS } from "../lib/game/config";
 import { renderPng } from "../lib/stories/render";
 
@@ -56,6 +56,7 @@ async function getData() {
   // Podio final del juego: los mismos totales que muestra /ranking.
   const podio = await db
     .select({
+      entryId: entries.id,
       entryName: entries.name,
       username: users.username,
       pts: entries.totalPoints,
@@ -64,6 +65,27 @@ async function getData() {
     .innerJoin(users, eq(entries.userId, users.id))
     .orderBy(desc(entries.totalPoints), asc(entries.id))
     .limit(3);
+
+  // ¿Empate en el 1er puesto? El podio se ordena por puntos y desempata por
+  // entries.id (orden de alta), que es arbitrario y no se puede publicar como
+  // criterio. Las Bases definen el desempate real: MEJOR PUNTAJE EN UNA SOLA
+  // FECHA, y recién después la inscripción más temprana. Si hay empate, lo
+  // calculamos y lo mostramos en la placa — si no, la gente ve dos totales
+  // iguales y un campeón sin explicación.
+  let desempate: string | null = null;
+  if (podio.length >= 2 && podio[0]!.pts === podio[1]!.pts) {
+    const empatados = podio.filter((p) => p.pts === podio[0]!.pts).map((p) => p.entryId);
+    const picos = await db
+      .select({ entryId: entryRounds.entryId, best: sql<number>`MAX(${entryRounds.points})` })
+      .from(entryRounds)
+      .where(inArray(entryRounds.entryId, empatados))
+      .groupBy(entryRounds.entryId)
+      .orderBy(desc(sql`MAX(${entryRounds.points})`));
+    const [mejor, segundo] = [picos[0]?.best, picos[1]?.best];
+    if (mejor != null && segundo != null && Number(mejor) !== Number(segundo)) {
+      desempate = `Empate en ${podio[0]!.pts} pts: define el mejor puntaje en una sola fecha (${mejor} vs ${segundo}).`;
+    }
+  }
 
   // Puntos fantasy acumulados por jugador en TODO el torneo (todas las fechas).
   const acumulado = await db
@@ -140,6 +162,7 @@ async function getData() {
 
   return {
     podio,
+    desempate,
     xi: best.xi,
     formation: best.formation,
     xiTotal: best.total,
@@ -241,7 +264,7 @@ function coverDoc(logoB64: string, titleFontCss: string, tag: string, campeon: s
 }
 
 // ─── Slide 2: podio final ────────────────────────────────────────────────────
-function slidePodio(podio: Array<{ entryName: string; username: string | null; pts: number | null }>): string {
+function slidePodio(podio: Array<{ entryName: string; username: string | null; pts: number | null }>, desempate: string | null): string {
   function row(i: number, name: string, user: string, pts: number) {
     const isFirst = i === 0;
     const borderB = i < podio.length - 1 ? "border-bottom:2px solid #E5E7EB;" : "";
@@ -269,6 +292,13 @@ function slidePodio(podio: Array<{ entryName: string; username: string | null; p
     <div class="card" style="overflow:hidden;padding:0;">
       ${podio.map((r, i) => row(i, r.entryName, r.username ?? "DT", Number(r.pts ?? 0))).join("")}
     </div>
+    ${
+      desempate
+        ? `<div style="background:var(--gold-bg);border:2px solid var(--gold-border);border-radius:12px;padding:22px 26px;">
+             <p class="body" style="font-size:27px;line-height:1.3;color:var(--gold-ink);font-weight:600;">${desempate}</p>
+           </div>`
+        : ""
+    }
     <p class="body" style="font-size:31px;line-height:1.32;">
       Los DT que mejor la vieron durante todo el Mundial. Mirá la tabla completa en <b>los11desampa.com</b>
     </p>
@@ -434,7 +464,7 @@ function slideNumeros(d: {
 async function main() {
   const [assets, data] = await Promise.all([loadAssets(), getData()]);
   const { logoB64, titleFontCss, flags } = assets;
-  const { podio, xi, formation, xiTotal, dts, goleador, masElegido, mejorJugador } = data;
+  const { podio, desempate, xi, formation, xiTotal, dts, goleador, masElegido, mejorJugador } = data;
 
   const outDir = path.join(ROOT, "out/final");
   await mkdir(outDir, { recursive: true });
@@ -442,7 +472,7 @@ async function main() {
   const campeon = podio[0]?.username ?? "DT";
   const slides = [
     coverDoc(logoB64, titleFontCss, "BALANCE · MUNDIAL", campeon),
-    doc(logoB64, titleFontCss, 2, slidePodio(podio), "PODIO FINAL"),
+    doc(logoB64, titleFontCss, 2, slidePodio(podio, desempate), "PODIO FINAL"),
     doc(logoB64, titleFontCss, 3, slideXi(xi, xiTotal, formation, flags), "XI IDEAL"),
     doc(logoB64, titleFontCss, 4, slideNumeros({ dts, goleador, masElegido, mejorJugador, flags }), "LOS NÚMEROS"),
   ];
@@ -455,6 +485,7 @@ async function main() {
   }
 
   console.log("\n── Caption data ──────────────────────────────");
+  if (desempate) console.log(`DESEMPATE: ${desempate}`);
   console.log("Podio final:");
   podio.forEach((r, i) => console.log(`  ${i + 1}. @${r.username} (${r.entryName}) — ${r.pts} pts`));
   console.log(`XI ideal (${formation}): ${xiTotal} pts`);
