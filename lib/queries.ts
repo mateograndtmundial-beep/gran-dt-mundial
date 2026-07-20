@@ -622,6 +622,61 @@ export async function isRankingsVisible(): Promise<boolean> {
 }
 
 /**
+ * ¿Terminó el torneo? = no queda NINGUNA fecha sin publicar (y hay fechas cargadas).
+ *
+ * OJO: NO alcanza con `getEditableRound() === null`. Esa función también devuelve
+ * null mientras la última fecha se está jugando y todavía no se publicó (la saltea
+ * porque su kickoff ya pasó) — es justo el estado que produce el "Equipo bloqueado".
+ * Usarla acá prendería el modo "terminó" durante los 90 minutos de la Final.
+ *
+ * Publicar fuera de orden es imposible (`publishRound` exige las anteriores ya
+ * publicadas), así que "no queda ninguna pendiente" ⟺ "se publicó la última".
+ *
+ * Cacheada con el tag `leaderboard`: `publishRound` lo invalida con "max" al
+ * publicar, así que el flip a "torneo terminado" es inmediato y sin deploy. El
+ * revalidate de 60s es red de seguridad (p. ej. si se toca `rounds.status` a mano).
+ */
+export const isTournamentFinished = unstable_cache(
+  async (): Promise<boolean> => {
+    const [row] = await db
+      .select({
+        total: sql<number>`count(*)`,
+        pending: sql<number>`count(*) filter (where ${rounds.status} <> 'published')`,
+      })
+      .from(rounds);
+    return Number(row?.total ?? 0) > 0 && Number(row?.pending ?? 0) === 0;
+  },
+  ["tournament-finished"],
+  { tags: ["leaderboard"], revalidate: 60 },
+);
+
+export type PodiumRow = {
+  entryId: number;
+  name: string | null;
+  username: string | null;
+  totalPoints: number;
+};
+
+/**
+ * Top 3 del ranking general: los campeones del juego. Reusa `getGlobalLeaderboard`,
+ * que ya está cacheado y ya se llama con limit=3 desde el round-recap → sin queries
+ * ni entradas de caché extra.
+ */
+export async function getFinalPodium(): Promise<PodiumRow[]> {
+  return getGlobalLeaderboard(3);
+}
+
+/**
+ * Combo para el home: estado del torneo + podio en un solo await. Sin
+ * `unstable_cache` propio (compone dos funciones ya cacheadas; anidarlas
+ * complicaría la invalidación).
+ */
+export async function getTournamentResults(): Promise<{ finished: boolean; podium: PodiumRow[] }> {
+  const finished = await isTournamentFinished();
+  return { finished, podium: finished ? await getFinalPodium() : [] };
+}
+
+/**
  * Tabla global (top N) leída en /ranking. Cacheada con el Data Cache (tag
  * `leaderboard`): los `entries.totalPoints` solo cambian al publicar una fecha
  * (`publishRound` invalida el tag). Los args (limit/offset) entran en la key del
